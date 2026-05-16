@@ -52,7 +52,7 @@ fun ArchiveScreen(onExport: () -> Unit, onDetail: (String) -> Unit, viewModel: A
             StatCard("連続記録", "${state.currentStreak}", "日", Modifier.weight(1f))
             StatCard("今月の記録", "${state.monthlyCount}", "件", Modifier.weight(1f))
         }
-        LazyColumn(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        LazyColumn(Modifier.weight(1f).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (state.journals.isEmpty()) item { EmptyState("この月の記録はまだありません。") }
             items(state.journals, key = { it.date.toString() }) { journal -> JournalRow(journal) { onDetail(journal.date.toString()) } }
         }
