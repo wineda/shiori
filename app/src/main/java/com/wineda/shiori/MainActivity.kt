@@ -43,9 +43,8 @@ class MainActivity : ComponentActivity() {
                         if (showBottomBar) {
                             ShioriTabBar(currentRoute = currentRoute) { route ->
                                 navController.navigate(route) {
-                                    popUpTo(ShioriDestination.Home.route) { saveState = true }
+                                    popUpTo(ShioriDestination.Home.route)
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         }
