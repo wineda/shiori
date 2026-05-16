@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                     ShioriDestination.Home.route,
                     ShioriDestination.Memo.route,
                     ShioriDestination.Archive.route,
+                    ShioriDestination.ArchiveDetail.route,
                     ShioriDestination.Export.route,
                 )
                 Scaffold(
