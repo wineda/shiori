@@ -24,11 +24,11 @@ import com.wineda.shiori.ui.theme.ShioriColors
 import com.wineda.shiori.util.jaDate
 
 @Composable
-fun ArchiveDetailScreen(onBack: () -> Unit, onEdit: () -> Unit, viewModel: ArchiveDetailViewModel = hiltViewModel()) {
+fun ArchiveDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: ArchiveDetailViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val journal = state.journal
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
-        ShioriTopBar(journal?.date?.jaDate() ?: "記録", action = { androidx.compose.material3.TextButton(onClick = onEdit) { Text("編集") } })
+        ShioriTopBar(journal?.date?.jaDate() ?: "記録", action = { androidx.compose.material3.TextButton(onClick = { journal?.let { onEdit(it.date.toString()) } }) { Text("編集") } })
         Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "戻る") }
             if (journal == null) EmptyState("記録が見つかりません。") else {

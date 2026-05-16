@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wineda.shiori.data.repository.JournalRepository
 import com.wineda.shiori.data.repository.MemoRepository
+import com.wineda.shiori.domain.model.Journal
 import com.wineda.shiori.domain.usecase.GetYesterdayBatonUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ data class HomeUiState(
     val memoCount: Int = 0,
     val baton: String? = null,
     val streak: List<Boolean> = List(7) { false },
+    val unfilledThisMonthCount: Int = 0,
 )
 
 @HiltViewModel
@@ -36,8 +38,14 @@ class HomeViewModel @Inject constructor(
     private val baton = MutableStateFlow<String?>(null)
     private val streak = MutableStateFlow(List(7) { false })
 
-    val uiState = combine(memoRepository.observeCountByDate(today), baton, streak) { memoCount, batonValue, streakValue ->
-        HomeUiState(today = today, memoCount = memoCount, baton = batonValue, streak = streakValue)
+    val uiState = combine(memoRepository.observeCountByDate(today), baton, streak, journalRepository.observeAll()) { memoCount, batonValue, streakValue, journals ->
+        HomeUiState(
+            today = today,
+            memoCount = memoCount,
+            baton = batonValue,
+            streak = streakValue,
+            unfilledThisMonthCount = countRecentUnfilledDays(journals),
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState(today))
 
     init {
@@ -47,5 +55,14 @@ class HomeViewModel @Inject constructor(
             val written = days.map { date -> journalRepository.getByDate(date)?.isEmpty == false }
             streak.value = written.reversed()
         }
+    }
+
+    private fun countRecentUnfilledDays(journals: List<Journal>): Int {
+        val datesWithEntries = journals.map { it.date }.toSet()
+        return (1..30)
+            .map { offset -> today.minus(offset, DateTimeUnit.DAY) }
+            .count { date ->
+                date.year == today.year && date.monthNumber == today.monthNumber && !datesWithEntries.contains(date)
+            }
     }
 }

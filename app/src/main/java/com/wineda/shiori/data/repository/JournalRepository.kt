@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +32,9 @@ class JournalRepository @Inject constructor(
     suspend fun save(journal: Journal) {
         val existing = journalDao.getByDate(journal.date.toString())
         val now = Clock.System.now()
-        journalDao.upsert(journal.copy(updatedAt = now).toEntity(existing?.createdAt))
+        val createdAt = existing?.createdAt ?: journal.createdAt.toEpochMilliseconds()
+        val createdDate = kotlinx.datetime.Instant.fromEpochMilliseconds(createdAt).toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val isBackfilled = journal.date != createdDate || journal.isBackfilled
+        journalDao.upsert(journal.copy(updatedAt = now, isBackfilled = isBackfilled).toEntity(createdAt))
     }
 }
