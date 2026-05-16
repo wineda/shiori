@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +50,7 @@ fun HomeScreen(
     onMemo: () -> Unit,
     onArchive: () -> Unit,
     onCalendar: () -> Unit,
+    onSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -69,8 +71,13 @@ fun HomeScreen(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                IconButton(onClick = onArchive) {
-                    Icon(Icons.Filled.EventNote, contentDescription = "記録", tint = ShioriColors.InkSoft)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "設定", tint = ShioriColors.InkSoft)
+                    }
+                    IconButton(onClick = onArchive) {
+                        Icon(Icons.Filled.EventNote, contentDescription = "記録", tint = ShioriColors.InkSoft)
+                    }
                 }
             }
 

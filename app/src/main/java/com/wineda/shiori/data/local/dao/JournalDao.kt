@@ -18,6 +18,9 @@ interface JournalDao {
     @Query("SELECT * FROM journals ORDER BY date DESC")
     fun observeAll(): Flow<List<JournalEntity>>
 
+    @Query("SELECT * FROM journals ORDER BY date ASC")
+    suspend fun getAll(): List<JournalEntity>
+
     @Query("SELECT * FROM journals WHERE date >= :from AND date <= :to ORDER BY date ASC")
     suspend fun getInRange(from: String, to: String): List<JournalEntity>
 
@@ -29,4 +32,10 @@ interface JournalDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(journal: JournalEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(journals: List<JournalEntity>)
+
+    @Query("DELETE FROM journals")
+    suspend fun deleteAll()
 }

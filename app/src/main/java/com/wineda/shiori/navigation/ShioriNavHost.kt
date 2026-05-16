@@ -10,6 +10,7 @@ import com.wineda.shiori.ui.calendar.CalendarPickerScreen
 import com.wineda.shiori.ui.export.ExportScreen
 import com.wineda.shiori.ui.home.HomeScreen
 import com.wineda.shiori.ui.memo.MemoScreen
+import com.wineda.shiori.ui.settings.SettingsScreen
 import com.wineda.shiori.ui.write.WriteScreen
 
 @Composable
@@ -21,6 +22,7 @@ fun ShioriNavHost(navController: NavHostController) {
                 onMemo = { navController.navigate(ShioriDestination.Memo.route) },
                 onArchive = { navController.navigate(ShioriDestination.Archive.route) },
                 onCalendar = { navController.navigate(ShioriDestination.CalendarPicker.route) },
+                onSettings = { navController.navigate(ShioriDestination.Settings.route) },
             )
         }
         composable(ShioriDestination.Write.route) { WriteScreen(onBack = { navController.popBackStack() }) }
@@ -47,5 +49,6 @@ fun ShioriNavHost(navController: NavHostController) {
             )
         }
         composable(ShioriDestination.Export.route) { ExportScreen() }
+        composable(ShioriDestination.Settings.route) { SettingsScreen(onBack = { navController.popBackStack() }) }
     }
 }
