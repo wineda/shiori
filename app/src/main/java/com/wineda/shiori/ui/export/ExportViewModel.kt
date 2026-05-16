@@ -17,7 +17,12 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import javax.inject.Inject
 
-enum class ExportRange(val label: String, val days: Int) { WEEK("1週間", 7), TWO_WEEKS("2週間", 14), MONTH("1ヶ月", 30) }
+enum class ExportRange(val label: String, val days: Int) {
+    WEEK("1週間", 7),
+    TWO_WEEKS("2週間", 14),
+    MONTH("1ヶ月", 30),
+    CUSTOM("指定", 14),
+}
 enum class PromptPreset(val label: String, val prompt: String) {
     PATTERNS("感情パターン", AnalysisPrompts.patterns),
     HIDDEN("見落とし発見", AnalysisPrompts.hiddenInsights),

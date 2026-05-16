@@ -45,55 +45,57 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    ShioriScreen(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 22.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 26.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column {
-                SectionLabel("SHIORI · 栞")
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "昨日と明日を、\n今日で結ぶ。",
-                    color = ShioriColors.Ink,
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-            IconButton(onClick = onArchive) {
-                Icon(Icons.Filled.EventNote, contentDescription = "記録", tint = ShioriColors.InkSoft)
-            }
-        }
-
-        Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            ShioriCard {
-                SectionLabel("TODAY")
-                Text(state.today.jaDate(), color = ShioriColors.Ink, style = MaterialTheme.typography.bodyLarge)
-            }
-
-            ShioriCard(Modifier.clickable(onClick = onMemo)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconCircle(Icons.Filled.Message)
-                        Column {
-                            SectionLabel("TODAY'S MEMO")
-                            Text("今日のメモ · ${state.memoCount}件", color = ShioriColors.Ink, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = ShioriColors.InkFaint)
+    ShioriScreen(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 26.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column {
+                    SectionLabel("SHIORI · 栞")
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "昨日と明日を、\n今日で結ぶ。",
+                        color = ShioriColors.Ink,
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                IconButton(onClick = onArchive) {
+                    Icon(Icons.Filled.EventNote, contentDescription = "記録", tint = ShioriColors.InkSoft)
                 }
             }
 
-            BatonCard(state.baton)
+            Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                ShioriCard {
+                    SectionLabel("TODAY")
+                    Text(state.today.jaDate(), color = ShioriColors.Ink, style = MaterialTheme.typography.bodyLarge)
+                }
 
-            StreakIndicator(state.streak)
+                ShioriCard(Modifier.clickable(onClick = onMemo)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            IconCircle(Icons.Filled.Message)
+                            Column {
+                                SectionLabel("TODAY'S MEMO")
+                                Text("今日のメモ · ${state.memoCount}件", color = ShioriColors.Ink, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = ShioriColors.InkFaint)
+                    }
+                }
 
-            Spacer(Modifier.height(10.dp))
+                BatonCard(state.baton)
+                StreakIndicator(state.streak)
+            }
+        }
+
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
             PrimaryShioriButton("今日を書く", onClick = onWrite)
             Text(
                 text = "5項目 · 平均 4分",
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 color = ShioriColors.InkMute,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
