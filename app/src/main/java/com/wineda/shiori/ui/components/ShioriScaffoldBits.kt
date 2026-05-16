@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,7 +49,7 @@ import com.wineda.shiori.ui.theme.ShioriColors
 val ShioriScreenBrush = Brush.verticalGradient(listOf(ShioriColors.Paper, ShioriColors.PaperDeep))
 
 @Composable
-fun ShioriScreen(modifier: Modifier = Modifier, content: @Composable Column.() -> Unit) {
+fun ShioriScreen(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = modifier.background(ShioriScreenBrush),
         content = content,
@@ -91,7 +92,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier, textAlign: TextAli
 }
 
 @Composable
-fun ShioriCard(modifier: Modifier = Modifier, content: @Composable Column.() -> Unit) {
+fun ShioriCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = ShioriColors.Card.copy(alpha = 0.92f)),
