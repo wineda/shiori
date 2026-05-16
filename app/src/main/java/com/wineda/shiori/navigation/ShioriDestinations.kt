@@ -8,5 +8,6 @@ sealed class ShioriDestination(val route: String) {
     data object ArchiveDetail : ShioriDestination("archive/{date}") {
         fun createRoute(date: String) = "archive/$date"
     }
+    data object Settings : ShioriDestination("settings")
     data object Export : ShioriDestination("export")
 }
