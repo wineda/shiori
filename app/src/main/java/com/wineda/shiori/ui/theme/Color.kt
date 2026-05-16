@@ -4,7 +4,9 @@ import androidx.compose.ui.graphics.Color
 
 object ShioriColors {
     val Paper = Color(0xFFF7F3ED)
-    val PaperDeep = Color(0xFFEDE5D6)
+    val PaperDeep = Color(0xFFF0EBE2)
+    val BatonStart = Color(0xFFEFE8DB)
+    val BatonEnd = Color(0xFFE8DFD0)
     val Ink = Color(0xFF2A2520)
     val InkSoft = Color(0xFF5A5450)
     val InkMute = Color(0xFF8B8278)

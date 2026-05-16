@@ -18,6 +18,7 @@ fun ShioriNavHost(navController: NavHostController) {
             HomeScreen(
                 onWrite = { navController.navigate(ShioriDestination.Write.route) },
                 onMemo = { navController.navigate(ShioriDestination.Memo.route) },
+                onArchive = { navController.navigate(ShioriDestination.Archive.route) },
             )
         }
         composable(ShioriDestination.Write.route) { WriteScreen(onBack = { navController.popBackStack() }) }
