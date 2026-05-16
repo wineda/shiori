@@ -2,7 +2,10 @@ package com.wineda.shiori.navigation
 
 sealed class ShioriDestination(val route: String) {
     data object Home : ShioriDestination("home")
-    data object Write : ShioriDestination("write")
+    data object Write : ShioriDestination("write?date={date}") {
+        const val dateArg = "date"
+        fun createRoute(date: String? = null) = if (date == null) "write" else "write?date=$date"
+    }
     data object Memo : ShioriDestination("memo")
     data object Archive : ShioriDestination("archive")
     data object ArchiveDetail : ShioriDestination("archive/{date}") {

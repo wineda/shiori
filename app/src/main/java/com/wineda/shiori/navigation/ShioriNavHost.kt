@@ -16,12 +16,21 @@ fun ShioriNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = ShioriDestination.Home.route) {
         composable(ShioriDestination.Home.route) {
             HomeScreen(
-                onWrite = { navController.navigate(ShioriDestination.Write.route) },
+                onWrite = { navController.navigate(ShioriDestination.Write.createRoute()) },
                 onMemo = { navController.navigate(ShioriDestination.Memo.route) },
                 onArchive = { navController.navigate(ShioriDestination.Archive.route) },
             )
         }
-        composable(ShioriDestination.Write.route) { WriteScreen(onBack = { navController.popBackStack() }) }
+        composable(
+            route = ShioriDestination.Write.route,
+            arguments = listOf(
+                androidx.navigation.navArgument(ShioriDestination.Write.dateArg) {
+                    type = androidx.navigation.NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            ),
+        ) { WriteScreen(onBack = { navController.popBackStack() }) }
         composable(ShioriDestination.Memo.route) { MemoScreen() }
         composable(ShioriDestination.Archive.route) {
             ArchiveScreen(
@@ -32,7 +41,7 @@ fun ShioriNavHost(navController: NavHostController) {
         composable(ShioriDestination.ArchiveDetail.route) {
             ArchiveDetailScreen(
                 onBack = { navController.popBackStack() },
-                onEdit = { navController.navigate(ShioriDestination.Write.route) },
+                onEdit = { date -> navController.navigate(ShioriDestination.Write.createRoute(date)) },
             )
         }
         composable(ShioriDestination.Export.route) { ExportScreen() }

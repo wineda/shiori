@@ -1,5 +1,6 @@
 package com.wineda.shiori.ui.write
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wineda.shiori.data.repository.JournalRepository
@@ -31,17 +32,21 @@ data class WriteUiState(val journal: Journal, val baton: String? = null, val sav
 class WriteViewModel @Inject constructor(
     private val journalRepository: JournalRepository,
     private val saveJournal: SaveJournalUseCase,
-    getYesterdayBaton: GetYesterdayBatonUseCase,
+    private val getYesterdayBaton: GetYesterdayBatonUseCase,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-    private val emptyJournal = Journal(today, "", "", "", "", Clock.System.now(), Clock.System.now())
+    private val targetDate: LocalDate = savedStateHandle.get<String>("date")
+        ?.let { LocalDate.parse(it) }
+        ?: today
+    private val emptyJournal = Journal(targetDate, "", "", "", "", Clock.System.now(), Clock.System.now())
     private val _uiState = MutableStateFlow(WriteUiState(emptyJournal))
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
     private val saveDebouncer = MutableSharedFlow<Journal>(extraBufferCapacity = 1)
 
     init {
         viewModelScope.launch {
-            _uiState.update { it.copy(journal = journalRepository.getByDate(today) ?: emptyJournal, baton = getYesterdayBaton(today)) }
+            _uiState.update { it.copy(journal = journalRepository.getByDate(targetDate) ?: emptyJournal, baton = getYesterdayBaton(targetDate)) }
         }
         saveDebouncer.debounce(1_500.milliseconds).onEach { journal ->
             saveJournal(journal)
