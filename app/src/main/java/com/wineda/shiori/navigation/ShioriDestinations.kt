@@ -13,4 +13,5 @@ sealed class ShioriDestination(val route: String) {
     }
     data object CalendarPicker : ShioriDestination("calendar-picker")
     data object Export : ShioriDestination("export")
+    data object Settings : ShioriDestination("settings")
 }
