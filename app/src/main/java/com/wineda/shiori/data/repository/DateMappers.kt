@@ -16,6 +16,7 @@ internal fun JournalEntity.toDomain() = Journal(
     tomorrow = tomorrow,
     createdAt = Instant.fromEpochMilliseconds(createdAt),
     updatedAt = Instant.fromEpochMilliseconds(updatedAt),
+    isBackfilled = isBackfilled,
 )
 
 internal fun Journal.toEntity(existingCreatedAt: Long? = null) = JournalEntity(
@@ -26,6 +27,7 @@ internal fun Journal.toEntity(existingCreatedAt: Long? = null) = JournalEntity(
     tomorrow = tomorrow,
     createdAt = existingCreatedAt ?: createdAt.toEpochMilliseconds(),
     updatedAt = updatedAt.toEpochMilliseconds(),
+    isBackfilled = isBackfilled,
 )
 
 internal fun MemoEntity.toDomain() = Memo(

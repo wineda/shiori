@@ -1,5 +1,7 @@
 package com.wineda.shiori.ui.home
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material3.Icon
@@ -22,9 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wineda.shiori.ui.components.BatonCard
@@ -42,6 +48,7 @@ fun HomeScreen(
     onWrite: () -> Unit,
     onMemo: () -> Unit,
     onArchive: () -> Unit,
+    onCalendar: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -86,6 +93,10 @@ fun HomeScreen(
                     }
                 }
 
+                if (state.unfilledThisMonthCount > 0) {
+                    UnfilledNotice(count = state.unfilledThisMonthCount, onClick = onCalendar)
+                }
+
                 BatonCard(state.baton)
                 StreakIndicator(state.streak)
             }
@@ -100,6 +111,35 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
+        }
+    }
+}
+
+
+@Composable
+private fun UnfilledNotice(count: Int, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0x26B8AD8A))
+            .border(1.dp, Color(0x4DB8AD8A), RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+    ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                IconCircle(
+                    Icons.Filled.ErrorOutline,
+                    tint = Color(0xFF8B7D52),
+                    background = Color(0x4DB8AD8A),
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SectionLabel("UNFILLED")
+                    Text("今月、記録のない日が ${count} 日あります", color = ShioriColors.InkSoft, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = ShioriColors.InkFaint)
         }
     }
 }

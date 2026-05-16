@@ -11,6 +11,7 @@ data class Journal(
     val tomorrow: String,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val isBackfilled: Boolean = false,
 ) {
     val isEmpty: Boolean
         get() = good.isBlank() && hard.isBlank() && insight.isBlank() && tomorrow.isBlank()

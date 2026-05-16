@@ -1,5 +1,6 @@
 package com.wineda.shiori.ui.write
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wineda.shiori.data.repository.JournalRepository
@@ -20,31 +21,60 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.todayIn
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
-data class WriteUiState(val journal: Journal, val baton: String? = null, val saved: Boolean = true)
+data class WriteUiState(
+    val journal: Journal,
+    val baton: String? = null,
+    val saved: Boolean = true,
+    val isBackfillMode: Boolean = false,
+    val daysAgo: Int = 0,
+)
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class WriteViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val journalRepository: JournalRepository,
     private val saveJournal: SaveJournalUseCase,
     getYesterdayBaton: GetYesterdayBatonUseCase,
 ) : ViewModel() {
     private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-    private val emptyJournal = Journal(today, "", "", "", "", Clock.System.now(), Clock.System.now())
-    private val _uiState = MutableStateFlow(WriteUiState(emptyJournal))
+    private val targetDate = savedStateHandle.get<String>("date")?.let(LocalDate::parse) ?: today
+    private val isBackfillMode = targetDate < today
+    private val emptyJournal = Journal(
+        date = targetDate,
+        good = "",
+        hard = "",
+        insight = "",
+        tomorrow = "",
+        createdAt = Clock.System.now(),
+        updatedAt = Clock.System.now(),
+        isBackfilled = isBackfillMode,
+    )
+    private val _uiState = MutableStateFlow(
+        WriteUiState(emptyJournal, isBackfillMode = isBackfillMode, daysAgo = targetDate.daysUntil(today)),
+    )
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
     private val saveDebouncer = MutableSharedFlow<Journal>(extraBufferCapacity = 1)
 
     init {
         viewModelScope.launch {
-            _uiState.update { it.copy(journal = journalRepository.getByDate(today) ?: emptyJournal, baton = getYesterdayBaton(today)) }
+            val existing = journalRepository.getByDate(targetDate)
+            _uiState.update {
+                it.copy(
+                    journal = existing ?: emptyJournal,
+                    baton = if (isBackfillMode) null else getYesterdayBaton(today),
+                    isBackfillMode = isBackfillMode,
+                    daysAgo = targetDate.daysUntil(today),
+                )
+            }
         }
         saveDebouncer.debounce(1_500.milliseconds).onEach { journal ->
-            saveJournal(journal)
+            saveJournal(journal.markBackfillIfNeeded())
             _uiState.update { it.copy(saved = true) }
         }.launchIn(viewModelScope)
     }
@@ -57,6 +87,7 @@ class WriteViewModel @Inject constructor(
                 insight = insight ?: it.insight,
                 tomorrow = tomorrow ?: it.tomorrow,
                 updatedAt = Clock.System.now(),
+                isBackfilled = isBackfillMode || it.isBackfilled,
             )
         }
         _uiState.update { it.copy(journal = updated, saved = false) }
@@ -64,7 +95,9 @@ class WriteViewModel @Inject constructor(
     }
 
     fun saveNow() = viewModelScope.launch {
-        saveJournal(_uiState.value.journal)
+        saveJournal(_uiState.value.journal.markBackfillIfNeeded())
         _uiState.update { it.copy(saved = true) }
     }
+
+    private fun Journal.markBackfillIfNeeded(): Journal = copy(isBackfilled = isBackfillMode || isBackfilled)
 }

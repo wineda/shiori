@@ -21,7 +21,7 @@ interface JournalDao {
     @Query("SELECT * FROM journals WHERE date >= :from AND date <= :to ORDER BY date ASC")
     suspend fun getInRange(from: String, to: String): List<JournalEntity>
 
-    @Query("SELECT tomorrow FROM journals WHERE date = :date")
+    @Query("SELECT tomorrow FROM journals WHERE date = :date AND isBackfilled = 0")
     suspend fun getTomorrowBaton(date: String): String?
 
     @Query("SELECT COUNT(*) FROM journals WHERE good != '' OR hard != '' OR insight != '' OR tomorrow != ''")

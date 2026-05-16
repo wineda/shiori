@@ -12,4 +12,5 @@ data class JournalEntity(
     val tomorrow: String = "",
     val createdAt: Long,
     val updatedAt: Long,
+    val isBackfilled: Boolean = false,
 )

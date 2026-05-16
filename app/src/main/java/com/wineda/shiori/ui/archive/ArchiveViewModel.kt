@@ -21,7 +21,19 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.todayIn
 import javax.inject.Inject
 
-data class ArchiveUiState(val month: LocalDate, val journals: List<Journal> = emptyList(), val monthlyCount: Int = 0, val currentStreak: Int = 0)
+sealed interface ArchiveTimelineItem {
+    val date: LocalDate
+    data class Entry(val journal: Journal) : ArchiveTimelineItem { override val date: LocalDate = journal.date }
+    data class Gap(override val date: LocalDate) : ArchiveTimelineItem
+}
+
+data class ArchiveUiState(
+    val month: LocalDate,
+    val journals: List<Journal> = emptyList(),
+    val timelineItems: List<ArchiveTimelineItem> = emptyList(),
+    val monthlyCount: Int = 0,
+    val currentStreak: Int = 0,
+)
 data class ArchiveDetailUiState(val journal: Journal? = null, val memos: List<Memo> = emptyList())
 
 @HiltViewModel
@@ -29,8 +41,15 @@ class ArchiveViewModel @Inject constructor(journalRepository: JournalRepository)
     private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
     private val selectedMonth = MutableStateFlow(LocalDate(today.year, today.monthNumber, 1))
     val uiState = combine(journalRepository.observeAll(), selectedMonth) { all, month ->
-        val monthly = all.filter { it.date.year == month.year && it.date.monthNumber == month.monthNumber && !it.isEmpty }
-        ArchiveUiState(month, monthly, monthly.size, calculateStreak(all, today))
+        val monthly = all.filter { it.date.year == month.year && it.date.monthNumber == month.monthNumber }
+        val journalsByDate = monthly.associateBy { it.date }
+        val timeline = monthDays(month)
+            .asReversed()
+            .mapNotNull { date ->
+                journalsByDate[date]?.let { ArchiveTimelineItem.Entry(it) }
+                    ?: if (date < today) ArchiveTimelineItem.Gap(date) else null
+            }
+        ArchiveUiState(month, monthly, timeline, monthly.size, calculateStreak(all, today))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ArchiveUiState(selectedMonth.value))
 
     fun previousMonth() = selectedMonth.update { shiftMonth(it, -1) }
@@ -39,6 +58,13 @@ class ArchiveViewModel @Inject constructor(journalRepository: JournalRepository)
     private fun shiftMonth(date: LocalDate, amount: Int): LocalDate {
         val monthIndex = date.year * 12 + (date.monthNumber - 1) + amount
         return LocalDate(monthIndex / 12, monthIndex % 12 + 1, 1)
+    }
+
+    private fun monthDays(month: LocalDate): List<LocalDate> {
+        val first = LocalDate(month.year, month.monthNumber, 1)
+        val nextMonth = shiftMonth(first, 1)
+        val last = nextMonth.minus(1, DateTimeUnit.DAY)
+        return (1..last.dayOfMonth).map { LocalDate(month.year, month.monthNumber, it) }
     }
 
     private fun calculateStreak(all: List<Journal>, today: LocalDate): Int {
