@@ -3,9 +3,23 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#F7F3ED" android:pathData="M0,0h108v108h-108z" />
+
+    <!--
+        Adaptive icon の safe zone は中央 72×72(viewport 座標で 18〜90)。
+        ここに栞のシンボルを 60% 程度のサイズで収め、上品な余白を作る。
+
+        元のシンボルは viewport 36〜72 × 16〜82 にあった(W=36, H=66)。
+        これを W=24, H=44 に縮小し、中央(54,54)に配置する。
+        新しい範囲: x = 42〜66, y = 32〜76
+    -->
+
+    <!-- 栞本体(墨色) -->
     <path
         android:fillColor="#2A2520"
-        android:pathData="M54,16c-10,0 -18,8 -18,18v48l18,-10l18,10v-48c0,-10 -8,-18 -18,-18zM44,34c0,-5.5 4.5,-10 10,-10s10,4.5 10,10v34l-10,-5.6l-10,5.6z" />
-    <path android:fillColor="#B94A3E" android:pathData="M73,73h13v13h-13z" />
+        android:pathData="M54,32c-6.6,0 -12,5.4 -12,12v32l12,-6.7l12,6.7v-32c0,-6.6 -5.4,-12 -12,-12zM47.3,44c0,-3.7 3,-6.7 6.7,-6.7s6.7,3 6.7,6.7v22.7l-6.7,-3.7l-6.7,3.7z" />
+
+    <!-- アクセント(朱色) -->
+    <path
+        android:fillColor="#B94A3E"
+        android:pathData="M67.7,69h8.7v8.7h-8.7z" />
 </vector>
