@@ -148,17 +148,16 @@ async function renderFeed(){
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const thumb=m.img?`<img class="entry-thumb" src="${m.img}">`:'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
+    // 時刻はタップで変更可。実体の time input を透明で重ね、どの環境でも
+    // ネイティブの時刻ピッカーが開くようにする（iOS Safari 含む）。
     el.innerHTML=`
-      <button class="time time-btn" aria-label="時刻を変更">${m.time}<input type="time" class="time-picker" value="${tv}"></button>
+      <span class="time time-wrap"><span class="time-text">${m.time}</span><input type="time" class="time-picker" value="${tv}" aria-label="時刻を変更"></span>
       <div class="track"><span class="dot"></span></div>
       <div class="body">${escapeHtml(m.text)}${badge}${late}${thumb}</div>
       <button class="del" data-id="${m.id}">消す</button>`;
     const timg=el.querySelector('.entry-thumb');
     if(timg) timg.onclick=()=>openImg(m.img);
-    // 時刻の変更（タップ→時刻ピッカー）
-    const tbtn=el.querySelector('.time-btn');
     const tpick=el.querySelector('.time-picker');
-    tbtn.onclick=(e)=>{ e.preventDefault(); if(tpick.showPicker) tpick.showPicker(); else tpick.click(); };
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
     el.querySelector('.del').onclick=async()=>{
       const d=await getDay(murmurDay);
