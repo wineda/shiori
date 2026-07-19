@@ -478,11 +478,71 @@ function mergeDay(a, b){
   return {murmurs, reflection};
 }
 
+/* ============ 旧アプリ（感情記録版）バックアップの取り込み ============
+   version/messages 形式（app:'shiori' ではない別アプリの書き出し）を、現行の
+   栞バックアップ形状へ変換する。messages→呟き、dailyReflections→振り返り。
+   感情・フラグ・睡眠・歩数（emotions/flags/dailyRecords）は現行アプリに置き場所が
+   ないため取り込まない（睡眠・歩数の件数は確認画面で通知する）。変換後は通常の
+   復元（マージ／上書き）フローにそのまま載る。id は元の値を残すので、同じファイルを
+   再度取り込んでも mergeDay が重複を除く。 */
+function isLegacyBackup(obj){
+  return !!obj && obj.app!=='shiori' && Array.isArray(obj.messages);
+}
+const LEGACY_REFLECT_FIELDS=[
+  ['wins','よかったこと'],
+  ['difficulties','難しかったこと'],
+  ['insights','気づき'],
+  ['tomorrowFirstAction','明日の最初の一歩'],
+  ['summary','まとめ'],
+];
+function composeLegacyReflection(r){
+  const parts=[];
+  for(const [key,label] of LEGACY_REFLECT_FIELDS){
+    const v=((r&&r[key])||'').trim();
+    if(v) parts.push(label+'\n'+v);
+  }
+  return parts.join('\n\n');
+}
+function convertLegacyBackup(obj){
+  const data={};
+  const dayOf=ds=>{ const k=dayKey(ds); if(!data[k]) data[k]={murmurs:[], reflection:null}; return data[k]; };
+  // messages → 呟き（日付はタイムスタンプのローカル日で振り分ける）
+  let mCount=0;
+  (obj.messages||[]).forEach((m,i)=>{
+    const text=((m&&m.text)||'').trim();
+    if(!text) return;
+    const ts=Number(m&&m.timestamp)||Date.now();
+    const dt=new Date(ts);
+    const time=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    const id=(m&&m.id!=null)?String(m.id):('leg'+ts+'-'+i);
+    dayOf(fmtKey(dt)).murmurs.push({id, text, ts, time, source:'import'});
+    mCount++;
+  });
+  for(const k of Object.keys(data)) data[k].murmurs.sort((a,b)=>a.ts-b.ts);
+  // dailyReflections → 振り返り
+  let rCount=0;
+  (obj.dailyReflections||[]).forEach(r=>{
+    const ds=r&&r.date;
+    if(!ds || !/^\d{4}-\d{2}-\d{2}$/.test(ds)) return;
+    const text=composeLegacyReflection(r);
+    if(!text) return;
+    dayOf(ds).reflection={text, savedAt:Number(r.updatedAt)||0, source:'import'};
+    rCount++;
+  });
+  return {
+    app:'shiori', schemaVersion:SCHEMA_VERSION, exportedAt:obj.exportedAt||Date.now(),
+    data,
+    _legacy:{messages:mCount, reflections:rCount, skippedRecords:Array.isArray(obj.dailyRecords)?obj.dailyRecords.length:0}
+  };
+}
+
 let pendingRestore=null;
 async function onRestoreFile(file){
   let obj;
   try{ obj=JSON.parse(await file.text()); }
   catch(e){ toast('JSON を読み取れませんでした'); return; }
+  let legacy=null;
+  if(isLegacyBackup(obj)){ obj=convertLegacyBackup(obj); legacy=obj._legacy; }
   if(!obj || obj.app!=='shiori' || !obj.data || typeof obj.data!=='object'){
     toast('栞のバックアップではないようです'); return;
   }
@@ -493,7 +553,14 @@ async function onRestoreFile(file){
   const keys=Object.keys(obj.data);
   const days=keys.filter(k=>k.startsWith('journal:day:')).length;
   const when=obj.exportedAt?('（'+jpDateShort(fmtKey(new Date(obj.exportedAt)))+' 書き出し）'):'';
-  document.getElementById('restoreDesc').textContent=`${days} 日分の記録${when}を取り込みます。`;
+  let desc;
+  if(legacy){
+    desc=`別アプリのバックアップを変換して、${days} 日分（呟き ${legacy.messages} 件・振り返り ${legacy.reflections} 件）${when}を取り込みます。`;
+    if(legacy.skippedRecords) desc+=` 睡眠・歩数の記録 ${legacy.skippedRecords} 件は対応する項目がないため取り込みません。`;
+  } else {
+    desc=`${days} 日分の記録${when}を取り込みます。`;
+  }
+  document.getElementById('restoreDesc').textContent=desc;
   document.getElementById('confirmOverlay').hidden=false;
 }
 function hideRestoreConfirm(){ document.getElementById('confirmOverlay').hidden=true; pendingRestore=null; }
