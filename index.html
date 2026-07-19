@@ -4,9 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>栞 -しおり- 明日のわたしへ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#F4F5F2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="栞">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -212,6 +215,15 @@
 
       <button class="reset-btn" id="resetData">サンプルデータを消して、まっさらに</button>
       <div class="set-foot">「栞（しおり）」は、今日という頁に栞を挟み、明日のわたしがひらく日記です。その場の呟きと一日の振り返りをゆるやかに束ねます。挟んだ栞は、履歴やうつろいでいつでも読み返せます。差し色の紅は、本に綴じられた栞紐の色です。</div>
+    </div>
+  </div>
+
+  <!-- INSTALL HINT (初回のみ・控えめ) -->
+  <div class="install-hint" id="installHint" hidden>
+    <div class="ih-text" id="installHintText">ホーム画面に追加すると、栞をアプリのように開けます。</div>
+    <div class="ih-actions">
+      <button class="ih-add" id="installAdd">追加</button>
+      <button class="ih-close" id="installClose" aria-label="閉じる">✕</button>
     </div>
   </div>
 

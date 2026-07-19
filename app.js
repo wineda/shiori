@@ -846,5 +846,64 @@ async function init(){
   document.getElementById('exFrom').max=todayKey;
   document.getElementById('exTo').max=todayKey;
   document.getElementById('exportBtn').onclick=exportRange;
+
+  // PWA: インストール導線（初回のみ・控えめ）
+  setupInstallHint();
 }
+
+/* ============ PWA: install hint（ホーム画面に追加） ============ */
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+}
+function setupInstallHint(){
+  const hint=document.getElementById('installHint');
+  const addBtn=document.getElementById('installAdd');
+  const closeBtn=document.getElementById('installClose');
+  const textEl=document.getElementById('installHintText');
+  const SEEN='shiori:installHintSeen';   // 再表示しないための UI フラグ（記録データではない）
+  let deferredPrompt=null, shown=false;
+
+  const dismiss=()=>{ hint.hidden=true; try{ localStorage.setItem(SEEN,'1'); }catch(e){} };
+  const seen=()=>{ try{ return !!localStorage.getItem(SEEN); }catch(e){ return false; } };
+  closeBtn.onclick=dismiss;
+
+  if(isStandalone() || seen()) return;   // インストール済み or 既に案内済みなら出さない
+
+  // 落ち着いたタイミングで一度だけ、そっと出す
+  const showSoon=()=>{ if(shown) return; shown=true; setTimeout(()=>{ if(!isStandalone() && !seen()) hint.hidden=false; }, 4000); };
+
+  // Android / Chrome 系：beforeinstallprompt を捕まえてボタンで実行
+  window.addEventListener('beforeinstallprompt',(e)=>{
+    e.preventDefault(); deferredPrompt=e;
+    addBtn.style.display='';
+    textEl.textContent='ホーム画面に追加すると、栞をアプリのように開けます。';
+    showSoon();
+  });
+  addBtn.onclick=async()=>{
+    if(!deferredPrompt){ dismiss(); return; }
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt=null; dismiss();
+  };
+
+  // iOS Safari：beforeinstallprompt が無いので、共有シート経由の手順をそっと案内
+  const ua=navigator.userAgent||'';
+  const isIOS=/iphone|ipad|ipod/i.test(ua) || (/(macintosh)/i.test(ua) && 'ontouchend' in document);
+  const isSafari=isIOS && !/crios|fxios|edgios/i.test(ua);
+  if(isIOS && isSafari){
+    addBtn.style.display='none';
+    textEl.innerHTML='ホーム画面に追加すると、栞をアプリのように開けます。<br>共有 <span aria-hidden="true">⬆︎</span> から「ホーム画面に追加」を選んでください。';
+    showSoon();
+  }
+}
+
+/* ============ PWA: service worker 登録 ============ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg=>console.log('[shiori] SW registered:', reg.scope))
+      .catch(err=>console.warn('[shiori] SW register failed:', err));
+  });
+}
+
 init();
