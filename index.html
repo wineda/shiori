@@ -213,6 +213,13 @@
       <button class="ex-btn" id="exportBtn">この期間を書き出す</button>
       <div class="pf-hint">選んだ期間の呟きと振り返りを Markdown で保存します（画像は含みません）。</div>
 
+      <div class="set-section">バックアップ（丸ごと・復元用）</div>
+      <div class="pf-hint" style="margin-bottom:14px">Markdown は「読む・共有する」用。JSON バックアップは、画像も含めて<b style="color:var(--ink-soft);font-weight:500">丸ごと保存し、機種変などで元に戻す</b>用です。</div>
+      <button class="ex-btn" id="backupBtn" style="margin-bottom:10px">バックアップを保存（JSON）</button>
+      <button class="ex-btn" id="restoreBtn" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">バックアップから復元</button>
+      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none">
+      <div class="pf-hint">復元時に「マージ」か「上書き」を選べます。ときどき保存して、ドライブ／iCloud などに控えておくと安心です。</div>
+
       <button class="reset-btn" id="resetData">サンプルデータを消して、まっさらに</button>
       <div class="set-foot">「栞（しおり）」は、今日という頁に栞を挟み、明日のわたしがひらく日記です。その場の呟きと一日の振り返りをゆるやかに束ねます。挟んだ栞は、履歴やうつろいでいつでも読み返せます。差し色の紅は、本に綴じられた栞紐の色です。</div>
     </div>
@@ -224,6 +231,19 @@
     <div class="ih-actions">
       <button class="ih-add" id="installAdd">追加</button>
       <button class="ih-close" id="installClose" aria-label="閉じる">✕</button>
+    </div>
+  </div>
+
+  <!-- RESTORE CONFIRM (危険な操作なので確認を挟む) -->
+  <div class="confirm-overlay" id="confirmOverlay" hidden>
+    <div class="confirm-backdrop" id="confirmBackdrop"></div>
+    <div class="confirm-card">
+      <div class="cc-title">バックアップから復元</div>
+      <div class="cc-desc" id="restoreDesc"></div>
+      <div class="cc-warn">「上書き」は今ある記録をすべて置き換えます。取り消せません。</div>
+      <button class="cc-btn cc-merge" id="restoreMerge">マージして取り込む（おすすめ）</button>
+      <button class="cc-btn cc-over" id="restoreOverwrite">全部を上書きする</button>
+      <button class="cc-cancel" id="restoreCancel">キャンセル</button>
     </div>
   </div>
 

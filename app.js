@@ -65,6 +65,10 @@ const Store = {
   async listDays(){
     const keys = await idbReq('readonly', os=>os.getAllKeys());
     return (keys||[]).filter(k=>typeof k==='string' && k.startsWith('journal:day:'));
+  },
+  async listAll(){
+    const keys = await idbReq('readonly', os=>os.getAllKeys());
+    return (keys||[]).filter(k=>typeof k==='string');
   }
 };
 const dayKey = ds => 'journal:day:'+ds;
@@ -393,6 +397,102 @@ async function exportRange(){
     catch(e2){ toast('書き出しに失敗しました'); }
   }
 }
+
+/* ============ JSON backup / restore（§8.5・最後の砦） ============
+   Markdown（§6）＝読む・共有する用。JSON＝画像も含めて丸ごと戻す用。
+   schemaVersion で将来の移行に備える。 */
+const SCHEMA_VERSION = 1;
+
+async function buildBackup(){
+  const keys = (await Store.listAll()).filter(k=>k.startsWith('journal:'));
+  const data = {};
+  for(const k of keys){ data[k] = await Store.get(k); }
+  return { app:'shiori', schemaVersion:SCHEMA_VERSION, exportedAt:Date.now(), data };
+}
+async function saveBackup(){
+  const backup = await buildBackup();
+  if(!Object.keys(backup.data).length){ toast('バックアップする記録がありません'); return; }
+  const json = JSON.stringify(backup);
+  const fname = `shiori_backup_${fmtKey(new Date())}.json`;
+  try{
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('バックアップを保存しました');
+  }catch(e){
+    try{ await navigator.clipboard.writeText(json); toast('保存できない環境のためコピーしました'); }
+    catch(e2){ toast('バックアップに失敗しました'); }
+  }
+}
+
+// 日ごとの記録を非破壊にマージ：呟きは id で重複を除いて合算、振り返りは新しい方を採用。
+function mergeDay(a, b){
+  const ids=new Set((a.murmurs||[]).map(m=>m.id));
+  const murmurs=[...(a.murmurs||[])];
+  for(const m of (b.murmurs||[])){ if(!ids.has(m.id)){ murmurs.push(m); ids.add(m.id); } }
+  murmurs.sort((x,y)=>x.ts-y.ts);
+  let reflection=a.reflection||null;
+  if(b.reflection){
+    if(!reflection || (b.reflection.savedAt||0)>(reflection.savedAt||0)) reflection=b.reflection;
+  }
+  return {murmurs, reflection};
+}
+
+let pendingRestore=null;
+async function onRestoreFile(file){
+  let obj;
+  try{ obj=JSON.parse(await file.text()); }
+  catch(e){ toast('JSON を読み取れませんでした'); return; }
+  if(!obj || obj.app!=='shiori' || !obj.data || typeof obj.data!=='object'){
+    toast('栞のバックアップではないようです'); return;
+  }
+  if(typeof obj.schemaVersion==='number' && obj.schemaVersion>SCHEMA_VERSION){
+    toast('新しいバージョンのバックアップです。アプリを更新してください'); return;
+  }
+  pendingRestore=obj;
+  const keys=Object.keys(obj.data);
+  const days=keys.filter(k=>k.startsWith('journal:day:')).length;
+  const when=obj.exportedAt?('（'+jpDateShort(fmtKey(new Date(obj.exportedAt)))+' 書き出し）'):'';
+  document.getElementById('restoreDesc').textContent=`${days} 日分の記録${when}を取り込みます。`;
+  document.getElementById('confirmOverlay').hidden=false;
+}
+function hideRestoreConfirm(){ document.getElementById('confirmOverlay').hidden=true; pendingRestore=null; }
+async function applyRestore(mode){
+  const obj=pendingRestore;
+  if(!obj){ hideRestoreConfirm(); return; }
+  const data=obj.data;
+  if(mode==='overwrite'){
+    const existing=(await Store.listAll()).filter(k=>k.startsWith('journal:'));
+    for(const k of existing) await Store.del(k);
+    for(const k of Object.keys(data)) await Store.set(k, data[k]);
+  } else { // merge（非破壊）
+    for(const k of Object.keys(data)){
+      if(k.startsWith('journal:day:')){
+        const cur=await Store.get(k);
+        await Store.set(k, cur?mergeDay(cur,data[k]):data[k]);
+      } else {
+        const cur=await Store.get(k);           // 設定・読み解きキャッシュは既存を尊重
+        if(cur==null) await Store.set(k, data[k]);
+      }
+    }
+  }
+  hideRestoreConfirm();
+  closeSheets();
+  // 画面を作り直す
+  await loadSettings();
+  setMurmurDay(murmurDay);
+  await refreshMeta();
+  const active=document.querySelector('.screen.active');
+  if(active){
+    if(active.id==='screen-history') renderCalendar();
+    if(active.id==='screen-reflect'){ renderGathered(); loadReflection(); }
+    if(active.id==='screen-utsuroi') renderUtsuroi();
+  }
+  toast(mode==='overwrite'?'上書きで復元しました':'マージして復元しました');
+}
+
 function openSettings(){
   document.getElementById('overlay').classList.add('show');
   document.getElementById('settingsSheet').classList.add('show');
@@ -846,6 +946,16 @@ async function init(){
   document.getElementById('exFrom').max=todayKey;
   document.getElementById('exTo').max=todayKey;
   document.getElementById('exportBtn').onclick=exportRange;
+
+  // backup / restore（JSON・丸ごと）
+  document.getElementById('backupBtn').onclick=saveBackup;
+  const restoreFile=document.getElementById('restoreFile');
+  document.getElementById('restoreBtn').onclick=()=>restoreFile.click();
+  restoreFile.onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) onRestoreFile(f); };
+  document.getElementById('restoreMerge').onclick=()=>applyRestore('merge');
+  document.getElementById('restoreOverwrite').onclick=()=>applyRestore('overwrite');
+  document.getElementById('restoreCancel').onclick=hideRestoreConfirm;
+  document.getElementById('confirmBackdrop').onclick=hideRestoreConfirm;
 
   // PWA: インストール導線（初回のみ・控えめ）
   setupInstallHint();

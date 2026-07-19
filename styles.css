@@ -255,6 +255,19 @@ textarea,input{font-family:inherit}
 .install-hint .ih-close{width:30px;height:30px;border-radius:50%;color:var(--muted);font-size:15px;display:flex;align-items:center;justify-content:center}
 .install-hint .ih-close:hover{background:var(--surface)}
 
+/* restore confirm（復元の確認ダイアログ・破壊的操作） */
+.confirm-overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:26px}
+.confirm-overlay[hidden]{display:none}
+.confirm-backdrop{position:absolute;inset:0;background:rgba(30,32,30,.38)}
+.confirm-card{position:relative;background:var(--paper);border-radius:20px;padding:22px 20px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:fade .28s ease}
+.confirm-card .cc-title{font-family:var(--mincho);font-size:18px;letter-spacing:.06em;margin-bottom:10px}
+.confirm-card .cc-desc{font-size:13px;color:var(--ink-soft);line-height:1.7;margin-bottom:12px}
+.confirm-card .cc-warn{font-size:12px;color:var(--accent);line-height:1.6;background:#F5EBEA;border:1px solid #E6D3D1;border-radius:10px;padding:9px 11px;margin-bottom:16px}
+.confirm-card .cc-btn{width:100%;padding:13px;border-radius:12px;font-size:14px;letter-spacing:.04em;margin-bottom:9px}
+.confirm-card .cc-merge{background:var(--accent);color:#fff}
+.confirm-card .cc-over{background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)}
+.confirm-card .cc-cancel{width:100%;padding:10px;font-size:13px;color:var(--muted)}
+
 /* ---------- ai draft (reflection) ---------- */
 .ai-draft{
   width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
