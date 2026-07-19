@@ -156,15 +156,23 @@ async function renderFeed(){
       <div class="body">${escapeHtml(m.text)}${badge}${late}${thumb}</div>
       <button class="del" data-id="${m.id}">消す</button>`;
     const timg=el.querySelector('.entry-thumb');
-    if(timg) timg.onclick=()=>openImg(m.img);
+    if(timg) timg.onclick=(e)=>{ e.stopPropagation(); openImg(m.img); };
     const tpick=el.querySelector('.time-picker');
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
-    el.querySelector('.del').onclick=async()=>{
+    el.querySelector('.del').onclick=async(e)=>{
+      e.stopPropagation();
       const d=await getDay(murmurDay);
       d.murmurs=d.murmurs.filter(x=>x.id!==m.id);
       await setDay(murmurDay,d);
       renderFeed(); refreshMeta();
     };
+    // タップで選択（ハイライト）→「消す」が現れる。時刻・画像・消すのタップは除外。
+    el.addEventListener('click',(e)=>{
+      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.classList.contains('entry-thumb')) return;
+      const wasSel=el.classList.contains('selected');
+      feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
+      if(!wasSel) el.classList.add('selected');
+    });
     feed.appendChild(el);
   });
 }
