@@ -147,13 +147,19 @@ async function renderFeed(){
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const thumb=m.img?`<img class="entry-thumb" src="${m.img}">`:'';
+    const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
     el.innerHTML=`
-      <div class="time">${m.time}</div>
+      <button class="time time-btn" aria-label="時刻を変更">${m.time}<input type="time" class="time-picker" value="${tv}"></button>
       <div class="track"><span class="dot"></span></div>
       <div class="body">${escapeHtml(m.text)}${badge}${late}${thumb}</div>
       <button class="del" data-id="${m.id}">消す</button>`;
     const timg=el.querySelector('.entry-thumb');
     if(timg) timg.onclick=()=>openImg(m.img);
+    // 時刻の変更（タップ→時刻ピッカー）
+    const tbtn=el.querySelector('.time-btn');
+    const tpick=el.querySelector('.time-picker');
+    tbtn.onclick=(e)=>{ e.preventDefault(); if(tpick.showPicker) tpick.showPicker(); else tpick.click(); };
+    tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
     el.querySelector('.del').onclick=async()=>{
       const d=await getDay(murmurDay);
       d.murmurs=d.murmurs.filter(x=>x.id!==m.id);
@@ -164,6 +170,29 @@ async function renderFeed(){
   });
 }
 function escapeHtml(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// 呟きの時刻ピッカー初期値（HH:MM）。既に HH:MM ならそれ、そうでなければ ts から。
+function timeValue(m){
+  if(typeof m.time==='string' && /^\d{2}:\d{2}$/.test(m.time)) return m.time;
+  const d=new Date(m.ts||Date.now());
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+// 登録済みの呟きの時刻を変更（表示時刻と並び順の ts を更新）。
+async function editMurmurTime(id, value){
+  if(!/^\d{2}:\d{2}$/.test(value||'')) return;
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===id);
+  if(!it) return;
+  if(it.time===value) return;
+  const [hh,mm]=value.split(':').map(Number);
+  const base=new Date(murmurDay+'T00:00:00'); base.setHours(hh,mm,0,0);
+  it.time=value;
+  it.ts=base.getTime();          // 並び順も新しい時刻に合わせる
+  await setDay(murmurDay,d);
+  renderFeed();
+  if(murmurDay===todayKey) renderGathered();
+  toast('時刻を変更しました');
+}
 
 /* ============ post murmur ============ */
 async function postMurmur(){
@@ -819,8 +848,13 @@ function switchScreen(name){
 
 /* ============ sample seed ============ */
 async function seedIfEmpty(){
+  // 種まきは「初回のみ」。一度でも種まき済み（＝journal:meta あり）なら二度としない。
+  // これにより「まっさらに」で消してもサンプルは復活しない。
+  const meta=await Store.get('journal:meta');
+  if(meta && meta.seeded) return;
+  // 旧データ（このフラグ導入前から記録がある人）は種まき済みとみなし、消さない。
   const keys=await Store.listDays();
-  if(keys.length>0) return;
+  if(keys.length>0){ await Store.set('journal:meta',{seeded:true, seededAt:Date.now()}); return; }
   const mTexts=[
     '朝のコーヒーがちょうどいい温度だった','窓の外の雲をぼんやり眺めてた','帰り道、金木犀の匂いがした',
     '少し疲れた。早めに休もう','友だちからの連絡がうれしかった','本を10ページ読めた','何もしない時間も、悪くない',
@@ -851,6 +885,7 @@ async function seedIfEmpty(){
     if(rnd()<0.65){ reflection={text:rTexts[Math.floor(rnd()*rTexts.length)], savedAt:d.getTime()}; }
     await setDay(ds,{murmurs,reflection});
   }
+  await Store.set('journal:meta',{seeded:true, seededAt:Date.now()});
 }
 
 /* ============ init ============ */
