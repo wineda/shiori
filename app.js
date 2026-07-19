@@ -1056,6 +1056,19 @@ function setupInstallHint(){
   }
 }
 
+/* ============ 可視ビューポート高さを反映（インストール時の下タブ見切れ対策） ============
+   standalone PWA では 100vh/100dvh が実際の可視高さと一致しない端末があり、
+   下タブ（position:absolute; bottom:0）が画面外へ押し出されることがある。
+   実測の window.innerHeight を --app-h に入れて確実に収める。 */
+function setAppHeight(){
+  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  if(h) document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', ()=>setTimeout(setAppHeight, 200));
+if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
+
 /* ============ PWA: service worker 登録 ============ */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{

@@ -58,6 +58,7 @@ textarea,input{font-family:inherit}
   display:flex;flex-direction:column;position:relative;
   min-height:100vh;height:100vh;
   min-height:100dvh;height:100dvh;   /* モバイルのアドレスバー伸縮に追従 */
+  min-height:var(--app-h,100dvh);height:var(--app-h,100dvh); /* JSが実測の可視高さを入れる（インストール時の下タブ見切れ対策） */
   overflow:hidden;
   box-shadow:0 0 60px rgba(0,0,0,.06);
 }
