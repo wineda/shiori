@@ -1,27 +1,70 @@
 const WD = ['日','月','火','水','木','金','土'];
 
-/* ============ storage (window.storage w/ in-memory fallback) ============ */
-const mem = {};
-let hasStore = false;
+/* ============ storage (IndexedDB) ============
+   保存の正はここ一つ。キー体系は不変（journal:day:* / journal:settings /
+   journal:insight:*）。値はオブジェクトのまま structured clone で保存する
+   ので、画像(base64)を含む記録もそのまま入る。呼び出し側は get/set/del/
+   listDays の4メソッドだけを使い、Step 1 以前から変更していない。 */
+const DB_NAME = 'shiori';
+const DB_VERSION = 1;
+const STORE = 'kv';
+let _db = null;
+
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = ()=>{
+      const db = req.result;
+      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+function idbReq(mode, fn){
+  return new Promise((resolve, reject)=>{
+    const tx = _db.transaction(STORE, mode);
+    const os = tx.objectStore(STORE);
+    let out;
+    const r = fn(os);
+    if(r) r.onsuccess = ()=>{ out = r.result; };
+    tx.oncomplete = ()=>resolve(out);
+    tx.onerror = ()=>reject(tx.error);
+    tx.onabort = ()=>reject(tx.error);
+  });
+}
+
 const Store = {
-  async init(){ try{ await window.storage.list('journal:'); hasStore=true; }catch(e){ hasStore=false; } },
+  async init(){
+    _db = await openDB();
+    // 永続化を要求（自動削除の対象外にしてもらう）。結果はログに残す。
+    try{
+      if(navigator.storage && navigator.storage.persist){
+        const already = await navigator.storage.persisted();
+        const granted = already ? true : await navigator.storage.persist();
+        console.log('[shiori] storage.persisted():', already, '-> persist granted:', granted);
+        if(navigator.storage.estimate){
+          const est = await navigator.storage.estimate();
+          console.log('[shiori] storage.estimate():', est);
+        }
+      } else {
+        console.log('[shiori] StorageManager API 非対応（永続化は要求できません）');
+      }
+    }catch(e){ console.warn('[shiori] persist request failed:', e); }
+  },
   async get(k){
-    if(hasStore){ try{ const r=await window.storage.get(k); return r?JSON.parse(r.value):null; }catch(e){ return null; } }
-    return (k in mem)?mem[k]:null;
+    const v = await idbReq('readonly', os=>os.get(k));
+    return v===undefined ? null : v;
   },
   async set(k,v){
-    if(hasStore){ try{ await window.storage.set(k, JSON.stringify(v)); return; }catch(e){} }
-    mem[k]=v;
+    await idbReq('readwrite', os=>os.put(v, k));
   },
   async del(k){
-    if(hasStore){ try{ await window.storage.delete(k); return; }catch(e){} }
-    delete mem[k];
+    await idbReq('readwrite', os=>os.delete(k));
   },
   async listDays(){
-    if(hasStore){
-      try{ const r=await window.storage.list('journal:day:'); return (r&&r.keys)?r.keys:[]; }catch(e){ return []; }
-    }
-    return Object.keys(mem).filter(k=>k.startsWith('journal:day:'));
+    const keys = await idbReq('readonly', os=>os.getAllKeys());
+    return (keys||[]).filter(k=>typeof k==='string' && k.startsWith('journal:day:'));
   }
 };
 const dayKey = ds => 'journal:day:'+ds;
