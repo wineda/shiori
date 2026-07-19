@@ -819,8 +819,13 @@ function switchScreen(name){
 
 /* ============ sample seed ============ */
 async function seedIfEmpty(){
+  // 種まきは「初回のみ」。一度でも種まき済み（＝journal:meta あり）なら二度としない。
+  // これにより「まっさらに」で消してもサンプルは復活しない。
+  const meta=await Store.get('journal:meta');
+  if(meta && meta.seeded) return;
+  // 旧データ（このフラグ導入前から記録がある人）は種まき済みとみなし、消さない。
   const keys=await Store.listDays();
-  if(keys.length>0) return;
+  if(keys.length>0){ await Store.set('journal:meta',{seeded:true, seededAt:Date.now()}); return; }
   const mTexts=[
     '朝のコーヒーがちょうどいい温度だった','窓の外の雲をぼんやり眺めてた','帰り道、金木犀の匂いがした',
     '少し疲れた。早めに休もう','友だちからの連絡がうれしかった','本を10ページ読めた','何もしない時間も、悪くない',
@@ -851,6 +856,7 @@ async function seedIfEmpty(){
     if(rnd()<0.65){ reflection={text:rTexts[Math.floor(rnd()*rTexts.length)], savedAt:d.getTime()}; }
     await setDay(ds,{murmurs,reflection});
   }
+  await Store.set('journal:meta',{seeded:true, seededAt:Date.now()});
 }
 
 /* ============ init ============ */
