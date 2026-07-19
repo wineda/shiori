@@ -341,7 +341,9 @@ async function loadSettings(){
   if(!settings.promptWeek) settings.promptWeek=DEFAULT_PROMPTS.week;
   if(!settings.promptMonth) settings.promptMonth=DEFAULT_PROMPTS.month;
   if(!settings.promptCustom) settings.promptCustom=DEFAULT_PROMPTS.custom;
-  document.getElementById('remToggle').classList.toggle('on',settings.rem);
+  const remTog=document.getElementById('remToggle');
+  remTog.classList.toggle('on',settings.rem);
+  remTog.setAttribute('aria-checked', settings.rem?'true':'false');
   document.getElementById('remTime').value=settings.remTime;
   document.getElementById('remTimeRow').style.opacity=settings.rem?'1':'.4';
   document.getElementById('setPromptDraft').value=settings.promptDraft;
@@ -554,7 +556,10 @@ function openBridge(opts){
     <button class="imp-confirm" id="bConfirm" disabled>${opts.confirmLabel||'反映する'}</button>`;
   const payload=()=>document.getElementById('bridgePrompt').value + (ctx?('\n\n'+ctx):'');
   document.getElementById('bShare').onclick=async()=>{
-    try{ if(navigator.share){ await navigator.share({text:payload()}); } else { await navigator.clipboard.writeText(payload()); toast('まとめてコピーしました'); } }catch(e){}
+    const text=payload();
+    // §6: 共有時もお願いは常にクリップボードへ（共有先がテキストを落としても貼れるように）
+    try{ await navigator.clipboard.writeText(text); }catch(e){}
+    try{ if(navigator.share){ await navigator.share({text}); } else { toast('まとめてコピーしました'); } }catch(e){}
   };
   document.getElementById('bCopy').onclick=async()=>{
     try{ await navigator.clipboard.writeText(payload()); toast('まとめてコピーしました'); }catch(e){ toast('コピーできませんでした'); }
@@ -643,7 +648,9 @@ async function confirmImport(){
   const ds=revDate;
   const day=await getDay(ds);
   if(revType==='murmur'){
-    day.murmurs.push({id:'h'+Date.now(),text,ts:new Date(ds+'T12:00:00').getTime(),time:'✎',img:impState.storeUrl||null,source:'hand'});
+    const entry={id:'h'+Date.now(),text,ts:new Date(ds+'T12:00:00').getTime(),time:'✎',img:impState.storeUrl||null,source:'hand'};
+    if(ds!==todayKey) entry.late=true;   // 過去日への取り込みは「あとから」（手入力と揃える）
+    day.murmurs.push(entry);
   }else{
     day.reflection={text,savedAt:Date.now(),img:impState.storeUrl||null,source:'hand'};
   }
@@ -798,7 +805,11 @@ const titles={murmur:'呟き',reflect:'振り返り',history:'履歴',utsuroi:'�
 function switchScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.screen===name));
+  document.querySelectorAll('.nav button').forEach(b=>{
+    const on=b.dataset.screen===name;
+    b.classList.toggle('active',on);
+    if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
   document.getElementById('screenTitle').textContent=titles[name];
   if(name==='reflect'){ renderGathered(); loadReflection(); }
   if(name==='history'){ renderCalendar(); }
@@ -902,12 +913,16 @@ async function init(){
   document.getElementById('imgViewer').onclick=closeImg;
 
   // settings interactions
-  document.getElementById('remToggle').onclick=async()=>{
+  const remTog=document.getElementById('remToggle');
+  const toggleRem=async()=>{
     settings.rem=!settings.rem;
-    document.getElementById('remToggle').classList.toggle('on',settings.rem);
+    remTog.classList.toggle('on',settings.rem);
+    remTog.setAttribute('aria-checked', settings.rem?'true':'false');
     document.getElementById('remTimeRow').style.opacity=settings.rem?'1':'.4';
     await saveSettings();
   };
+  remTog.onclick=toggleRem;
+  remTog.addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleRem(); } });
   document.getElementById('remTime').onchange=async(e)=>{ settings.remTime=e.target.value; await saveSettings(); toast('リマインドを '+settings.remTime+' に設定'); };
 
   // プロンプト編集（変更確定時に保存）
