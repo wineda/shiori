@@ -125,8 +125,11 @@ textarea,input{font-family:inherit}
 }
 .feed-label::after{content:"";flex:1;height:1px;background:var(--hairline)}
 .murmur{
-  display:flex;gap:14px;padding:14px 4px;position:relative;animation:fade .3s ease;
+  display:flex;gap:14px;padding:14px 8px;position:relative;animation:fade .3s ease;
+  border-radius:14px;transition:background .2s;cursor:pointer;
 }
+/* タップで選択＝ハイライト。選択中だけ「消す」を本文と被らない右下に出す */
+.murmur.selected{background:rgba(156,74,80,.07)}
 .murmur .time{font-size:11px;color:var(--muted);width:38px;flex-shrink:0;padding-top:3px;letter-spacing:.02em}
 /* 時刻はタップで変更できる（登録後の時刻編集）。透明の time input を重ねて
    どの環境でもネイティブピッカーが開くようにし、点線で編集可能を控えめに示す。 */
@@ -138,8 +141,9 @@ textarea,input{font-family:inherit}
 .murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;position:relative;align-self:stretch}
 .murmur .track .dot{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
 .murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px}
-.murmur .del{position:absolute;right:0;top:12px;font-size:11px;color:var(--muted);opacity:0;transition:opacity .2s;padding:4px}
-.murmur:hover .del{opacity:1}
+.murmur .del{position:absolute;right:8px;bottom:8px;font-size:12px;color:var(--accent);background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
+.murmur.selected .del{opacity:1;pointer-events:auto;transform:none}
+.murmur.selected .body{padding-bottom:34px}   /* 「消す」の一行分を確保して被りを防ぐ */
 
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;line-height:1.9}
 .empty .big{font-family:var(--mincho);font-size:16px;color:var(--ink-soft);display:block;margin-bottom:6px}
