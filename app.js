@@ -146,17 +146,14 @@ async function renderFeed(){
     el.className='murmur';
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
-    const thumb=m.img?`<img class="entry-thumb" src="${m.img}">`:'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
     // 時刻はタップで変更可。実体の time input を透明で重ね、どの環境でも
     // ネイティブの時刻ピッカーが開くようにする（iOS Safari 含む）。
     el.innerHTML=`
       <span class="time time-wrap"><span class="time-text">${m.time}</span><input type="time" class="time-picker" value="${tv}" aria-label="時刻を変更"></span>
       <div class="track"><span class="dot"></span></div>
-      <div class="body">${escapeHtml(m.text)}${badge}${late}${thumb}</div>
+      <div class="body">${escapeHtml(m.text)}${badge}${late}</div>
       <button class="del" data-id="${m.id}">消す</button>`;
-    const timg=el.querySelector('.entry-thumb');
-    if(timg) timg.onclick=(e)=>{ e.stopPropagation(); openImg(m.img); };
     const tpick=el.querySelector('.time-picker');
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
     el.querySelector('.del').onclick=async(e)=>{
@@ -168,7 +165,7 @@ async function renderFeed(){
     };
     // タップで選択（ハイライト）→「消す」が現れる。時刻・画像・消すのタップは除外。
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.classList.contains('entry-thumb')) return;
+      if(e.target.closest('.time-wrap')||e.target.closest('.del')) return;
       const wasSel=el.classList.contains('selected');
       feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
       if(!wasSel) el.classList.add('selected');
@@ -345,19 +342,16 @@ async function openDetail(ds){
     html+='<div class="sb-section-label">呟き</div>';
     [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
       const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
-      const thumb=m.img?`<img class="entry-thumb" src="${m.img}" style="margin-left:17px">`:'';
-      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}</span></div>${thumb}`;
+      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}</span></div>`;
     });
   }
   if(day.reflection){
     const rbadge=day.reflection.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     html+=`<div class="sb-section-label" style="margin-top:22px">振り返り${rbadge}</div>`;
     html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
-    if(day.reflection.img) html+=`<img class="entry-thumb" src="${day.reflection.img}" style="margin-top:12px">`;
   }
   if(!day.murmurs.length && !day.reflection){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
   body.innerHTML=html;
-  body.querySelectorAll('.entry-thumb').forEach(im=>im.onclick=()=>openImg(im.src));
   document.getElementById('overlay').classList.add('show');
   document.getElementById('detailSheet').classList.add('show');
 }
@@ -405,11 +399,11 @@ async function buildExportMd(fromDs,toDs){
       if(day.murmurs&&day.murmurs.length){
         out+=`\n### 呟き\n`;
         [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
-          out+=`- ${m.time} ${m.text}${m.source==='hand'?'（手書き）':''}${m.img?'（画像あり）':''}\n`;
+          out+=`- ${m.time} ${m.text}${m.source==='hand'?'（手書き）':''}\n`;
         });
       }
       if(day.reflection){
-        out+=`\n### 振り返り${day.reflection.source==='hand'?'（手書き）':''}${day.reflection.img?'（画像あり）':''}\n${day.reflection.text}\n`;
+        out+=`\n### 振り返り${day.reflection.source==='hand'?'（手書き）':''}\n${day.reflection.text}\n`;
       }
     }
     d.setDate(d.getDate()+1);
@@ -750,12 +744,14 @@ async function confirmImport(){
   if(!text) return;
   const ds=revDate;
   const day=await getDay(ds);
+  // 画像は AI アプリへの橋渡し（共有）専用。文字起こしした本文だけを残し、
+  // 画像そのものは保存しない（source:'hand' で手書き由来だけ記録に残す）。
   if(revType==='murmur'){
-    const entry={id:'h'+Date.now(),text,ts:new Date(ds+'T12:00:00').getTime(),time:'✎',img:impState.storeUrl||null,source:'hand'};
+    const entry={id:'h'+Date.now(),text,ts:new Date(ds+'T12:00:00').getTime(),time:'✎',source:'hand'};
     if(ds!==todayKey) entry.late=true;   // 過去日への取り込みは「あとから」（手入力と揃える）
     day.murmurs.push(entry);
   }else{
-    day.reflection={text,savedAt:Date.now(),img:impState.storeUrl||null,source:'hand'};
+    day.reflection={text,savedAt:Date.now(),source:'hand'};
   }
   await setDay(ds,day);
   closeSheets(); impState=null;
