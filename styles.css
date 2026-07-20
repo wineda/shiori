@@ -208,6 +208,10 @@ textarea,input{font-family:inherit}
 .nav button.active{color:var(--accent)}
 .nav .n-ico{width:22px;height:22px}
 .nav .n-lbl{font-size:10px;letter-spacing:.08em}
+/* 入力中（キーボード表示中）は下タブを畳む。
+   下タブは position:absolute で本文に重なるため、画面下部の入力欄に
+   フォーカスすると入力欄を覆ってしまう。入力中だけ隠して被りを防ぐ。 */
+.app.kb-open .nav{display:none}
 
 /* ---------- sheet overlay ---------- */
 .overlay{position:absolute;inset:0;background:rgba(30,32,30,.32);opacity:0;pointer-events:none;transition:opacity .3s;z-index:20}
