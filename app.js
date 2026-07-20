@@ -1140,6 +1140,27 @@ window.addEventListener('resize', setAppHeight);
 window.addEventListener('orientationchange', ()=>setTimeout(setAppHeight, 200));
 if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
 
+/* ============ 入力中は下タブを畳む（入力欄がキーボードに隠れる対策） ============
+   下タブ（.nav）は position:absolute で本文の上に重なる。画面下部の入力欄に
+   フォーカスするとキーボードの上に下タブが残り、入力欄を覆ってしまう。
+   文字入力欄にフォーカスしている間だけ .kb-open を付けて下タブを隠す。
+   日付ピッカーやボタンはキーボードを出さないので対象外。 */
+function isTextField(el){
+  if(!el) return false;
+  if(el.tagName === 'TEXTAREA') return true;
+  if(el.tagName === 'INPUT'){
+    const skip = ['button','checkbox','radio','file','submit','reset','date','time','color','range'];
+    return !skip.includes((el.type||'text').toLowerCase());
+  }
+  return false;
+}
+document.addEventListener('focusin', (e)=>{
+  if(isTextField(e.target)) document.querySelector('.app').classList.add('kb-open');
+});
+document.addEventListener('focusout', (e)=>{
+  if(isTextField(e.target)) document.querySelector('.app').classList.remove('kb-open');
+});
+
 /* ============ PWA: service worker 登録 ============ */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
