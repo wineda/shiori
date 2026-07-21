@@ -4,7 +4,7 @@
    重要：ユーザーデータ（IndexedDB）は SW の管轄外。ここでは一切触れない。
         キャッシュの更新・削除をしても IndexedDB は消えない（別枠）。 */
 
-const CACHE = 'shiori-shell-v4';
+const CACHE = 'shiori-shell-v5';
 
 // プリキャッシュするアプリ本体。バージョンを上げたら CACHE 名も上げる。
 const SHELL = [
