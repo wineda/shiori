@@ -153,9 +153,14 @@ async function renderFeed(){
       <span class="time time-wrap"><span class="time-text">${m.time}</span><input type="time" class="time-picker" value="${tv}" aria-label="時刻を変更"></span>
       <div class="track"><span class="dot"></span></div>
       <div class="body">${escapeHtml(m.text)}${badge}${late}</div>
+      <button class="edit" data-id="${m.id}">なおす</button>
       <button class="del" data-id="${m.id}">消す</button>`;
     const tpick=el.querySelector('.time-picker');
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
+    el.querySelector('.edit').onclick=(e)=>{
+      e.stopPropagation();
+      startEditMurmur(m, el);
+    };
     el.querySelector('.del').onclick=async(e)=>{
       e.stopPropagation();
       const d=await getDay(murmurDay);
@@ -163,9 +168,9 @@ async function renderFeed(){
       await setDay(murmurDay,d);
       renderFeed(); refreshMeta();
     };
-    // タップで選択（ハイライト）→「消す」が現れる。時刻・画像・消すのタップは除外。
+    // タップで選択（ハイライト）→「なおす」「消す」が現れる。時刻・編集・消すのタップは除外。
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.time-wrap')||e.target.closest('.del')) return;
+      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.closest('.edit')||el.classList.contains('editing')) return;
       const wasSel=el.classList.contains('selected');
       feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
       if(!wasSel) el.classList.add('selected');
@@ -196,6 +201,48 @@ async function editMurmurTime(id, value){
   renderFeed();
   if(murmurDay===todayKey) renderGathered();
   toast('時刻を変更しました');
+}
+
+// 登録済みの呟きの本文を、その場で編集する（インライン編集）。
+function startEditMurmur(m, el){
+  if(el.classList.contains('editing')) return;
+  el.classList.add('editing');
+  const body=el.querySelector('.body');
+  body.innerHTML=`
+    <textarea class="edit-input" aria-label="呟きを編集"></textarea>
+    <div class="edit-actions">
+      <button class="edit-cancel" type="button">やめる</button>
+      <button class="edit-save" type="button">保存</button>
+    </div>`;
+  const ta=body.querySelector('.edit-input');
+  ta.value=m.text;
+  const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input',grow);
+  // 編集領域のタップで選択が解除されないように、内部のクリックは伝播させない。
+  body.addEventListener('click',e=>e.stopPropagation());
+  const finish=()=>{ el.classList.remove('editing'); renderFeed(); };
+  body.querySelector('.edit-cancel').onclick=finish;
+  body.querySelector('.edit-save').onclick=async()=>{
+    const val=ta.value.trim();
+    if(!val){ ta.focus(); return; }   // 空にはできない
+    await saveMurmurText(m.id, val);
+    finish();
+  };
+  grow();
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+// 呟きの本文を保存する（本文のみ更新。時刻・並び順は変えない）。
+async function saveMurmurText(id, text){
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===id);
+  if(!it) return;
+  if(it.text===text) return;
+  it.text=text;
+  await setDay(murmurDay,d);
+  if(murmurDay===todayKey) renderGathered();
+  refreshMeta();
+  toast('呟きをなおしました');
 }
 
 /* ============ post murmur ============ */

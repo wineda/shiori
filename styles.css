@@ -143,7 +143,20 @@ textarea,input{font-family:inherit}
 .murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px}
 .murmur .del{position:absolute;right:8px;bottom:8px;font-size:12px;color:var(--accent);background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
 .murmur.selected .del{opacity:1;pointer-events:auto;transform:none}
-.murmur.selected .body{padding-bottom:34px}   /* 「消す」の一行分を確保して被りを防ぐ */
+.murmur.selected .body{padding-bottom:34px}   /* 「なおす」「消す」の一行分を確保して被りを防ぐ */
+/* 選択中に「消す」の左へ「なおす」を出す。タップでインライン編集に入る。 */
+.murmur .edit{position:absolute;right:70px;bottom:8px;font-size:12px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
+.murmur.selected .edit{opacity:1;pointer-events:auto;transform:none}
+/* 編集中は下部ボタンを隠し、本文欄をインライン編集フォームに置き換える。 */
+.murmur.editing{background:rgba(156,74,80,.07)}
+.murmur.editing .edit,.murmur.editing .del{opacity:0;pointer-events:none}
+.murmur.editing .body{padding-bottom:2px}
+.murmur .edit-input{width:100%;box-sizing:border-box;font:inherit;font-size:15px;line-height:1.72;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:8px 10px;resize:none;min-height:44px;overflow:hidden}
+.murmur .edit-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.18)}
+.murmur .edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.murmur .edit-actions button{font-size:12px;border-radius:999px;padding:6px 18px;cursor:pointer;border:1px solid var(--hairline)}
+.murmur .edit-cancel{color:var(--ink-soft);background:var(--surface-2)}
+.murmur .edit-save{color:#fff;background:var(--accent);border-color:var(--accent)}
 
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;line-height:1.9}
 .empty .big{font-family:var(--mincho);font-size:16px;color:var(--ink-soft);display:block;margin-bottom:6px}
