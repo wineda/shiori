@@ -65,9 +65,15 @@
   <!-- SCREEN: REFLECT -->
   <div class="screen" id="screen-reflect">
     <div class="pad">
+      <div class="daybar">
+        <button class="db-nav" id="dayPrevR" aria-label="前の日">‹</button>
+        <button class="db-label" id="dayLabelR">きょう</button>
+        <button class="db-nav" id="dayNextR" aria-label="次の日">›</button>
+        <input type="date" id="dayPickerR" class="db-picker">
+      </div>
       <div class="reflect-gathered">
         <div class="g-top">
-          <div class="g-title">きょう集めた呟き</div>
+          <div class="g-title" id="gTitle">きょう集めた呟き</div>
           <div class="g-count" id="gCount">0 件</div>
         </div>
         <div class="g-list" id="gList"></div>

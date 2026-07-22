@@ -111,17 +111,35 @@ function murmurDayLabel(){
   const dt=new Date(yy,mm-1,dd);
   return mm+'月'+dd+'日 ('+WD[dt.getDay()]+')';
 }
+// 選択日を表す2つの日付バー（呟き画面・振り返り画面）を同じ日にそろえる。
+function syncDaybar(labelId, nextId, pickerId){
+  const lbl=document.getElementById(labelId);
+  if(lbl){ lbl.textContent=murmurDayLabel(); lbl.classList.toggle('past', murmurDay!==todayKey); }
+  const nx=document.getElementById(nextId); if(nx) nx.disabled=(murmurDay===todayKey);
+  const pk=document.getElementById(pickerId); if(pk) pk.value=murmurDay;
+}
 function setMurmurDay(ds){
   if(ds>todayKey) ds=todayKey;
   murmurDay=ds;
-  const lbl=document.getElementById('dayLabel');
-  lbl.textContent=murmurDayLabel();
-  lbl.classList.toggle('past', murmurDay!==todayKey);
-  document.getElementById('dayNext').disabled=(murmurDay===todayKey);
-  document.getElementById('dayPicker').value=murmurDay;
-  document.getElementById('feedLabel').textContent=(murmurDay===todayKey?'きょう':murmurDayLabel())+'の呟き';
-  document.getElementById('murmurInput').placeholder = murmurDay===todayKey ? 'いま、なにを思ってる?' : 'この日のことを、おもいだして。';
+  const isToday=murmurDay===todayKey;
+  // 呟き画面の日付バー
+  syncDaybar('dayLabel','dayNext','dayPicker');
+  document.getElementById('feedLabel').textContent=(isToday?'きょう':murmurDayLabel())+'の呟き';
+  document.getElementById('murmurInput').placeholder = isToday ? 'いま、なにを思ってる?' : 'この日のことを、おもいだして。';
+  // 振り返り画面の日付バー（呟きと同じ日を共有）
+  syncDaybar('dayLabelR','dayNextR','dayPickerR');
+  updateReflectDayUI();
   renderFeed();
+  // 振り返りタブを開いていれば、その日の内容に更新する
+  if(document.getElementById('screen-reflect').classList.contains('active')){ renderGathered(); loadReflection(); }
+}
+// 振り返り画面の見出し・保存ボタンを、選択日に合わせて更新する。
+function updateReflectDayUI(){
+  const isToday=murmurDay===todayKey;
+  const gt=document.getElementById('gTitle');
+  if(gt) gt.textContent=(isToday?'きょう':murmurDayLabel())+'集めた呟き';
+  const sb=document.getElementById('saveReflect');
+  if(sb) sb.textContent=isToday?'今日に栞を挟む':'この日に栞を挟む';
 }
 function shiftMurmurDay(n){
   const [y,m,d]=murmurDay.split('-').map(Number);
@@ -269,11 +287,11 @@ function updateSaveBtn(){
   document.getElementById('saveReflect').disabled=!txt.length;
 }
 async function renderGathered(){
-  const day=await getDay(todayKey);
+  const day=await getDay(murmurDay);
   const list=document.getElementById('gList');
   document.getElementById('gCount').textContent=day.murmurs.length+' 件';
   const adb=document.getElementById('aiDraftBtn'); if(adb) adb.disabled=!day.murmurs.length;
-  if(!day.murmurs.length){ list.innerHTML='<div class="g-empty">今日はまだ呟きがありません。</div>'; return; }
+  if(!day.murmurs.length){ list.innerHTML='<div class="g-empty">'+(murmurDay===todayKey?'今日はまだ呟きがありません。':'この日の呟きはありません。')+'</div>'; return; }
   list.innerHTML='';
   [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
     const el=document.createElement('div');
@@ -283,7 +301,7 @@ async function renderGathered(){
   });
 }
 async function loadReflection(){
-  const day=await getDay(todayKey);
+  const day=await getDay(murmurDay);
   const inp=document.getElementById('reflectInput');
   const note=document.getElementById('savedNote');
   const aiNote=document.getElementById('aiNote'); if(aiNote) aiNote.textContent='';
@@ -298,17 +316,21 @@ async function loadReflection(){
 async function saveReflection(){
   const txt=document.getElementById('reflectInput').value.trim();
   if(!txt) return;
-  const day=await getDay(todayKey);
+  const isToday=murmurDay===todayKey;
+  const day=await getDay(murmurDay);
+  const prev=day.reflection||{};
   day.reflection={text:txt, savedAt:Date.now()};
-  await setDay(todayKey,day);
+  if(!isToday) day.reflection.late=true;   // 過去日にあとから挟んだ振り返り
+  if(prev.source) day.reflection.source=prev.source;
+  await setDay(murmurDay,day);
   document.getElementById('savedNote').textContent='保存済み — いつでも書き直せます';
   refreshMeta();
-  toast('今日に栞を挟みました');
+  toast(isToday?'今日に栞を挟みました':murmurDayLabel()+'に栞を挟みました');
 }
 
 /* ============ ai reflection draft (share bridge) ============ */
 async function draftReflection(){
-  const day=await getDay(todayKey);
+  const day=await getDay(murmurDay);
   if(!day.murmurs.length) return;
   const lines=[...day.murmurs].sort((a,b)=>a.ts-b.ts)
     .map(m=>`- ${m.time} ${m.text}`).join('\n');
@@ -316,7 +338,7 @@ async function draftReflection(){
     title:'呟きからAI下書き',
     sub:'呟きをAIに送って、下書きを貼り付け',
     prompt:(settings.promptDraft||DEFAULT_PROMPTS.draft),
-    contextText:`【今日の呟き】\n${lines}`,
+    contextText:`【${murmurDay===todayKey?'今日':murmurDayLabel()}の呟き】\n${lines}`,
     confirmLabel:'下書きに反映',
     placeholder:'AIが書いた振り返りを貼り付け',
     onResult:(text)=>{
@@ -394,7 +416,8 @@ async function openDetail(ds){
   }
   if(day.reflection){
     const rbadge=day.reflection.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
-    html+=`<div class="sb-section-label" style="margin-top:22px">振り返り${rbadge}</div>`;
+    const rlate=day.reflection.late?'<span class="badge-hand">あとから</span>':'';
+    html+=`<div class="sb-section-label" style="margin-top:22px">振り返り${rbadge}${rlate}</div>`;
     html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
   }
   if(!day.murmurs.length && !day.reflection){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
@@ -723,7 +746,7 @@ function defaultPromptFor(type){
 }
 function renderShareImport(){
   revType=impState.defaultType || 'murmur';
-  revDate=(impState.defaultType==='murmur') ? murmurDay : todayKey;
+  revDate=murmurDay;   // 呟き・振り返りとも、選択中の日を既定にする
   document.getElementById('impTitle').textContent='画像から取り込む';
   document.getElementById('impSub').textContent='AIアプリに共有 → 結果を貼り付け';
   const body=document.getElementById('importBody');
@@ -799,6 +822,7 @@ async function confirmImport(){
     day.murmurs.push(entry);
   }else{
     day.reflection={text,savedAt:Date.now(),source:'hand'};
+    if(ds!==todayKey) day.reflection.late=true;   // 過去日への取り込みは「あとから」
   }
   await setDay(ds,day);
   closeSheets(); impState=null;
@@ -1026,6 +1050,15 @@ async function init(){
   picker.max=todayKey;
   document.getElementById('dayLabel').onclick=()=>{ picker.style.pointerEvents='auto'; picker.showPicker?picker.showPicker():picker.click(); };
   picker.onchange=e=>{ picker.style.pointerEvents='none'; if(e.target.value) setMurmurDay(e.target.value); };
+
+  // 振り返り画面の日付バー（呟きと同じ選択日を操作する）
+  document.getElementById('dayPrevR').onclick=()=>shiftMurmurDay(-1);
+  document.getElementById('dayNextR').onclick=()=>shiftMurmurDay(1);
+  const pickerR=document.getElementById('dayPickerR');
+  pickerR.max=todayKey;
+  document.getElementById('dayLabelR').onclick=()=>{ pickerR.style.pointerEvents='auto'; pickerR.showPicker?pickerR.showPicker():pickerR.click(); };
+  pickerR.onchange=e=>{ pickerR.style.pointerEvents='none'; if(e.target.value) setMurmurDay(e.target.value); };
+
   setMurmurDay(todayKey);
 
   // reflect
