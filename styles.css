@@ -112,7 +112,9 @@ textarea,input{font-family:inherit}
 
 /* ---------- murmur feed ---------- */
 .daybar{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px;position:relative}
-.db-nav{width:32px;height:32px;border-radius:50%;color:var(--ink-soft);font-size:17px;display:flex;align-items:center;justify-content:center}
+/* 前後ボタンは、透明の日付ピッカー（inset:0）より前面に置き、
+   ピッカーが開いた状態でもタップを奪われないようにする。 */
+.db-nav{width:32px;height:32px;border-radius:50%;color:var(--ink-soft);font-size:17px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
 .db-nav:hover{background:var(--surface)}
 .db-nav:disabled{opacity:.25;cursor:default}
 .db-label{font-family:var(--mincho);font-size:15px;letter-spacing:.06em;color:var(--ink);padding:6px 14px;border-radius:999px;position:relative}

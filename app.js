@@ -1044,20 +1044,26 @@ async function init(){
   document.getElementById('postBtn').onclick=postMurmur;
 
   // day bar (past-day murmurs)
+  // 日付ピッカーを開く／閉じるときの pointer-events 制御を共通化する。
+  // 開いた後に auto のままだと、透明の input が日付バー全体を覆って
+  // 前後ボタンのタップを奪ってしまうため、閉じたら必ず none に戻す。
+  function wirePicker(labelId, pickerId){
+    const pk=document.getElementById(pickerId);
+    pk.max=todayKey;
+    const arm=()=>{ pk.style.pointerEvents='none'; };
+    document.getElementById(labelId).onclick=()=>{ pk.style.pointerEvents='auto'; pk.showPicker?pk.showPicker():pk.click(); };
+    pk.onchange=e=>{ arm(); if(e.target.value) setMurmurDay(e.target.value); };
+    pk.oncancel=arm;   // ピッカーを選ばず閉じたとき
+    pk.onblur=arm;     // フォーカスが外れたとき
+  }
   document.getElementById('dayPrev').onclick=()=>shiftMurmurDay(-1);
   document.getElementById('dayNext').onclick=()=>shiftMurmurDay(1);
-  const picker=document.getElementById('dayPicker');
-  picker.max=todayKey;
-  document.getElementById('dayLabel').onclick=()=>{ picker.style.pointerEvents='auto'; picker.showPicker?picker.showPicker():picker.click(); };
-  picker.onchange=e=>{ picker.style.pointerEvents='none'; if(e.target.value) setMurmurDay(e.target.value); };
+  wirePicker('dayLabel','dayPicker');
 
   // 振り返り画面の日付バー（呟きと同じ選択日を操作する）
   document.getElementById('dayPrevR').onclick=()=>shiftMurmurDay(-1);
   document.getElementById('dayNextR').onclick=()=>shiftMurmurDay(1);
-  const pickerR=document.getElementById('dayPickerR');
-  pickerR.max=todayKey;
-  document.getElementById('dayLabelR').onclick=()=>{ pickerR.style.pointerEvents='auto'; pickerR.showPicker?pickerR.showPicker():pickerR.click(); };
-  pickerR.onchange=e=>{ pickerR.style.pointerEvents='none'; if(e.target.value) setMurmurDay(e.target.value); };
+  wirePicker('dayLabelR','dayPickerR');
 
   setMurmurDay(todayKey);
 
