@@ -84,6 +84,7 @@ function dayOfYear(d){ const s=new Date(d.getFullYear(),0,0); return Math.floor(
 /* ============ state ============ */
 let murmurDay = todayKey;   // 呟き画面で表示・入力する日付
 let calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+let detailDay = null;       // 履歴の詳細シートで表示中の日付
 let utsuroiPeriod = 'week';
 const DEFAULT_PROMPTS = {
   draft: 'あなたはわたし本人です。以下の「今日の呟き」だけを手がかりに、明日のわたしへ宛てた一人称の振り返りを、日本語で3〜5文、穏やかで正直なトーンで書いてください。呟きに無い出来事は創作しないでください。',
@@ -402,28 +403,41 @@ function heatColor(lv){
 
 /* ============ detail sheet ============ */
 async function openDetail(ds){
+  detailDay=ds;
   const day=await getDay(ds);
   document.getElementById('detailDate').textContent=jpDateShort(ds);
   document.getElementById('detailSub').textContent=(day.murmurs.length)+' 件の呟き'+(day.reflection?' ・ 振り返りあり':'');
   const body=document.getElementById('detailBody');
   let html='';
+  // 振り返りを上、呟きを下に表示する。
+  if(day.reflection){
+    const rbadge=day.reflection.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
+    const rlate=day.reflection.late?'<span class="badge-hand">あとから</span>':'';
+    html+=`<div class="sb-section-label">振り返り${rbadge}${rlate}</div>`;
+    html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
+  }
   if(day.murmurs.length){
-    html+='<div class="sb-section-label">呟き</div>';
+    const mt=day.reflection?' style="margin-top:22px"':'';
+    html+=`<div class="sb-section-label"${mt}>呟き</div>`;
     [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
       const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
       html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}</span></div>`;
     });
   }
-  if(day.reflection){
-    const rbadge=day.reflection.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
-    const rlate=day.reflection.late?'<span class="badge-hand">あとから</span>':'';
-    html+=`<div class="sb-section-label" style="margin-top:22px">振り返り${rbadge}${rlate}</div>`;
-    html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
-  }
   if(!day.murmurs.length && !day.reflection){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
   body.innerHTML=html;
+  body.scrollTop=0;
   document.getElementById('overlay').classList.add('show');
   document.getElementById('detailSheet').classList.add('show');
+}
+// 詳細シートを左右スワイプで前後の日に切り替える（未来日は表示しない）。
+function shiftDetailDay(n){
+  if(!detailDay) return;
+  const [y,m,d]=detailDay.split('-').map(Number);
+  const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n);
+  const ds=fmtKey(dt);
+  if(ds>todayKey) return;
+  openDetail(ds);
 }
 function closeSheets(){
   document.getElementById('overlay').classList.remove('show');
@@ -1078,6 +1092,23 @@ async function init(){
   // calendar nav
   document.getElementById('prevMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
   document.getElementById('nextMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); };
+
+  // 詳細シートの左右スワイプで前後の日へ（縦スクロールは邪魔しない）
+  (function(){
+    const sheet=document.getElementById('detailSheet');
+    let sx=0, sy=0, tracking=false;
+    sheet.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1){ tracking=false; return; }
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY; tracking=true;
+    },{passive:true});
+    sheet.addEventListener('touchend',e=>{
+      if(!tracking) return; tracking=false;
+      const t=e.changedTouches[0];
+      const dx=t.clientX-sx, dy=t.clientY-sy;
+      if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.4) return;  // 横方向が明確なときだけ
+      shiftDetailDay(dx<0?1:-1);   // 左へスワイプ=次の日、右へスワイプ=前の日
+    },{passive:true});
+  })();
 
   // utsuroi period toggle
   [...document.getElementById('uSeg').children].forEach(b=>b.onclick=()=>{ utsuroiPeriod=b.dataset.p; renderUtsuroi(); });
