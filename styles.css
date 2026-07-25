@@ -118,18 +118,7 @@ textarea,input{font-family:inherit}
 }
 .mic-btn[hidden]{display:none}
 .mic-btn:hover{background:var(--surface-2)}
-/* 録音中：栞紅で満たし、やわらかく脈打つ */
-.mic-btn.listening{
-  color:#fff;background:var(--accent);border-color:var(--accent);
-  animation:mic-pulse 1.5s ease-in-out infinite;
-}
-@keyframes mic-pulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(156,74,80,.35)}
-  50%{box-shadow:0 0 0 6px rgba(156,74,80,0)}
-}
-@media (prefers-reduced-motion:reduce){
-  .mic-btn.listening{animation:none}
-}
+.mic-btn:active{background:var(--surface-2);color:var(--accent);border-color:var(--accent-soft)}
 
 /* ---------- murmur feed ---------- */
 .daybar{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:14px;position:relative}
