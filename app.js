@@ -266,6 +266,7 @@ async function saveMurmurText(id, text){
 
 /* ============ post murmur ============ */
 async function postMurmur(){
+  Voice.stop();
   const inp=document.getElementById('murmurInput');
   const txt=inp.value.trim();
   if(!txt) return;
@@ -281,6 +282,66 @@ async function postMurmur(){
   renderFeed(); refreshMeta(); renderGathered();
   toast(isToday?'呟きをのこしました':murmurDayLabel()+'に呟きをのこしました');
 }
+
+/* ============ 音声入力（Web Speech API） ============
+   呟きの入力欄に、話した言葉をそのまま書き起こす。ブラウザの音声認識
+   （多くは通信が必要）を使うため、非対応・オフライン時はボタンを出さない／
+   エラーを控えめに知らせる。認識結果は下書き扱いで、保存は「のこす」で行う。 */
+const Voice = (()=>{
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec=null, listening=false, baseText='', finalText='';
+
+  function supported(){ return !!Rec; }
+
+  function setBtn(on){
+    const btn=document.getElementById('micBtn');
+    if(!btn) return;
+    btn.classList.toggle('listening',on);
+    btn.setAttribute('aria-pressed',String(on));
+    btn.setAttribute('aria-label',on?'音声入力を止める':'音声で入力');
+  }
+
+  // 認識テキストを入力欄へ反映し、既存の input 処理（高さ調整・ボタン活性）を促す。
+  function apply(interim){
+    const inp=document.getElementById('murmurInput');
+    if(!inp) return;
+    inp.value=baseText+finalText+interim;
+    inp.dispatchEvent(new Event('input'));
+  }
+
+  function stop(){ if(rec && listening) rec.stop(); }
+
+  function start(){
+    const inp=document.getElementById('murmurInput');
+    if(!inp) return;
+    baseText=inp.value; finalText='';
+    rec=new Rec();
+    rec.lang='ja-JP';
+    rec.interimResults=true;
+    rec.continuous=true;
+    rec.onstart=()=>{ listening=true; setBtn(true); };
+    rec.onresult=(e)=>{
+      let interim='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r=e.results[i];
+        if(r.isFinal) finalText+=r[0].transcript; else interim+=r[0].transcript;
+      }
+      apply(interim);
+    };
+    rec.onerror=(e)=>{
+      if(e.error==='not-allowed'||e.error==='service-not-allowed') toast('マイクの使用が許可されていません');
+      else if(e.error==='no-speech') toast('声が聞き取れませんでした');
+      else if(e.error!=='aborted') toast('音声入力を使えませんでした');
+    };
+    rec.onend=()=>{ listening=false; setBtn(false); apply(''); rec=null; };
+    try{ rec.start(); }
+    catch(_){ listening=false; setBtn(false); rec=null; }
+  }
+
+  function toggle(){ listening ? stop() : start(); }
+
+  return { supported, toggle, stop };
+})();
 
 /* ============ reflection ============ */
 function updateSaveBtn(){
@@ -987,6 +1048,7 @@ async function renderUtsuroi(){
 /* ============ navigation ============ */
 const titles={murmur:'呟き',reflect:'振り返り',history:'履歴',utsuroi:'うつろい'};
 function switchScreen(name){
+  if(name!=='murmur') Voice.stop();   // 呟き画面を離れたら音声入力を止める
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.nav button').forEach(b=>{
@@ -1056,6 +1118,10 @@ async function init(){
   const inp=document.getElementById('murmurInput');
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,160)+'px'; updatePostBtn(); });
   document.getElementById('postBtn').onclick=postMurmur;
+
+  // 音声入力：対応ブラウザでのみマイクボタンを出す
+  const micBtn=document.getElementById('micBtn');
+  if(micBtn && Voice.supported()){ micBtn.hidden=false; micBtn.onclick=Voice.toggle; }
 
   // day bar (past-day murmurs)
   // 日付ピッカーを開く／閉じるときの pointer-events 制御を共通化する。
