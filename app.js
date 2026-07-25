@@ -282,25 +282,6 @@ async function postMurmur(){
   toast(isToday?'呟きをのこしました':murmurDayLabel()+'に呟きをのこしました');
 }
 
-/* ============ 音声入力（OSキーボードのマイク） ============
-   Web ページから OS の音声入力（キーボード左下のマイク）を直接起動する API は
-   ないため、マイクボタンは入力欄にフォーカスしてキーボードを呼び出すだけにする。
-   あとはユーザーがキーボードのマイクを押せば、OS 純正の音声入力が使える。
-   ソフトキーボードのない環境（デスクトップ等）ではボタンを出さない。 */
-const Voice = (()=>{
-  // タッチ／粗いポインタ＝ソフトキーボードにマイクがある端末とみなす。
-  function hasSoftKeyboardMic(){
-    return (navigator.maxTouchPoints||0) > 0 ||
-           (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-  }
-  // 入力欄にフォーカスしてキーボードを開く（このタップ操作＝ユーザー操作の中で呼ぶ）。
-  function focusInput(){
-    const inp=document.getElementById('murmurInput');
-    if(inp) inp.focus();
-  }
-  return { hasSoftKeyboardMic, focusInput };
-})();
-
 /* ============ reflection ============ */
 function updateSaveBtn(){
   const txt=document.getElementById('reflectInput').value.trim();
@@ -1075,11 +1056,6 @@ async function init(){
   const inp=document.getElementById('murmurInput');
   inp.addEventListener('input',()=>{ inp.style.height='auto'; inp.style.height=Math.min(inp.scrollHeight,160)+'px'; updatePostBtn(); });
   document.getElementById('postBtn').onclick=postMurmur;
-
-  // 音声入力：ソフトキーボードのある端末でだけマイクを出し、
-  // タップしたら入力欄にフォーカスしてキーボード（＝OS純正マイク）を呼び出す。
-  const micBtn=document.getElementById('micBtn');
-  if(micBtn && Voice.hasSoftKeyboardMic()){ micBtn.hidden=false; micBtn.onclick=Voice.focusInput; }
 
   // day bar (past-day murmurs)
   // 日付ピッカーを開く／閉じるときの pointer-events 制御を共通化する。
