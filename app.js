@@ -191,9 +191,9 @@ async function renderFeed(){
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
-    // 追伸（時間を置いてからの一言）。呟きの下に明朝で連なる。
+    // 追伸（時間を置いてからの一言）。呟きの下に明朝で連なる。タップでその追伸を編集。
     const echoes=(m.echoes||[]).map(e=>`
-      <div class="echo"><div class="echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
+      <div class="echo" data-eid="${e.id}"><div class="echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
     // 時刻はタップで変更可。実体の time input を透明で重ね、どの環境でも
     // ネイティブの時刻ピッカーが開くようにする（iOS Safari 含む）。
     el.innerHTML=`
@@ -209,6 +209,14 @@ async function renderFeed(){
       e.stopPropagation();
       startTsuishin(m, el);
     };
+    // 追伸のタップ→その追伸をインライン編集（親の呟き選択には伝播させない）
+    el.querySelectorAll('.echo').forEach(eEl=>{
+      eEl.addEventListener('click',(ev)=>{
+        ev.stopPropagation();
+        const echo=(m.echoes||[]).find(x=>x.id===eEl.dataset.eid);
+        if(echo) startEditEcho(m, echo, el, eEl);
+      });
+    });
     el.querySelector('.edit').onclick=(e)=>{
       e.stopPropagation();
       startEditMurmur(m, el);
@@ -340,6 +348,58 @@ function startTsuishin(m, el){
   grow();
   ta.focus();
 }
+// 追伸をその場で編集する（保存・消すも可）。親の呟きの編集とは独立。
+function startEditEcho(m, echo, murmurEl, echoEl){
+  if(murmurEl.classList.contains('editing')||murmurEl.querySelector('.tsn-box')||echoEl.classList.contains('editing')) return;
+  murmurEl.classList.add('tsn-editing');   // 編集中は下部ボタンを隠す（追伸入力時と同じ）
+  echoEl.classList.add('editing');
+  const body=echoEl.querySelector('.echo-text');
+  body.innerHTML=`
+    <textarea class="tsn-input" aria-label="追伸を編集"></textarea>
+    <div class="edit-actions">
+      <button class="echo-delete" type="button">消す</button>
+      <button class="edit-cancel" type="button">やめる</button>
+      <button class="edit-save" type="button">保存</button>
+    </div>`;
+  const ta=body.querySelector('.tsn-input');
+  ta.value=echo.text;
+  const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input',grow);
+  const finish=()=>{ murmurEl.classList.remove('tsn-editing'); renderFeed(); };
+  body.querySelector('.edit-cancel').onclick=(e)=>{ e.stopPropagation(); finish(); };
+  body.querySelector('.edit-save').onclick=async(e)=>{
+    e.stopPropagation();
+    const val=ta.value.trim();
+    if(!val){ ta.focus(); return; }   // 空にはできない（消したいときは「消す」）
+    await saveEchoText(m.id, echo.id, val);
+    finish();
+  };
+  body.querySelector('.echo-delete').onclick=async(e)=>{
+    e.stopPropagation();
+    await deleteEcho(m.id, echo.id);
+    finish();
+  };
+  grow();
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+async function saveEchoText(mid, eid, text){
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===mid); if(!it) return;
+  const ec=(it.echoes||[]).find(x=>x.id===eid); if(!ec) return;
+  if(ec.text===text) return;
+  ec.text=text;
+  await setDay(murmurDay,d);
+  toast('追伸をなおしました');
+}
+async function deleteEcho(mid, eid){
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===mid); if(!it) return;
+  it.echoes=(it.echoes||[]).filter(x=>x.id!==eid);
+  await setDay(murmurDay,d);
+  toast('追伸を消しました');
+}
+
 // 追伸を保存する（元の呟きが属する日の記録に紐づけ、書いた日を持つ）。
 async function saveTsuishin(id, text){
   const d=await getDay(murmurDay);
