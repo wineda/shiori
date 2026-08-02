@@ -38,6 +38,8 @@
         <button class="db-nav" id="dayNext" aria-label="次の日">›</button>
         <input type="date" id="dayPicker" class="db-picker">
       </div>
+      <!-- 日付の切り替え時にフェードインする範囲（日付バーは含めない） -->
+      <div class="day-body" id="murmurBody">
       <div class="compose">
         <textarea id="murmurInput" placeholder="いま、なにを思ってる?" rows="1"></textarea>
         <div class="row">
@@ -59,6 +61,7 @@
 
       <div class="feed-label" id="feedLabel">きょうの呟き</div>
       <div id="murmurFeed"></div>
+      </div>
     </div>
   </div>
 
@@ -71,6 +74,8 @@
         <button class="db-nav" id="dayNextR" aria-label="次の日">›</button>
         <input type="date" id="dayPickerR" class="db-picker">
       </div>
+      <!-- 日付の切り替え時にフェードインする範囲（日付バーは含めない） -->
+      <div class="day-body" id="reflectBody">
       <div class="reflect-gathered">
         <div class="g-top">
           <div class="g-title" id="gTitle">きょう集めた呟き</div>
@@ -94,6 +99,7 @@
       </div>
       <button class="save-btn" id="saveReflect" disabled>今日に栞を挟む</button>
       <div class="saved-note" id="savedNote"></div>
+      </div>
     </div>
   </div>
 
