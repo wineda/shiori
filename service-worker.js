@@ -1,10 +1,10 @@
-/* 栞 — Service Worker
+/* 文（ふみ） — Service Worker
    役割：アプリ本体（HTML/CSS/JS/フォント/アイコン/manifest）だけをキャッシュし、
    オフライン起動を可能にする。
    重要：ユーザーデータ（IndexedDB）は SW の管轄外。ここでは一切触れない。
         キャッシュの更新・削除をしても IndexedDB は消えない（別枠）。 */
 
-const CACHE = 'shiori-shell-v17';
+const CACHE = 'fumi-shell-v18';
 
 // プリキャッシュするアプリ本体。バージョンを上げたら CACHE 名も上げる。
 const SHELL = [

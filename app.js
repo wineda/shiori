@@ -165,7 +165,7 @@ function updateReflectDayUI(){
   const gt=document.getElementById('gTitle');
   if(gt) gt.textContent=(isToday?'きょう':murmurDayLabel())+'集めた呟き';
   const sb=document.getElementById('saveReflect');
-  if(sb) sb.textContent=isToday?'今日に栞を挟む':'この日に栞を挟む';
+  if(sb) sb.textContent=isToday?'あしたへ文を出す':'この日から文を出す';
 }
 function shiftMurmurDay(n){
   const [y,m,d]=murmurDay.split('-').map(Number);
@@ -413,7 +413,7 @@ async function saveReflection(){
   await setDay(murmurDay,day);
   document.getElementById('savedNote').textContent='保存済み — いつでも書き直せます';
   refreshMeta();
-  toast(isToday?'今日に栞を挟みました':murmurDayLabel()+'に栞を挟みました');
+  toast(isToday?'あしたへ文を出しました':murmurDayLabel()+'から文を出しました');
 }
 
 /* ============ ai reflection draft (share bridge) ============ */
@@ -609,7 +609,7 @@ async function buildExportMd(fromDs,toDs){
   const [fy,fm,fd]=fromDs.split('-').map(Number);
   const [ty,tm,td]=toDs.split('-').map(Number);
   let d=new Date(fy,fm-1,fd); const end=new Date(ty,tm-1,td);
-  let out=`# 栞（しおり）エクスポート\n\n期間: ${fromDs} 〜 ${toDs}\n`;
+  let out=`# 文（ふみ）エクスポート\n\n期間: ${fromDs} 〜 ${toDs}\n`;
   let has=false;
   while(d<=end){
     const ds=fmtKey(d);
@@ -642,7 +642,7 @@ async function exportRange(){
     const blob=new Blob([res.text],{type:'text/markdown;charset=utf-8'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url; a.download=`shiori_${from}_${to}.md`;
+    a.href=url; a.download=`fumi_${from}_${to}.md`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
     toast('書き出しました');
@@ -667,7 +667,7 @@ async function saveBackup(){
   const backup = await buildBackup();
   if(!Object.keys(backup.data).length){ toast('バックアップする記録がありません'); return; }
   const json = JSON.stringify(backup);
-  const fname = `shiori_backup_${fmtKey(new Date())}.json`;
+  const fname = `fumi_backup_${fmtKey(new Date())}.json`;
   try{
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -760,7 +760,7 @@ async function onRestoreFile(file){
   let legacy=null;
   if(isLegacyBackup(obj)){ obj=convertLegacyBackup(obj); legacy=obj._legacy; }
   if(!obj || obj.app!=='shiori' || !obj.data || typeof obj.data!=='object'){
-    toast('栞のバックアップではないようです'); return;
+    toast('文のバックアップではないようです'); return;
   }
   if(typeof obj.schemaVersion==='number' && obj.schemaVersion>SCHEMA_VERSION){
     toast('新しいバージョンのバックアップです。アプリを更新してください'); return;
@@ -1416,7 +1416,7 @@ function setupInstallHint(){
   window.addEventListener('beforeinstallprompt',(e)=>{
     e.preventDefault(); deferredPrompt=e;
     addBtn.style.display='';
-    textEl.textContent='ホーム画面に追加すると、栞をアプリのように開けます。';
+    textEl.textContent='ホーム画面に追加すると、文をアプリのように開けます。';
     showSoon();
   });
   addBtn.onclick=async()=>{
@@ -1432,7 +1432,7 @@ function setupInstallHint(){
   const isSafari=isIOS && !/crios|fxios|edgios/i.test(ua);
   if(isIOS && isSafari){
     addBtn.style.display='none';
-    textEl.innerHTML='ホーム画面に追加すると、栞をアプリのように開けます。<br>共有 <span aria-hidden="true">⬆︎</span> から「ホーム画面に追加」を選んでください。';
+    textEl.innerHTML='ホーム画面に追加すると、文をアプリのように開けます。<br>共有 <span aria-hidden="true">⬆︎</span> から「ホーム画面に追加」を選んでください。';
     showSoon();
   }
 }

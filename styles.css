@@ -72,13 +72,18 @@ textarea,input{font-family:inherit}
   border-bottom:1px solid var(--hairline);flex-shrink:0;background:var(--paper);
 }
 .topbar .date{font-size:13px;color:var(--ink-soft);letter-spacing:.04em;display:flex;align-items:center}
+/* ロゴ「文」（案A-3 封蝋）：明朝一字＋紅の傍線、線の結びに封蝋の点 */
 .logo-mark{
   font-family:var(--mincho);font-size:15px;color:var(--ink);letter-spacing:.1em;
-  position:relative;display:inline-block;padding-bottom:3px;line-height:1.2;
+  position:relative;display:inline-block;padding-bottom:4px;line-height:1.2;
 }
 .logo-mark::after{
-  content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
-  width:14px;height:2px;border-radius:2px;background:var(--accent);
+  content:"";position:absolute;left:0;bottom:0;
+  width:11px;height:2px;border-radius:2px;background:var(--accent);
+}
+.logo-mark::before{
+  content:"";position:absolute;right:0;bottom:-1px;
+  width:4px;height:4px;border-radius:50%;background:var(--accent);
 }
 .topbar .title{font-family:var(--mincho);font-size:21px;font-weight:500;letter-spacing:.08em;margin-top:2px}
 .topbar .streak{
