@@ -38,6 +38,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
+/* 左右スワイプ（日付移動）がブラウザの「戻る/進む」ジェスチャに化けないようにする */
+html{overscroll-behavior-x:none}
 body{
   font-family:var(--sans);
   background:#E9EAE6;
@@ -45,6 +47,7 @@ body{
   display:flex;justify-content:center;align-items:stretch;
   font-weight:400;line-height:1.6;
   -webkit-font-smoothing:antialiased;
+  overscroll-behavior-x:none;
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 /* キーボード操作時のみフォーカスを可視化（マウス/タッチでは出ない＝見た目は不変） */
