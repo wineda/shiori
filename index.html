@@ -131,6 +131,10 @@
         <div><div class="ex-l">開始</div><input type="date" class="ex-date" id="uFrom"></div>
         <div><div class="ex-l">終了</div><input type="date" class="ex-date" id="uTo"></div>
       </div>
+      <div class="u-angle" id="uAngleRow">
+        <div class="ex-l">読み解きの角度</div>
+        <select class="u-angle-sel" id="uAngle" aria-label="読み解きの角度"></select>
+      </div>
       <div id="uReviewArea"></div>
     </div>
   </div>
@@ -216,6 +220,11 @@
         <textarea class="pf-input" id="setPromptCustom" rows="4"></textarea>
       </div>
       <button class="reset-btn" id="resetPrompts" style="color:var(--ink-soft)">プロンプトを既定に戻す</button>
+
+      <div class="set-section">読み解きの角度（うつろいのプロンプト集）</div>
+      <div class="pf-hint" style="margin-bottom:12px">うつろいでAIに送るとき、ここに登録した角度から選べます。名前と本文は自由に書き替えられます。</div>
+      <div id="angleList"></div>
+      <button class="ex-btn" id="addAngle" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">＋ 角度を追加</button>
 
       <div class="set-section">エクスポート</div>
       <div class="ex-dates">
