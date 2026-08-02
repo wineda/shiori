@@ -102,7 +102,8 @@ const DEFAULT_ANGLES = [
   {id:'d5', name:'捉え直しの癖（追伸）', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録には、その場で書いた呟きと、時間を置いてから書き足した「追伸」が含まれます。その時の見え方と、後からの見え方がどう変わったか（あるいは変わらなかったか）に注目し、わたしの「捉え直しの癖」をやさしく描写してください。記録に無いことは書かないでください。'},
   {id:'d6', name:'願いの粒', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録から、「〜したい」「〜すればよかった」「〜が楽しみ」といった、望みや願いのかけらをそのまま拾い集めて、一覧にしてください。実現の方法は提案しないでください。集めるだけで結構です。記録に無いことは書かないでください。'},
   {id:'d7', name:'親友からの手紙', text:'あなたは、わたしの日記をこっそり読ませてもらった、古くからの親友です。以下の記録だけを手がかりに、わたしに宛てた短い手紙を書いてください。励ましの押しつけはせず、「読んでいてこう見えたよ」ということを、正直であたたかい言葉で。記録に無い出来事は書かないでください。'},
-  {id:'d8', name:'問いだけ返す', text:'あなたは、わたしの日記を読み解く、静かな聞き手です。以下の記録を読んで、要約も分析もせず、わたしが自分で考えたくなる問いを3つだけ、やさしい日本語で返してください。問いは記録の中の具体的な言葉を引いて作ってください。答えの誘導はしないでください。'}
+  {id:'d8', name:'問いだけ返す', text:'あなたは、わたしの日記を読み解く、静かな聞き手です。以下の記録を読んで、要約も分析もせず、わたしが自分で考えたくなる問いを3つだけ、やさしい日本語で返してください。問いは記録の中の具体的な言葉を引いて作ってください。答えの誘導はしないでください。'},
+  {id:'d9', name:'カーネギーの視点', text:'あなたはデール・カーネギー（『人を動かす』『道は開ける』の著者）です。以下のわたしの日記を読み、そこに書かれた行動や人との関わり、悩みへの向き合い方を、あなたの原則（批判より理解、相手の立場に立つ、率直で誠実に認める、今日一日の区切りで生きる など）から、やさしい日本語で読み解いてください。まず、うまくできている行動を記録の言葉を引いて具体的に認めてください。そのうえで、試してみたくなる小さな工夫があれば1つだけ、押しつけずに添えてください。記録に無い出来事は創作しないでください。'}
 ];
 let settings = {rem:true, remTime:'21:00', promptDraft:DEFAULT_PROMPTS.draft, promptWeek:DEFAULT_PROMPTS.week, promptMonth:DEFAULT_PROMPTS.month, promptCustom:DEFAULT_PROMPTS.custom};
 
@@ -542,8 +543,24 @@ async function loadSettings(){
   if(!settings.promptWeek) settings.promptWeek=DEFAULT_PROMPTS.week;
   if(!settings.promptMonth) settings.promptMonth=DEFAULT_PROMPTS.month;
   if(!settings.promptCustom) settings.promptCustom=DEFAULT_PROMPTS.custom;
-  // 角度プロンプト集が未導入の旧データには既定の8つを種まき（全削除した場合は空のまま）
-  if(!Array.isArray(settings.anglePrompts)) settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
+  // 角度プロンプト集が未導入の旧データには既定を種まき（全削除した場合は空のまま）
+  if(!Array.isArray(settings.anglePrompts)){
+    settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
+    settings.angleSeeded=DEFAULT_ANGLES.map(a=>a.id);
+  }
+  // どの既定角度を追加済みかを記録し、あとから増えた既定は既存ユーザーにも一度だけ
+  // 追加する。追加済みリストにある id は（削除されていても）復活させない。
+  // このリスト導入前のデータは d1〜d8 が追加済み。
+  if(!Array.isArray(settings.angleSeeded)) settings.angleSeeded=['d1','d2','d3','d4','d5','d6','d7','d8'];
+  let angleSeedChanged=false;
+  for(const a of DEFAULT_ANGLES){
+    if(!settings.angleSeeded.includes(a.id)){
+      settings.anglePrompts.push({...a});
+      settings.angleSeeded.push(a.id);
+      angleSeedChanged=true;
+    }
+  }
+  if(angleSeedChanged) await saveSettings();
   renderAngleList();
   const remTog=document.getElementById('remToggle');
   remTog.classList.toggle('on',settings.rem);
@@ -1326,6 +1343,7 @@ async function init(){
     document.getElementById('setPromptMonth').value=settings.promptMonth;
     document.getElementById('setPromptCustom').value=settings.promptCustom;
     settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
+    settings.angleSeeded=DEFAULT_ANGLES.map(a=>a.id);
     renderAngleList();
     await saveSettings(); toast('プロンプトを既定に戻しました');
   };
