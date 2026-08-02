@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>文 — 未来の自分へ文を出す（モック）</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e9eae6}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;gap:22px;padding:24px 12px 60px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+textarea,input{font-family:inherit}
+.panel-label{font-size:11px;color:#8a8f89;letter-spacing:.12em;align-self:center;text-align:center;line-height:1.7}
+.app{width:100%;max-width:400px;background:var(--paper);border-radius:22px;box-shadow:0 8px 40px rgba(0,0,0,.10);padding:18px 20px 22px}
+
+/* ============ 書く側 ============ */
+.d-label{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.d-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
+/* あて先 */
+.dest-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.dest-chip{font-size:12px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hairline-strong);border-radius:999px;padding:7px 15px;letter-spacing:.04em;position:relative}
+.dest-chip.sel{color:var(--accent);border-color:var(--accent);background:var(--surface-2, #fff)}
+.dest-chip input[type=date]{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.dest-note{font-size:11px;color:var(--accent);letter-spacing:.04em;margin-bottom:8px;display:none}
+.dengon textarea{width:100%;resize:none;border:1px solid var(--hairline-strong);background:#fff;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7;min-height:58px;color:var(--ink);outline:none}
+.dengon textarea::placeholder{color:var(--muted)}
+.dengon textarea:focus{border-color:var(--ink-soft)}
+.d-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6}
+.save-btn{width:100%;margin-top:16px;background:var(--accent);color:#fff;font-family:var(--mincho);font-size:15px;letter-spacing:.14em;padding:14px;border-radius:14px}
+
+/* 結ばれている文（予約一覧） */
+.pending{margin-top:20px}
+.p-title{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.p-title::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.p-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:10px 13px;margin-bottom:8px}
+.p-knot{flex-shrink:0;width:22px;height:14px}
+.p-knot path{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round;opacity:.75}
+.p-body{flex:1;min-width:0}
+.p-to{font-size:11px;color:var(--accent);letter-spacing:.05em}
+.p-text{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.p-undo{font-size:11px;color:var(--muted);padding:5px 9px;flex-shrink:0}
+.p-empty{font-size:11px;color:var(--muted);text-align:center;padding:6px 0 2px}
+
+/* ============ 届く側（水引カード・実装済みと同じ） ============ */
+.dg-letter{margin-top:4px}
+.dg-closed{position:relative;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:16px;
+  padding:20px 18px 18px;text-align:center;cursor:pointer;transition:transform .15s;overflow:hidden}
+.dg-closed:active{transform:scale(.985)}
+.dg-cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em}
+.dg-sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+.dg-mizuhiki{display:block;margin:2px auto 12px;width:78%;height:30px}
+.dg-mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+.dg-letter.opening .dg-mizuhiki{animation:dgUntie .55s ease forwards}
+@keyframes dgUntie{50%{transform:scaleX(1.06);opacity:1}100%{transform:scaleX(1.15);opacity:0}}
+.dg-letter.opening .dg-closed{animation:dgFade .4s ease .3s forwards}
+@keyframes dgFade{to{opacity:0;transform:translateY(-6px)}}
+.dg-note{display:none;background:#fff;border:1px solid var(--hairline-strong);border-radius:16px;padding:16px 18px 12px}
+.dg-letter.open .dg-closed{display:none}
+.dg-letter.open .dg-note{display:block;animation:noteIn .5s cubic-bezier(.22,.61,.36,1)}
+@keyframes noteIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dg-meta{font-size:10px;color:var(--accent);letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.dg-meta::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.dg-text{font-size:14px;line-height:1.8;color:var(--ink)}
+.dg-fold{display:block;margin:8px 0 0 auto;font-size:11px;color:var(--muted);padding:4px 8px}
+
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;padding:11px 20px;border-radius:999px;opacity:0;transition:all .3s;letter-spacing:.04em;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="panel-label">① 書く — 振り返り画面の伝言欄に「あて先」がつく<br><span style="letter-spacing:.02em">あした／日付をえらぶ。結んだ文は下の一覧から解ける</span></div>
+<div class="app">
+  <div class="dengon">
+    <div class="d-label"><span class="d-dot"></span>未来のわたしへ、ひとこと</div>
+    <div class="dest-row">
+      <span style="font-size:11px;color:var(--muted)">あて先：</span>
+      <button class="dest-chip sel" id="chipTomorrow">あした</button>
+      <button class="dest-chip" id="chipDate">日付をえらぶ<input type="date" id="destDate" aria-label="あて先の日付"></button>
+    </div>
+    <div class="dest-note" id="destNote"></div>
+    <textarea id="dengonInput" rows="2" placeholder="その日のわたしに、伝えておきたいこと"></textarea>
+    <div class="d-hint">えらんだ日の朝、呟き画面に結んで届きます。</div>
+    <button class="save-btn" id="knotBtn">この日へ結ぶ</button>
+
+    <div class="pending">
+      <div class="p-title">結ばれている文</div>
+      <div id="pendingList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-label">② 届く — その日が来ると、呟き画面にいつもの水引で<br><span style="letter-spacing:.02em">遠くから届いた文は、書いた日付ごと添えられる</span></div>
+<div class="app">
+  <div class="dg-letter" id="letter">
+    <div class="dg-closed" id="dgClosed">
+      <svg class="dg-mizuhiki" viewBox="0 0 300 30" aria-hidden="true">
+        <path d="M0 15 H118 C132 15 130 5 143 5 C158 5 158 25 143 25 C130 25 132 15 146 15 C160 15 158 5 171 5 C186 5 186 25 171 25 C158 25 160 15 174 15 H300"/>
+      </svg>
+      <div class="dg-cap">7月2日のわたしから、文が届いています</div>
+      <div class="dg-sub">結びをほどいて、ひらく</div>
+    </div>
+    <div class="dg-note">
+      <div class="dg-meta">7月2日のわたしから（1か月前）</div>
+      <div class="dg-text">誕生日おめでとう。この文を書いた日は蒸し暑くて、締め切りに追われてた。今日は好きなものを食べて、ゆっくりしてね。</div>
+      <button class="dg-fold" id="dgFold">たたむ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- あて先の選択 ---- */
+const chipT=document.getElementById('chipTomorrow');
+const chipD=document.getElementById('chipDate');
+const destDate=document.getElementById('destDate');
+const destNote=document.getElementById('destNote');
+let dest='tomorrow';   // 'tomorrow' | 'YYYY-MM-DD'
+const today=new Date(); today.setHours(0,0,0,0);
+const fmt=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const tmr=new Date(today); tmr.setDate(tmr.getDate()+1);
+destDate.min=fmt(tmr);
+
+function daysAhead(ds){
+  const d=Math.round((new Date(ds+'T00:00:00')-today)/86400000);
+  if(d===1) return 'あした';
+  if(d<7) return d+'日後';
+  if(d<30) return Math.floor(d/7)+'週間後';
+  if(d<365) return Math.floor(d/30)+'か月後';
+  return Math.floor(d/365)+'年後';
+}
+function jp(ds){ const [y,m,dd]=ds.split('-').map(Number); return m+'月'+dd+'日'; }
+
+chipT.onclick=()=>{ dest='tomorrow'; chipT.classList.add('sel'); chipD.classList.remove('sel');
+  chipD.firstChild.textContent='日付をえらぶ'; destNote.style.display='none'; };
+destDate.onchange=()=>{
+  if(!destDate.value) return;
+  dest=destDate.value;
+  chipD.classList.add('sel'); chipT.classList.remove('sel');
+  chipD.firstChild.textContent=jp(dest);
+  destNote.textContent=jp(dest)+'（'+daysAhead(dest)+'）のわたしへ';
+  destNote.style.display='block';
+};
+
+/* ---- 結ぶ・一覧 ---- */
+let pending=[
+  {to:fmt(new Date(today.getFullYear(),today.getMonth(),today.getDate()+13)), text:'誕生日おめでとう。今日は好きなものを食べてね。'},
+];
+const list=document.getElementById('pendingList');
+function knotSvg(){ return '<svg class="p-knot" viewBox="0 0 22 14"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>'; }
+function renderPending(){
+  list.innerHTML='';
+  if(!pending.length){ list.innerHTML='<div class="p-empty">まだ、結ばれている文はありません。</div>'; return; }
+  [...pending].sort((a,b)=>a.to<b.to?-1:1).forEach((it,i)=>{
+    const el=document.createElement('div');
+    el.className='p-item';
+    el.innerHTML=knotSvg()+`
+      <div class="p-body">
+        <div class="p-to">${jp(it.to)}（${daysAhead(it.to)}）のわたしへ</div>
+        <div class="p-text"></div>
+      </div>
+      <button class="p-undo">解く</button>`;
+    el.querySelector('.p-text').textContent=it.text;
+    el.querySelector('.p-undo').onclick=()=>{ pending=pending.filter(x=>x!==it); renderPending(); toast('結びを解きました'); };
+    list.appendChild(el);
+  });
+}
+renderPending();
+
+document.getElementById('knotBtn').onclick=()=>{
+  const v=document.getElementById('dengonInput').value.trim();
+  if(!v){ document.getElementById('dengonInput').focus(); return; }
+  const to = dest==='tomorrow' ? fmt(tmr) : dest;
+  pending=pending.filter(x=>x.to!==to);   // 同じ日は1通（上書き）
+  pending.push({to, text:v});
+  document.getElementById('dengonInput').value='';
+  renderPending();
+  toast(jp(to)+'のわたしへ、文を結びました');
+};
+
+/* ---- 届く側（開封） ---- */
+const letter=document.getElementById('letter');
+document.getElementById('dgClosed').onclick=()=>{
+  if(letter.classList.contains('opening')||letter.classList.contains('open')) return;
+  letter.classList.add('opening');
+  setTimeout(()=>{ letter.classList.remove('opening'); letter.classList.add('open'); },680);
+};
+document.getElementById('dgFold').onclick=()=>{ letter.classList.remove('open'); };
+
+let toastT;
+function toast(m){ const t=document.getElementById('toastEl'); t.textContent=m; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2000); }
+</script>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>
