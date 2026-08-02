@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>栞 — 追伸（後日の一言）モック</title>
+<style>
+/* ---- fonts (local, same as 本体) ---- */
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:700;font-display:swap;src:url('fonts/ZenKakuGothicNew-700.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e9eae6}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;padding:24px 12px 60px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+textarea{font-family:inherit}
+
+.app{width:100%;max-width:400px;background:var(--paper);border-radius:26px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.10);min-height:760px;display:flex;flex-direction:column}
+
+/* header */
+.topbar{padding:20px 22px 12px;border-bottom:1px solid var(--hairline)}
+.brand{font-family:var(--mincho);font-size:21px;font-weight:500;letter-spacing:.08em;position:relative;display:inline-block}
+.brand::after{content:"";position:absolute;left:2px;right:2px;bottom:-4px;height:2px;background:var(--accent);border-radius:2px}
+.sub{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.06em}
+
+/* day bar */
+.daybar{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0 6px}
+.daybar button{font-size:18px;color:var(--muted);padding:4px 10px}
+.db-label{font-family:var(--mincho);font-size:15px;letter-spacing:.06em;color:var(--accent);padding:6px 14px}
+
+/* compose */
+.compose{padding:6px 20px 14px;border-bottom:1px solid var(--hairline)}
+.compose-row{display:flex;gap:10px;align-items:flex-end}
+.compose textarea{flex:1;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.6;color:var(--ink);min-height:46px}
+.compose textarea::placeholder{color:var(--muted)}
+.post{background:var(--accent);color:#fff;font-size:14px;font-weight:500;padding:0 18px;height:46px;border-radius:14px;flex-shrink:0;letter-spacing:.04em}
+
+/* feed */
+.feed-label{font-size:11px;color:var(--muted);letter-spacing:.1em;padding:16px 22px 4px}
+.feed{padding:0 20px 30px}
+
+.murmur{position:relative;display:flex;gap:12px;padding:12px 2px;border-radius:12px;transition:background .18s}
+.murmur.selected{background:var(--surface)}
+.murmur .time{font-size:11px;color:var(--muted);width:38px;flex-shrink:0;padding-top:3px;letter-spacing:.02em}
+.murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;position:relative}
+.murmur .track .dot{position:absolute;top:5px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
+.murmur .main{flex:1;min-width:0}
+.murmur .body{font-size:15px;line-height:1.72;color:var(--ink);word-break:break-word}
+.badge{display:inline-block;font-size:10px;color:var(--muted);border:1px solid var(--hairline-strong);border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:2px;letter-spacing:.04em}
+
+/* actions on select */
+.actions{display:none;gap:6px;margin-top:9px}
+.murmur.selected .actions{display:flex}
+.actions button{font-size:12px;color:var(--ink-soft);border:1px solid var(--hairline-strong);background:var(--card);border-radius:999px;padding:5px 13px;letter-spacing:.04em}
+.actions .act-tsuishin{color:var(--accent);border-color:var(--accent)}
+
+/* echoes (追伸) */
+.echoes{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.echo{position:relative;padding-left:16px}
+.echo::before{content:"";position:absolute;left:3px;top:2px;bottom:2px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
+.echo .meta{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:3px;opacity:.85}
+.echo .etext{font-family:var(--mincho);font-size:14px;line-height:1.78;color:var(--ink-soft)}
+
+/* 追伸 input */
+.tsuishin-box{margin-top:12px;padding-left:16px;position:relative}
+.tsuishin-box::before{content:"";position:absolute;left:3px;top:2px;bottom:44px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
+.tsuishin-box .cap{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:6px}
+.tsuishin-box textarea{width:100%;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:12px;padding:11px 13px;font-family:var(--mincho);font-size:14px;line-height:1.8;color:var(--ink);min-height:64px}
+.tsuishin-box textarea::placeholder{color:var(--muted);font-family:var(--mincho)}
+.tsuishin-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.tsuishin-actions .cancel{font-size:12px;color:var(--muted);padding:6px 12px}
+.tsuishin-actions .save{font-size:12px;font-weight:500;color:#fff;background:var(--accent);border-radius:999px;padding:6px 16px;letter-spacing:.04em}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;padding:11px 20px;border-radius:999px;opacity:0;transition:all .3s;letter-spacing:.04em;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.hint{font-size:11px;color:var(--muted);text-align:center;padding:0 24px 24px;line-height:1.7}
+.hint b{color:var(--accent);font-weight:500}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="brand">栞</span>
+    <div class="sub">明日の自分への伝言 — <b style="color:var(--accent)">追伸</b>モック</div>
+  </div>
+
+  <div class="daybar">
+    <button>‹</button>
+    <span class="db-label" id="dayLabel">7月30日（3日前）</span>
+    <button>›</button>
+  </div>
+
+  <div class="compose">
+    <div class="compose-row">
+      <textarea id="composeInput" rows="1" placeholder="この日のことを、おもいだして。"></textarea>
+      <button class="post" id="postBtn">のこす</button>
+    </div>
+  </div>
+
+  <div class="feed-label">7月30日の呟き</div>
+  <div class="feed" id="feed"></div>
+
+  <div class="hint">
+    呟きを<b>タップ</b>して選択 → <b>追伸</b>ボタンで、時間を置いてからの一言を重ねられます。<br>
+    追伸は明朝で、経過（◯日後）が添えられます。
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// この日（表示中の呟きの日）と「今日」。経過日数の算出に使う。
+const DAY = '2026-07-30';        // 表示中の呟きの日付
+const TODAY = '2026-08-02';      // 今日（モック固定）
+
+let murmurs = [
+  { id:'m1', time:'08:24', text:'締め切り前で気が急く。朝から落ち着かない。',
+    echoes:[ { id:'e1', day:'2026-08-02', text:'終わってみれば大したことなかった。あの焦りは何だったんだろう。' } ] },
+  { id:'m2', time:'13:10', text:'昼、少し歩いた。空が高くて気持ちよかった。', echoes:[] },
+  { id:'m3', time:'22:47', text:'夜になっても頭が冴えて眠れない。', echoes:[] },
+];
+
+let selectedId = null;
+
+function daysBetween(from, to){
+  const a = new Date(from+'T00:00:00'), b = new Date(to+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+// 経過ラベル：翌日 / ◯日後 / ◯週間後 / ◯か月後
+function elapsedLabel(fromDay, toDay){
+  const d = daysBetween(fromDay, toDay);
+  if(d<=0) return 'その日';
+  if(d===1) return '翌日';
+  if(d<7) return d+'日後';
+  if(d<30) return Math.floor(d/7)+'週間後';
+  return Math.floor(d/30)+'か月後';
+}
+function esc(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+const feed = document.getElementById('feed');
+
+function render(){
+  feed.innerHTML='';
+  [...murmurs].sort((a,b)=>a.time<b.time?1:-1).forEach(m=>{
+    const el=document.createElement('div');
+    el.className='murmur'+(selectedId===m.id?' selected':'');
+
+    const echoesHtml = (m.echoes||[]).map(e=>`
+      <div class="echo">
+        <div class="meta">追伸・${elapsedLabel(DAY, e.day)}</div>
+        <div class="etext">${esc(e.text)}</div>
+      </div>`).join('');
+
+    el.innerHTML=`
+      <span class="time">${m.time}</span>
+      <div class="track"><span class="dot"></span></div>
+      <div class="main">
+        <div class="body">${esc(m.text)}${m.echoes&&m.echoes.length?`<span class="badge">追伸 ${m.echoes.length}</span>`:''}</div>
+        ${echoesHtml?`<div class="echoes">${echoesHtml}</div>`:''}
+        <div class="actions">
+          <button class="act-edit">なおす</button>
+          <button class="act-del">消す</button>
+          <button class="act-tsuishin">追伸</button>
+        </div>
+      </div>`;
+
+    // 呟き選択（本文/余白のタップ）
+    el.addEventListener('click',(e)=>{
+      if(e.target.closest('.actions')||e.target.closest('.tsuishin-box')) return;
+      selectedId = (selectedId===m.id)? null : m.id;
+      render();
+    });
+    // 追伸を書く
+    el.querySelector('.act-tsuishin').onclick=(e)=>{ e.stopPropagation(); openTsuishin(m.id, el.querySelector('.main')); };
+    el.querySelector('.act-del').onclick=(e)=>{ e.stopPropagation(); toast('（モック）消すは本体側の機能です'); };
+    el.querySelector('.act-edit').onclick=(e)=>{ e.stopPropagation(); toast('（モック）なおすは本体側の機能です'); };
+
+    feed.appendChild(el);
+  });
+}
+
+function openTsuishin(id, mainEl){
+  if(mainEl.querySelector('.tsuishin-box')) return;
+  const box=document.createElement('div');
+  box.className='tsuishin-box';
+  box.innerHTML=`
+    <div class="cap">時間を置いて、いま思うこと</div>
+    <textarea placeholder="あの時のことを、いまどう思う?"></textarea>
+    <div class="tsuishin-actions">
+      <button class="cancel">やめる</button>
+      <button class="save">追伸をのこす</button>
+    </div>`;
+  const actions=mainEl.querySelector('.actions');
+  mainEl.insertBefore(box, actions);
+  const ta=box.querySelector('textarea');
+  const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input',grow);
+  box.addEventListener('click',e=>e.stopPropagation());
+  box.querySelector('.cancel').onclick=()=>render();
+  box.querySelector('.save').onclick=()=>{
+    const val=ta.value.trim();
+    if(!val){ ta.focus(); return; }
+    const m=murmurs.find(x=>x.id===id);
+    m.echoes=m.echoes||[];
+    m.echoes.push({ id:'e'+Date.now(), day:TODAY, text:val });
+    selectedId=null;
+    render();
+    toast('追伸をのこしました');
+  };
+  ta.focus();
+}
+
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+// 本体では過去日にのみ「のこす」で呟きが増えるが、モックでは簡易に
+document.getElementById('postBtn').onclick=()=>{
+  const inp=document.getElementById('composeInput');
+  const v=inp.value.trim(); if(!v) return;
+  murmurs.push({ id:'m'+Date.now(), time:'✎', text:v, echoes:[] });
+  inp.value=''; inp.style.height='auto';
+  render(); toast('呟きをのこしました');
+};
+document.getElementById('composeInput').addEventListener('input',e=>{
+  e.target.style.height='auto'; e.target.style.height=e.target.scrollHeight+'px';
+});
+
+render();
+</script>
+</body>
+</html>
