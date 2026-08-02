@@ -86,12 +86,24 @@ let murmurDay = todayKey;   // 呟き画面で表示・入力する日付
 let calMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 let detailDay = null;       // 履歴の詳細シートで表示中の日付
 let utsuroiPeriod = 'week';
+let utsuroiAngle = 'base';   // うつろいで選んだ読み解きの角度（'base'=期間の既定プロンプト）
 const DEFAULT_PROMPTS = {
   draft: 'あなたはわたし本人です。以下の「今日の呟き」だけを手がかりに、明日のわたしへ宛てた一人称の振り返りを、日本語で3〜5文、穏やかで正直なトーンで書いてください。呟きに無い出来事は創作しないでください。',
   week: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今週の全体の流れ・前の週と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
   month: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今月の全体の流れ・前の月と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
   custom: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の期間の記録をもとに、全体の流れ・その間の変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。'
 };
+// うつろいで選べる「読み解きの角度」の既定プロンプト集。設定で追加・編集・削除できる。
+const DEFAULT_ANGLES = [
+  {id:'d1', name:'感情の波', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、誇張や決めつけもしません。以下の記録から、わたしの気持ちが動いた瞬間（うれしさ・焦り・安らぎ・苛立ちなど）を拾い、「何がきっかけで、どう動いたか」をやさしい日本語で短くまとめてください。記録に無いことは書かないでください。'},
+  {id:'d2', name:'大切にしているもの', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録に繰り返し現れる言葉・話題・場面から、わたしが大切にしていそうなもの（価値観）を2〜3つ、根拠となる記録の言葉を添えて、やさしく差し出してください。断定はせず「〜を大切にしているのかもしれません」の距離感で。記録に無いことは書かないでください。'},
+  {id:'d3', name:'エネルギーの出入り', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録から、わたしに力をくれたらしいもの（人・場所・行動）と、力をすり減らしたらしいものを、それぞれ記録の言葉を引きながら短く整理してください。助言はせず、並べて見せるだけにしてください。記録に無いことは書かないでください。'},
+  {id:'d4', name:'人との関わり', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録に登場する人（名前や呼び名のある相手）ごとに、その人が現れる場面でわたしがどんな様子だったかを、やさしい日本語で短くまとめてください。関係への評価はしないでください。記録に無いことは書かないでください。'},
+  {id:'d5', name:'捉え直しの癖（追伸）', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録には、その場で書いた呟きと、時間を置いてから書き足した「追伸」が含まれます。その時の見え方と、後からの見え方がどう変わったか（あるいは変わらなかったか）に注目し、わたしの「捉え直しの癖」をやさしく描写してください。記録に無いことは書かないでください。'},
+  {id:'d6', name:'願いの粒', text:'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。以下の記録から、「〜したい」「〜すればよかった」「〜が楽しみ」といった、望みや願いのかけらをそのまま拾い集めて、一覧にしてください。実現の方法は提案しないでください。集めるだけで結構です。記録に無いことは書かないでください。'},
+  {id:'d7', name:'親友からの手紙', text:'あなたは、わたしの日記をこっそり読ませてもらった、古くからの親友です。以下の記録だけを手がかりに、わたしに宛てた短い手紙を書いてください。励ましの押しつけはせず、「読んでいてこう見えたよ」ということを、正直であたたかい言葉で。記録に無い出来事は書かないでください。'},
+  {id:'d8', name:'問いだけ返す', text:'あなたは、わたしの日記を読み解く、静かな聞き手です。以下の記録を読んで、要約も分析もせず、わたしが自分で考えたくなる問いを3つだけ、やさしい日本語で返してください。問いは記録の中の具体的な言葉を引いて作ってください。答えの誘導はしないでください。'}
+];
 let settings = {rem:true, remTime:'21:00', promptDraft:DEFAULT_PROMPTS.draft, promptWeek:DEFAULT_PROMPTS.week, promptMonth:DEFAULT_PROMPTS.month, promptCustom:DEFAULT_PROMPTS.custom};
 
 /* ============ murmur day accessors ============ */
@@ -530,6 +542,9 @@ async function loadSettings(){
   if(!settings.promptWeek) settings.promptWeek=DEFAULT_PROMPTS.week;
   if(!settings.promptMonth) settings.promptMonth=DEFAULT_PROMPTS.month;
   if(!settings.promptCustom) settings.promptCustom=DEFAULT_PROMPTS.custom;
+  // 角度プロンプト集が未導入の旧データには既定の8つを種まき（全削除した場合は空のまま）
+  if(!Array.isArray(settings.anglePrompts)) settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
+  renderAngleList();
   const remTog=document.getElementById('remToggle');
   remTog.classList.toggle('on',settings.rem);
   remTog.setAttribute('aria-checked', settings.rem?'true':'false');
@@ -541,6 +556,36 @@ async function loadSettings(){
   document.getElementById('setPromptCustom').value=settings.promptCustom;
 }
 async function saveSettings(){ await Store.set('journal:settings',settings); }
+
+// 設定：読み解きの角度（プロンプト集）の一覧を組み立てる。名前・本文は変更確定時に保存。
+function renderAngleList(){
+  const wrap=document.getElementById('angleList');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  (settings.anglePrompts||[]).forEach(a=>{
+    const div=document.createElement('div');
+    div.className='prompt-field angle-item';
+    div.innerHTML=`
+      <div class="angle-head">
+        <input class="pf-name" placeholder="角度の名前" aria-label="角度の名前">
+        <button class="angle-del" type="button">削除</button>
+      </div>
+      <textarea class="pf-input" rows="4" placeholder="AIへのお願いを書く"></textarea>`;
+    const nameEl=div.querySelector('.pf-name'), textEl=div.querySelector('.pf-input');
+    nameEl.value=a.name;
+    textEl.value=a.text;
+    nameEl.addEventListener('change',async()=>{ a.name=nameEl.value.trim()||a.name; nameEl.value=a.name; await saveSettings(); toast('角度を保存しました'); });
+    textEl.addEventListener('change',async()=>{ a.text=textEl.value.trim(); await saveSettings(); toast('角度を保存しました'); });
+    div.querySelector('.angle-del').onclick=async()=>{
+      settings.anglePrompts=(settings.anglePrompts||[]).filter(x=>x.id!==a.id);
+      if(utsuroiAngle===a.id) utsuroiAngle='base';
+      await saveSettings();
+      renderAngleList();
+      toast('角度を削除しました');
+    };
+    wrap.appendChild(div);
+  });
+}
 
 /* ============ export ============ */
 async function buildExportMd(fromDs,toDs){
@@ -983,12 +1028,21 @@ function digestArr(arr){
     return s;
   }).filter(Boolean).join('\n');
 }
+// 選択中の角度（'base' のときは null）。削除済みの角度が残っていたら base に戻す。
+function currentAngle(){
+  if(utsuroiAngle==='base') return null;
+  const a=(settings.anglePrompts||[]).find(x=>x.id===utsuroiAngle);
+  if(!a) utsuroiAngle='base';
+  return a||null;
+}
 function cacheKey(){
+  // 角度ごとに読み解きを別キャッシュにする（きほんは従来キーのまま＝後方互換）
+  const a=utsuroiAngle==='base'?'':`:a:${utsuroiAngle}`;
   if(utsuroiPeriod==='custom'){
     const r=customRange();
-    return r?`journal:insight:custom:${r.from}:${r.to}`:null;
+    return r?`journal:insight:custom:${r.from}:${r.to}${a}`:null;
   }
-  return `journal:insight:${utsuroiPeriod}:${todayKey}`;
+  return `journal:insight:${utsuroiPeriod}:${todayKey}${a}`;
 }
 function periodLabel(){
   if(utsuroiPeriod==='week') return '今週';
@@ -1019,11 +1073,15 @@ async function generateUtsuroi(){
   }
   const dn=digestArr(arrNow);
   if(!dn.trim()){ toast('この期間に記録がありません'); return; }
-  const promptText = utsuroiPeriod==='week' ? (settings.promptWeek||DEFAULT_PROMPTS.week)
+  // 角度が選ばれていればそのプロンプト、きほんは期間ごとの既定プロンプト
+  const angle=currentAngle();
+  if(angle && !angle.text.trim()){ toast('この角度のプロンプトが空です。設定で書いてください'); return; }
+  const promptText = angle ? angle.text
+                   : utsuroiPeriod==='week' ? (settings.promptWeek||DEFAULT_PROMPTS.week)
                    : utsuroiPeriod==='month' ? (settings.promptMonth||DEFAULT_PROMPTS.month)
                    : (settings.promptCustom||DEFAULT_PROMPTS.custom);
   openBridge({
-    title:label+'の読み解き',
+    title:label+'の読み解き'+(angle?'（'+angle.name+'）':''),
     sub:'記録をAIに送って、読み解きを貼り付け',
     prompt:promptText,
     contextText:`【${label}の記録】\n${dn}${ctxPrev}`,
@@ -1036,10 +1094,23 @@ async function generateUtsuroi(){
     }
   });
 }
+// 「読み解きの角度」セレクトを組み立てる。角度が未登録なら行ごと隠す。
+function renderAngleSelect(){
+  const row=document.getElementById('uAngleRow'), sel=document.getElementById('uAngle');
+  if(!row||!sel) return;
+  const list=settings.anglePrompts||[];
+  if(!list.length){ row.style.display='none'; utsuroiAngle='base'; return; }
+  row.style.display='flex';
+  currentAngle();   // 削除済みの角度なら base に戻す
+  sel.innerHTML='<option value="base">きほんの読み解き</option>'+
+    list.map(a=>`<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+  sel.value=utsuroiAngle;
+}
 async function renderUtsuroi(){
   const seg=document.getElementById('uSeg');
   [...seg.children].forEach(b=>b.classList.toggle('sel',b.dataset.p===utsuroiPeriod));
   document.getElementById('uRange').style.display = utsuroiPeriod==='custom' ? 'flex' : 'none';
+  renderAngleSelect();
   const area=document.getElementById('uReviewArea');
   let arr;
   if(utsuroiPeriod==='custom'){
@@ -1254,8 +1325,23 @@ async function init(){
     document.getElementById('setPromptWeek').value=settings.promptWeek;
     document.getElementById('setPromptMonth').value=settings.promptMonth;
     document.getElementById('setPromptCustom').value=settings.promptCustom;
+    settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
+    renderAngleList();
     await saveSettings(); toast('プロンプトを既定に戻しました');
   };
+
+  // 読み解きの角度（プロンプト集）：追加
+  document.getElementById('addAngle').onclick=async()=>{
+    settings.anglePrompts=settings.anglePrompts||[];
+    settings.anglePrompts.push({id:'u'+Date.now(), name:'あたらしい角度', text:''});
+    await saveSettings();
+    renderAngleList();
+    const items=document.querySelectorAll('#angleList .angle-item');
+    const last=items[items.length-1];
+    if(last){ last.scrollIntoView({block:'center'}); last.querySelector('.pf-name').focus(); }
+  };
+  // うつろいの角度セレクト
+  document.getElementById('uAngle').onchange=e=>{ utsuroiAngle=e.target.value; renderUtsuroi(); };
 
   document.getElementById('resetData').onclick=async()=>{
     const keys=await Store.listDays();
