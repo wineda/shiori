@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文（ふみ）のつかいかた — まんがマニュアル</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:700;font-display:swap;src:url('fonts/ZenKakuGothicNew-700.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:36px 14px 70px}
+.wrap{max-width:430px;margin:0 auto}
+
+/* 扉 */
+.tobira{text-align:center;margin-bottom:30px}
+.logo{position:relative;display:inline-block;font-family:var(--mincho);font-weight:500;font-size:46px;padding-bottom:8px}
+.logo::after{content:"";position:absolute;left:2px;bottom:0;width:30px;height:3px;border-radius:3px;background:var(--accent)}
+.logo::before{content:"";position:absolute;right:0;bottom:-2px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.tobira .t1{font-family:var(--mincho);font-size:16px;letter-spacing:.2em;margin-top:14px}
+.tobira .t2{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.08em}
+
+/* コマ */
+.koma{position:relative;background:var(--card);border:2px solid var(--ink);border-radius:4px;margin-bottom:26px;overflow:hidden}
+.koma svg{display:block;width:100%;height:auto}
+.k-num{position:absolute;top:-1px;left:-1px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:0 0 8px 0;letter-spacing:.1em;z-index:2}
+.k-cap{border-top:2px solid var(--ink);background:var(--surface);padding:10px 14px;font-size:12px;line-height:1.75;color:var(--ink-soft)}
+.k-cap b{color:var(--accent);font-weight:500}
+.owari{text-align:center;font-family:var(--mincho);font-size:13px;letter-spacing:.3em;color:var(--ink-soft);margin-top:34px}
+
+/* SVG共通 */
+text{font-family:var(--sans)}
+.fk{font-size:12.5px;fill:var(--ink)}
+.fk-s{font-size:10.5px;fill:var(--ink-soft)}
+.sfx{font-family:var(--mincho);fill:var(--accent);letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tobira">
+    <span class="logo">文</span>
+    <div class="t1">— ふみの つかいかた —</div>
+    <div class="t2">きのうのわたしから、あしたのわたしへ。まんがでわかる8コマ</div>
+  </div>
+
+  <!-- コマ1 呟き -->
+  <div class="koma"><span class="k-num">1</span>
+    <svg viewBox="0 0 400 240">
+      <!-- 空・道 -->
+      <line x1="0" y1="205" x2="400" y2="205" stroke="#D8D9D3" stroke-width="2"/>
+      <circle cx="345" cy="45" r="20" fill="none" stroke="#E5E6E1" stroke-width="2"/>
+      <!-- 人物（歩き・ひらめき） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="120" cy="120" r="17" fill="#FFFFFF"/>
+        <path d="M104 114 q8 -12 26 -8" />
+        <path d="M120 137 v34" />
+        <path d="M120 148 l-16 12 M120 146 l17 8" />
+        <path d="M120 171 l-11 26 M120 171 l13 25" />
+      </g>
+      <circle cx="114" cy="120" r="1.7" fill="#2B2E2B"/><circle cx="125" cy="120" r="1.7" fill="#2B2E2B"/>
+      <path d="M116 128 q4 3 8 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <!-- ひらめき線 -->
+      <g stroke="#9C4A50" stroke-width="2" stroke-linecap="round">
+        <line x1="138" y1="96" x2="146" y2="88"/><line x1="128" y1="90" x2="130" y2="80"/><line x1="146" y1="106" x2="156" y2="102"/>
+      </g>
+      <!-- フキダシ -->
+      <g>
+        <path d="M180 40 h170 a12 12 0 0 1 12 12 v50 a12 12 0 0 1 -12 12 h-140 l-22 16 6 -16 h-14 a12 12 0 0 1 -12 -12 v-50 a12 12 0 0 1 12 -12 z" fill="#fff" stroke="#2B2E2B" stroke-width="2"/>
+        <text x="196" y="66" class="fk">あ、いま思ったこと、</text>
+        <text x="196" y="86" class="fk">すぐ忘れちゃうんだよね…</text>
+      </g>
+      <!-- 呟きUI -->
+      <g transform="translate(230,140)">
+        <rect x="0" y="0" width="150" height="58" rx="12" fill="#FBFBF9" stroke="#D8D9D3" stroke-width="1.6"/>
+        <text x="12" y="24" class="fk-s" fill="#9AA09A">いま、なにを思ってる?</text>
+        <rect x="88" y="34" width="52" height="18" rx="9" fill="#9C4A50"/>
+        <text x="100" y="47" font-size="10" fill="#fff">のこす</text>
+      </g>
+    </svg>
+    <div class="k-cap"><b>呟き</b> — 思ったことを、ひとことで「のこす」。それだけ。時刻は自動でつきます。</div>
+  </div>
+
+  <!-- コマ2 追伸 -->
+  <div class="koma"><span class="k-num">2</span>
+    <svg viewBox="0 0 400 240">
+      <!-- 人物（数日後・ソファ） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <path d="M40 200 h90 q10 0 10 -12 v-16" fill="none"/>
+        <circle cx="86" cy="130" r="17" fill="#fff"/>
+        <path d="M70 124 q8 -12 26 -8"/>
+        <path d="M86 147 q0 22 -12 30"/>
+        <path d="M86 158 l20 10"/>
+      </g>
+      <circle cx="80" cy="130" r="1.7" fill="#2B2E2B"/><circle cx="91" cy="130" r="1.7" fill="#2B2E2B"/>
+      <path d="M82 138 q4 3 8 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <text x="34" y="60" font-size="11" fill="#9AA09A" letter-spacing="2">— 3日後 —</text>
+      <!-- フキダシ -->
+      <path d="M150 70 h200 a12 12 0 0 1 12 12 v34 a12 12 0 0 1 -12 12 h-160 l-24 14 7 -14 h-11 a12 12 0 0 1 -12 -12 v-34 a12 12 0 0 1 12 -12 z" fill="#fff" stroke="#2B2E2B" stroke-width="2"/>
+      <text x="166" y="94" class="fk">あの時は焦ってたけど…</text>
+      <text x="166" y="112" class="fk">いま思えば大丈夫だったな</text>
+      <!-- 追伸UI -->
+      <g transform="translate(160,150)">
+        <rect x="0" y="0" width="220" height="70" rx="12" fill="#FBFBF9" stroke="#D8D9D3" stroke-width="1.6"/>
+        <circle cx="16" cy="18" r="4" fill="#9C4A50"/>
+        <text x="28" y="22" class="fk-s">締め切り前で気が急く…</text>
+        <text x="28" y="41" font-size="9" fill="#9C4A50" letter-spacing="1">追伸・3日後</text>
+        <text x="28" y="57" class="fk-s">終わってみれば大丈夫だった</text>
+      </g>
+    </svg>
+    <div class="k-cap"><b>追伸</b> — 呟きをタップ→「追伸」。時間が経ってから思ったことを、何度でも重ねられます。</div>
+  </div>
+
+  <!-- コマ3 振り返り -->
+  <div class="koma"><span class="k-num">3</span>
+    <svg viewBox="0 0 400 240">
+      <!-- 夜・机 -->
+      <rect x="0" y="0" width="400" height="240" fill="#EFEFEA"/>
+      <circle cx="352" cy="40" r="16" fill="#fff" stroke="#D8D9D3" stroke-width="2"/>
+      <path d="M344 36 a10 10 0 1 0 14 12 a12 12 0 0 1 -14 -12" fill="#E5E6E1"/>
+      <line x1="30" y1="206" x2="370" y2="206" stroke="#2B2E2B" stroke-width="2.4" stroke-linecap="round"/>
+      <!-- 人物（机に向かう） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="90" cy="132" r="17" fill="#fff"/>
+        <path d="M74 126 q8 -12 26 -8"/>
+        <path d="M90 149 q-2 20 -14 26"/>
+        <path d="M90 160 l24 16"/>
+      </g>
+      <circle cx="96" cy="134" r="1.7" fill="#2B2E2B"/>
+      <path d="M96 142 q4 2 7 -1" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <!-- 振り返りUI -->
+      <g transform="translate(150,84)">
+        <rect x="0" y="0" width="216" height="112" rx="12" fill="#fff" stroke="#D8D9D3" stroke-width="1.6"/>
+        <text x="14" y="22" font-size="9.5" fill="#9AA09A" letter-spacing="1">きょう集めた呟き（3件）</text>
+        <circle cx="18" cy="36" r="3" fill="#9C4A50"/><line x1="28" y1="36" x2="130" y2="36" stroke="#E5E6E1" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="18" cy="50" r="3" fill="#9C4A50"/><line x1="28" y1="50" x2="150" y2="50" stroke="#E5E6E1" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="18" cy="64" r="3" fill="#9C4A50"/><line x1="28" y1="64" x2="110" y2="64" stroke="#E5E6E1" stroke-width="3" stroke-linecap="round"/>
+        <rect x="14" y="78" width="188" height="22" rx="11" fill="#9C4A50"/>
+        <text x="62" y="93" font-size="11" fill="#fff" font-family="var(--mincho)" letter-spacing="2">あしたへ文を出す</text>
+      </g>
+    </svg>
+    <div class="k-cap"><b>振り返り</b> — 一日の終わり、集まった呟きを眺めながらひと書き。「<b>あしたへ文を出す</b>」で保存。呟きからAIに下書きを頼むこともできます。</div>
+  </div>
+
+  <!-- コマ4 伝言 -->
+  <div class="koma"><span class="k-num">4</span>
+    <svg viewBox="0 0 400 240">
+      <!-- フキダシ -->
+      <path d="M40 34 h210 a12 12 0 0 1 12 12 v34 a12 12 0 0 1 -12 12 h-150 l-22 15 6 -15 h-44 a12 12 0 0 1 -12 -12 v-34 a12 12 0 0 1 12 -12 z" fill="#fff" stroke="#2B2E2B" stroke-width="2"/>
+      <text x="56" y="58" class="fk">来月の誕生日のわたしに</text>
+      <text x="56" y="76" class="fk">書いておこうっと</text>
+      <!-- 人物（にっこり書く） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="320" cy="80" r="17" fill="#fff"/>
+        <path d="M304 74 q8 -12 26 -8"/>
+        <path d="M320 97 v26 M320 108 l-18 10"/>
+      </g>
+      <path d="M313 82 q3 3 6 0 M323 82 q3 3 6 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M315 89 q5 4 10 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <!-- 伝言UI -->
+      <g transform="translate(60,130)">
+        <rect x="0" y="0" width="280" height="86" rx="12" fill="#FBFBF9" stroke="#D8D9D3" stroke-width="1.6"/>
+        <circle cx="18" cy="20" r="5" fill="#9C4A50"/>
+        <text x="30" y="24" font-size="10.5" fill="#5C615B">未来のわたしへ、ひとこと</text>
+        <text x="16" y="47" font-size="9.5" fill="#9AA09A">あて先：</text>
+        <rect x="58" y="34" width="52" height="19" rx="9.5" fill="#fff" stroke="#D8D9D3" stroke-width="1.4"/>
+        <text x="70" y="47" font-size="10" fill="#5C615B">あした</text>
+        <rect x="116" y="34" width="60" height="19" rx="9.5" fill="#fff" stroke="#9C4A50" stroke-width="1.4"/>
+        <text x="126" y="47" font-size="10" fill="#9C4A50">9月1日</text>
+        <text x="16" y="72" font-size="10" fill="#9C4A50">9月1日（1か月後）のわたしへ</text>
+      </g>
+    </svg>
+    <div class="k-cap"><b>伝言</b> — あて先は「あした」でも、遠い未来の日でも。誕生日、試験の日、決断の1か月後。「結ばれている文」からいつでも解けます。</div>
+  </div>
+
+  <!-- コマ5 届く -->
+  <div class="koma"><span class="k-num">5</span>
+    <svg viewBox="0 0 400 240">
+      <rect x="0" y="0" width="400" height="240" fill="#FBFBF9"/>
+      <circle cx="60" cy="46" r="18" fill="#fff" stroke="#E5C97A" stroke-width="2.4"/>
+      <g stroke="#E5C97A" stroke-width="2" stroke-linecap="round">
+        <line x1="60" y1="18" x2="60" y2="26"/><line x1="60" y1="66" x2="60" y2="74"/>
+        <line x1="32" y1="46" x2="40" y2="46"/><line x1="80" y1="46" x2="88" y2="46"/>
+        <line x1="40" y1="26" x2="46" y2="32"/><line x1="74" y1="60" x2="80" y2="66"/>
+        <line x1="80" y1="26" x2="74" y2="32"/><line x1="46" y1="60" x2="40" y2="66"/>
+      </g>
+      <text x="96" y="52" font-size="11" fill="#9AA09A" letter-spacing="2">— その日の朝 —</text>
+      <!-- 水引カード -->
+      <g transform="translate(75,80)">
+        <rect x="0" y="0" width="250" height="92" rx="14" fill="#fff" stroke="#D8D9D3" stroke-width="1.8"/>
+        <path d="M20 30 H98 C107 30 106 22 114 22 C123 22 123 38 114 38 C106 38 107 30 116 30 C125 30 124 22 132 22 C141 22 141 38 132 38 C124 38 125 30 134 30 H230" fill="none" stroke="#9C4A50" stroke-width="1.7" stroke-linecap="round"/>
+        <text x="34" y="62" font-size="11" fill="#5C615B">7月2日のわたしから、文が届いています</text>
+        <text x="86" y="80" font-size="9" fill="#9AA09A">結びをほどいて、ひらく</text>
+      </g>
+      <!-- 効果音 -->
+      <text x="316" y="120" class="sfx" font-size="17" transform="rotate(8 316 120)">するり…</text>
+      <!-- 人物（わくわく） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="48" cy="190" r="16" fill="#fff"/>
+        <path d="M33 184 q8 -11 25 -7"/>
+      </g>
+      <path d="M41 190 q3 3 6 0 M51 190 q3 3 6 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M43 198 q5 4 10 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <g stroke="#9C4A50" stroke-width="1.8" stroke-linecap="round">
+        <line x1="70" y1="176" x2="77" y2="170"/><line x1="72" y1="188" x2="80" y2="186"/>
+      </g>
+    </svg>
+    <div class="k-cap"><b>届く</b> — その日が来ると、呟き画面に紅の<b>水引</b>を結んだ文が。結びをほどくと、あの日のわたしの言葉がひらきます。読まないまま日が過ぎても、ちゃんと待っていてくれます。</div>
+  </div>
+
+  <!-- コマ6 返事 -->
+  <div class="koma"><span class="k-num">6</span>
+    <svg viewBox="0 0 400 240">
+      <!-- 便箋UI -->
+      <g transform="translate(30,28)">
+        <rect x="0" y="0" width="240" height="150" rx="14" fill="#fff" stroke="#D8D9D3" stroke-width="1.8"/>
+        <text x="16" y="24" font-size="9" fill="#9C4A50" letter-spacing="1">きのうのわたしから</text>
+        <line x1="120" y1="21" x2="224" y2="21" stroke="#E5E6E1" stroke-width="1.4"/>
+        <text x="16" y="46" font-size="10.5" fill="#2B2E2B">今日は面接だね。準備は</text>
+        <text x="16" y="62" font-size="10.5" fill="#2B2E2B">全部やった。いつも通りに。</text>
+        <text x="28" y="92" font-size="9" fill="#9C4A50">↩ きょうのわたしより、返事</text>
+        <text x="28" y="110" font-size="10.5" fill="#5C615B">ありがとう。無事終わったよ。</text>
+        <text x="28" y="126" font-size="10.5" fill="#5C615B">落ち着いて話せた。</text>
+      </g>
+      <!-- 人物（照れ笑い） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="330" cy="90" r="17" fill="#fff"/>
+        <path d="M314 84 q8 -12 26 -8"/>
+        <path d="M330 107 v28 M330 118 l-20 8 M330 118 l16 12"/>
+      </g>
+      <path d="M323 92 q3 3 6 0 M333 92 q3 3 6 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M325 99 q5 4 10 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <!-- フキダシ小 -->
+      <path d="M296 150 h84 a10 10 0 0 1 10 10 v22 a10 10 0 0 1 -10 10 h-50 l-16 12 4 -12 h-22 a10 10 0 0 1 -10 -10 v-22 a10 10 0 0 1 10 -10 z" fill="#fff" stroke="#2B2E2B" stroke-width="2"/>
+      <text x="306" y="172" font-size="11">文通みたい</text>
+      <text x="306" y="186" font-size="11">でしょ</text>
+    </svg>
+    <div class="k-cap"><b>返事</b> — 届いた文には返事が書けます。文と返事はセットで履歴に残って、じぶんとの<b>往復書簡</b>になります。</div>
+  </div>
+
+  <!-- コマ7 うつろい -->
+  <div class="koma"><span class="k-num">7</span>
+    <svg viewBox="0 0 400 240">
+      <!-- カレンダー -->
+      <g transform="translate(30,30)">
+        <rect x="0" y="0" width="150" height="120" rx="10" fill="#fff" stroke="#D8D9D3" stroke-width="1.6"/>
+        <text x="12" y="20" font-size="9.5" fill="#9AA09A">履歴</text>
+        <g>
+          <rect x="12" y="30" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="34" y="30" width="18" height="18" rx="4" fill="#D9BFC1"/><rect x="56" y="30" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="78" y="30" width="18" height="18" rx="4" fill="#B98A8E"/><rect x="100" y="30" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="122" y="30" width="18" height="18" rx="4" fill="#D9BFC1"/>
+          <rect x="12" y="52" width="18" height="18" rx="4" fill="#D9BFC1"/><rect x="34" y="52" width="18" height="18" rx="4" fill="#8A4348"/><rect x="56" y="52" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="78" y="52" width="18" height="18" rx="4" fill="#D9BFC1"/><rect x="100" y="52" width="18" height="18" rx="4" fill="#B98A8E"/><rect x="122" y="52" width="18" height="18" rx="4" fill="#EDE3E3"/>
+          <rect x="12" y="74" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="34" y="74" width="18" height="18" rx="4" fill="#D9BFC1"/><rect x="56" y="74" width="18" height="18" rx="4" fill="#B98A8E"/><rect x="78" y="74" width="18" height="18" rx="4" fill="#EDE3E3"/><rect x="100" y="74" width="18" height="18" rx="4" fill="#D9BFC1"/><rect x="122" y="74" width="18" height="18" rx="4" fill="#8A4348"/>
+        </g>
+        <text x="12" y="112" font-size="8.5" fill="#9AA09A">記録の濃淡がたまっていく</text>
+      </g>
+      <!-- うつろいUI -->
+      <g transform="translate(210,30)">
+        <rect x="0" y="0" width="160" height="120" rx="10" fill="#fff" stroke="#D8D9D3" stroke-width="1.6"/>
+        <text x="12" y="20" font-size="9.5" fill="#9AA09A">うつろい</text>
+        <text x="12" y="40" font-size="9" fill="#5C615B">読み解きの角度：</text>
+        <rect x="12" y="48" width="136" height="20" rx="8" fill="#FBFBF9" stroke="#D8D9D3" stroke-width="1.3"/>
+        <text x="20" y="62" font-size="9.5" fill="#9C4A50">親友からの手紙 ▾</text>
+        <rect x="12" y="78" width="136" height="22" rx="11" fill="#9C4A50"/>
+        <text x="26" y="93" font-size="9.5" fill="#fff">今週をAIに読み解いてもらう</text>
+      </g>
+      <!-- 人物 -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="200" cy="196" r="16" fill="#fff"/>
+        <path d="M185 190 q8 -11 25 -7"/>
+      </g>
+      <circle cx="194" cy="196" r="1.7" fill="#2B2E2B"/><circle cx="205" cy="196" r="1.7" fill="#2B2E2B"/>
+      <path d="M196 204 q4 3 8 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <text x="240" y="200" font-size="11" fill="#5C615B">「感情の波」「願いの粒」…</text>
+      <text x="240" y="216" font-size="11" fill="#5C615B">角度をかえて自分を読める</text>
+    </svg>
+    <div class="k-cap"><b>履歴とうつろい</b> — 記録がたまったら、カレンダーで見返したり、AIアプリに送って読み解いてもらったり。<b>読み解きの角度</b>（感情の波・親友からの手紙・カーネギーの視点など）は設定で増やせます。</div>
+  </div>
+
+  <!-- コマ8 締め -->
+  <div class="koma"><span class="k-num">8</span>
+    <svg viewBox="0 0 400 240">
+      <rect x="0" y="0" width="400" height="240" fill="#F4F5F2"/>
+      <!-- 人物（のんびり寝転ぶ） -->
+      <g stroke="#2B2E2B" stroke-width="2.4" fill="none" stroke-linecap="round">
+        <circle cx="80" cy="176" r="16" fill="#fff"/>
+        <path d="M66 168 q8 -11 25 -6"/>
+        <path d="M96 182 q30 6 60 2"/>
+      </g>
+      <path d="M74 176 q3 -2 6 0 M84 176 q3 -2 6 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M77 184 q4 3 8 0" stroke="#2B2E2B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <line x1="30" y1="206" x2="370" y2="206" stroke="#D8D9D3" stroke-width="2"/>
+      <text x="200" y="70" text-anchor="middle" font-family="var(--mincho)" font-size="16" fill="#5C615B" letter-spacing="3">書かない日が あっても</text>
+      <text x="200" y="98" text-anchor="middle" font-family="var(--mincho)" font-size="16" fill="#5C615B" letter-spacing="3">だいじょうぶ</text>
+      <text x="200" y="136" text-anchor="middle" font-size="11.5" fill="#9AA09A" letter-spacing="1">物語が途切れたのではなく、</text>
+      <text x="200" y="154" text-anchor="middle" font-size="11.5" fill="#9AA09A" letter-spacing="1">しばらく便りが無かっただけ。</text>
+      <g transform="translate(310,150)">
+        <path d="M0 15 H28 C34 15 33 8 39 8 C46 8 46 22 39 22 C33 22 34 15 40 15 H70" fill="none" stroke="#9C4A50" stroke-width="1.6" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="k-cap">気が向いた日に、また一通。<b>文</b>は、いつでもあなたの便りを待っています。</div>
+  </div>
+
+  <div class="owari">おしまい</div>
+</div>
+</body>
+</html>
