@@ -1160,22 +1160,32 @@ async function init(){
   document.getElementById('prevMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
   document.getElementById('nextMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); };
 
-  // 詳細シートの左右スワイプで前後の日へ（縦スクロールは邪魔しない）
-  (function(){
-    const sheet=document.getElementById('detailSheet');
+  // 左右スワイプで前後の日へ（縦スクロールは邪魔しない）。fn に +1/-1 を渡す。
+  // skip が true を返すタッチは無視する（テキスト入力中など）。
+  function wireSwipeNav(el, fn, skip){
     let sx=0, sy=0, tracking=false;
-    sheet.addEventListener('touchstart',e=>{
-      if(e.touches.length!==1){ tracking=false; return; }
+    el.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1 || (skip&&skip(e))){ tracking=false; return; }
       sx=e.touches[0].clientX; sy=e.touches[0].clientY; tracking=true;
     },{passive:true});
-    sheet.addEventListener('touchend',e=>{
+    el.addEventListener('touchend',e=>{
       if(!tracking) return; tracking=false;
+      if(skip&&skip(e)) return;
       const t=e.changedTouches[0];
       const dx=t.clientX-sx, dy=t.clientY-sy;
       if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.4) return;  // 横方向が明確なときだけ
-      shiftDetailDay(dx<0?1:-1);   // 左へスワイプ=次の日、右へスワイプ=前の日
+      fn(dx<0?1:-1);   // 左へスワイプ=次の日、右へスワイプ=前の日
     },{passive:true});
-  })();
+  }
+  // 詳細シート
+  wireSwipeNav(document.getElementById('detailSheet'), shiftDetailDay);
+  // 呟き・振り返り画面（同じ選択日を共有）。入力欄の上や、呟きの編集・追伸の
+  // 入力中は反応させない（書きかけを守る）。
+  const daySwipeSkip=e=>
+    !!(e.target.closest && e.target.closest('textarea,input')) ||
+    !!document.querySelector('.murmur.editing,.murmur.tsn-editing');
+  wireSwipeNav(document.getElementById('screen-murmur'), shiftMurmurDay, daySwipeSkip);
+  wireSwipeNav(document.getElementById('screen-reflect'), shiftMurmurDay, daySwipeSkip);
 
   // utsuroi period toggle
   [...document.getElementById('uSeg').children].forEach(b=>b.onclick=()=>{ utsuroiPeriod=b.dataset.p; renderUtsuroi(); });
