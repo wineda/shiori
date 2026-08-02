@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文（ふみ）— ロゴ案ボード</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:40px 20px 80px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:var(--mincho);font-weight:500;font-size:22px;letter-spacing:.1em;margin:0 0 6px}
+.lead{font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:34px}
+.section{font-size:11px;color:var(--muted);letter-spacing:.14em;margin:38px 0 14px;border-bottom:1px solid var(--hairline);padding-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--hairline);border-radius:18px;padding:26px 14px 16px;text-align:center}
+.card .cap{font-size:11px;color:var(--ink-soft);margin-top:16px;line-height:1.6}
+.card .note{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* ---- 案A-1: 一字「文」＋紅の傍線（栞ロゴの構成を継承） ---- */
+.logo-fumi{position:relative;display:inline-block;font-family:var(--mincho);font-weight:500;color:var(--ink)}
+.logo-fumi::after{content:"";position:absolute;left:6%;right:6%;bottom:-.13em;height:.07em;background:var(--accent);border-radius:99px}
+.l-lg{font-size:76px;line-height:1}
+
+/* ---- 案A-2: 傍線を短く左寄せ（便箋の書き出し線） ---- */
+.logo-fumi2{position:relative;display:inline-block;font-family:var(--mincho);font-weight:500;color:var(--ink)}
+.logo-fumi2::after{content:"";position:absolute;left:4%;width:56%;bottom:-.13em;height:.07em;background:var(--accent);border-radius:99px}
+
+/* ---- 案A-3: 傍線＋封蝋の点（線を結んで封をする） ---- */
+.logo-fumi3{position:relative;display:inline-block;font-family:var(--mincho);font-weight:500;color:var(--ink)}
+.logo-fumi3::after{content:"";position:absolute;left:4%;width:66%;bottom:-.13em;height:.07em;background:var(--accent);border-radius:99px}
+.logo-fumi3 .seal{position:absolute;right:2%;bottom:-.165em;width:.14em;height:.14em;border-radius:50%;background:var(--accent)}
+
+/* ---- 案A-4: 縦のことば「ふみ」＋傍線 ---- */
+.logo-fumi4{display:inline-flex;flex-direction:column;align-items:center;font-family:var(--mincho);font-weight:500;color:var(--ink)}
+.logo-fumi4 .v{writing-mode:vertical-rl;font-size:44px;line-height:1.15;letter-spacing:.08em}
+.logo-fumi4 .bar{width:.07em;font-size:44px;background:var(--accent);border-radius:99px;height:2.1em;margin-left:2px}
+.logo-fumi4 .row{display:flex;align-items:flex-start;gap:6px}
+
+/* ---- アプリアイコン ---- */
+.icon{width:108px;height:108px;border-radius:26px;background:var(--paper);border:1px solid var(--hairline-strong);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.icon .logo-fumi{font-size:58px}
+.icon.round{border-radius:50%}
+.icon.dark{background:#26292​6}
+.icon-sm{width:56px;height:56px;border-radius:14px}
+.icon-sm .logo-fumi{font-size:30px}
+.iconrow{display:flex;gap:22px;align-items:center;justify-content:center;flex-wrap:wrap}
+
+/* ---- ヘッダー使用例 ---- */
+.appbar{background:var(--paper);border:1px solid var(--hairline);border-radius:18px;overflow:hidden;max-width:400px;margin:0 auto}
+.topbar{padding:18px 22px 14px;border-bottom:1px solid var(--hairline);display:flex;align-items:baseline;gap:12px}
+.topbar .logo-fumi{font-size:19px}
+.topbar .date{font-size:12px;color:var(--muted)}
+.topbar2{padding:10px 22px 16px}
+.topbar2 .t{font-family:var(--mincho);font-size:21px;font-weight:500;letter-spacing:.08em}
+.appbar .body{padding:26px 22px;font-size:13px;color:var(--muted);text-align:center}
+
+/* ---- ワードマーク ---- */
+.wordmark{text-align:center;padding:34px 0 8px}
+.wordmark .logo-fumi{font-size:64px}
+.wordmark .yomi{font-family:var(--mincho);font-size:13px;color:var(--ink-soft);letter-spacing:.5em;margin-top:22px;padding-left:.5em}
+.wordmark .tag{font-family:var(--mincho);font-size:13px;color:var(--muted);letter-spacing:.14em;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>文（ふみ）— ロゴ案</h1>
+  <div class="lead">
+    コンセプト：日記は、別々の世界に生きる「わたし」たちが時を越えて交わす手紙。<br>
+    構成は栞ロゴを継承 — 明朝の一字＋栞紅（封蝋の朱）の傍線。UIは和紙・墨・紅一色のまま。
+  </div>
+
+  <div class="section">ロゴマーク（4バリエーション）</div>
+  <div class="grid">
+    <div class="card">
+      <span class="logo-fumi l-lg">文</span>
+      <div class="cap">A-1 基本形</div>
+      <div class="note">「栞」と同じ構成。一字＋全幅の傍線</div>
+    </div>
+    <div class="card">
+      <span class="logo-fumi2 l-lg">文</span>
+      <div class="cap">A-2 書き出しの線</div>
+      <div class="note">傍線を左寄せ半分に。便箋に書き始めた一行</div>
+    </div>
+    <div class="card">
+      <span class="logo-fumi3 l-lg">文<span class="seal"></span></span>
+      <div class="cap">A-3 封蝋</div>
+      <div class="note">線の結びに紅の点。手紙に封をする印</div>
+    </div>
+    <div class="card">
+      <div class="logo-fumi4">
+        <div class="row"><span class="v">ふみ</span><span class="bar"></span></div>
+      </div>
+      <div class="cap">A-4 縦のことば</div>
+      <div class="note">ひらがな縦書き＋縦の紅。和封筒の宛名風</div>
+    </div>
+  </div>
+
+  <div class="section">アプリアイコン（A-1 / A-3 適用）</div>
+  <div class="iconrow" style="padding:16px 0 6px">
+    <div class="icon"><span class="logo-fumi">文</span></div>
+    <div class="icon round"><span class="logo-fumi">文</span></div>
+    <div class="icon"><span class="logo-fumi3" style="font-size:58px">文<span class="seal"></span></span></div>
+    <div class="icon icon-sm"><span class="logo-fumi">文</span></div>
+  </div>
+  <div class="lead" style="text-align:center;margin-top:10px">和紙地・角丸／maskable（丸）／封蝋版／ホーム画面サイズ</div>
+
+  <div class="section">ヘッダー使用例（アプリ内）</div>
+  <div class="appbar">
+    <div class="topbar">
+      <span class="logo-fumi">文</span>
+      <span class="date">2026年8月2日（日）</span>
+    </div>
+    <div class="topbar2"><span class="t">呟き</span></div>
+    <div class="body">「今日に栞を挟む」→「あしたへ文を出す」</div>
+  </div>
+
+  <div class="section">ワードマーク</div>
+  <div class="wordmark">
+    <span class="logo-fumi">文</span>
+    <div class="yomi">ふ　み</div>
+    <div class="tag">きのうのわたしから、あしたのわたしへ。</div>
+  </div>
+</div>
+</body>
+</html>
