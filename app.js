@@ -119,8 +119,18 @@ function syncDaybar(labelId, nextId, pickerId){
   const nx=document.getElementById(nextId); if(nx) nx.disabled=(murmurDay===todayKey);
   const pk=document.getElementById(pickerId); if(pk) pk.value=murmurDay;
 }
+// 日付バーの下の内容（両画面）をフェードインさせる。クラスを付け直して再生する。
+function replayDayFade(){
+  ['murmurBody','reflectBody'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.classList.remove('fade');
+    void el.offsetWidth;   // リフローを挟んでアニメーションを最初から再生
+    el.classList.add('fade');
+  });
+}
 function setMurmurDay(ds){
   if(ds>todayKey) ds=todayKey;
+  const changed=ds!==murmurDay;
   murmurDay=ds;
   const isToday=murmurDay===todayKey;
   // 呟き画面の日付バー
@@ -133,6 +143,8 @@ function setMurmurDay(ds){
   renderFeed();
   // 振り返りタブを開いていれば、その日の内容に更新する
   if(document.getElementById('screen-reflect').classList.contains('active')){ renderGathered(); loadReflection(); }
+  // 日付が変わったときだけ、日付バーの下の内容をフェードイン
+  if(changed) replayDayFade();
 }
 // 振り返り画面の見出し・保存ボタンを、選択日に合わせて更新する。
 function updateReflectDayUI(){

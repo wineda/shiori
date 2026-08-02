@@ -94,6 +94,8 @@ textarea,input{font-family:inherit}
 .screen{display:none}
 .screen.active{display:block;animation:fade .32s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* 日付切り替え時、日付バーの下の内容だけをフェードイン（日付バーは動かさない） */
+.day-body.fade{animation:fade .3s ease}
 .pad{padding:20px 22px 120px}
 
 /* ---------- compose (murmur) ---------- */
