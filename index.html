@@ -40,6 +40,22 @@
       </div>
       <!-- 日付の切り替え時にフェードインする範囲（日付バーは含めない） -->
       <div class="day-body" id="murmurBody">
+      <!-- きのうのわたしからの伝言（水引の文）。今日表示のときだけ現れる -->
+      <div class="dg-letter" id="dengonLetter" style="display:none">
+        <div class="dg-closed" id="dgClosed" role="button" tabindex="0" aria-label="伝言をひらく">
+          <svg class="dg-mizuhiki" viewBox="0 0 300 30" aria-hidden="true">
+            <path d="M0 15 H118 C132 15 130 5 143 5 C158 5 158 25 143 25 C130 25 132 15 146 15 C160 15 158 5 171 5 C186 5 186 25 171 25 C158 25 160 15 174 15 H300"/>
+          </svg>
+          <div class="dg-cap" id="dgCap">きのうのわたしから、文が届いています</div>
+          <div class="dg-sub">結びをほどいて、ひらく</div>
+        </div>
+        <div class="dg-note">
+          <div class="dg-meta" id="dgFrom">きのうのわたしから</div>
+          <div class="dg-text" id="dgText"></div>
+          <button class="dg-fold" id="dgFold" type="button">たたむ</button>
+        </div>
+        <button class="dg-mini" id="dgMini" type="button"><span class="dg-dot"></span><span id="dgMiniLabel">きのうのわたしから — タップで読み返す</span></button>
+      </div>
       <div class="compose">
         <textarea id="murmurInput" placeholder="いま、なにを思ってる?" rows="1"></textarea>
         <div class="row">
@@ -96,6 +112,12 @@
       <div class="ai-note" id="aiNote"></div>
       <div class="reflect-box">
         <textarea id="reflectInput" placeholder="ゆっくり、書きたいことを。"></textarea>
+      </div>
+      <!-- あしたのわたしへの伝言（今日のみ） -->
+      <div class="dengon" id="dengonWrap">
+        <div class="d-label"><span class="d-dot"></span>あしたのわたしへ、ひとこと</div>
+        <textarea id="dengonInput" rows="2" placeholder="あしたのわたしに、伝えておきたいこと"></textarea>
+        <div class="d-hint">あしたの朝、呟き画面に結んで届きます。書かなくても文は出せます。</div>
       </div>
       <button class="save-btn" id="saveReflect" disabled>あしたへ文を出す</button>
       <div class="saved-note" id="savedNote"></div>

@@ -154,6 +154,7 @@ function setMurmurDay(ds){
   syncDaybar('dayLabelR','dayNextR','dayPickerR');
   updateReflectDayUI();
   renderFeed();
+  renderDengon();
   // 振り返りタブを開いていれば、その日の内容に更新する
   if(document.getElementById('screen-reflect').classList.contains('active')){ renderGathered(); loadReflection(); }
   // 日付が変わったときだけ、日付バーの下の内容をフェードイン
@@ -166,6 +167,9 @@ function updateReflectDayUI(){
   if(gt) gt.textContent=(isToday?'きょう':murmurDayLabel())+'集めた呟き';
   const sb=document.getElementById('saveReflect');
   if(sb) sb.textContent=isToday?'あしたへ文を出す':'この日から文を出す';
+  // あしたへの伝言は今日だけ（過去日には出さない）
+  const dgWrap=document.getElementById('dengonWrap');
+  if(dgWrap) dgWrap.style.display=isToday?'block':'none';
 }
 function shiftMurmurDay(n){
   const [y,m,d]=murmurDay.split('-').map(Number);
@@ -429,10 +433,68 @@ async function postMurmur(){
   toast(isToday?'呟きをのこしました':murmurDayLabel()+'に呟きをのこしました');
 }
 
+/* ============ 伝言（きのうのわたしから） ============ */
+let dengonState=null;   // 表示中の伝言の { ds }
+// 書いた日から見た「◯前のわたし」ラベル
+function agoLabel(fromDs){
+  const a=new Date(fromDs+'T00:00:00'), b=new Date(todayKey+'T00:00:00');
+  const d=Math.round((b-a)/86400000);
+  if(d<=1) return 'きのう';
+  if(d<7) return d+'日前';
+  if(d<30) return Math.floor(d/7)+'週間前';
+  return Math.floor(d/30)+'か月前';
+}
+// 直近30日をさかのぼり、最後に結ばれた伝言を探す
+async function findLatestDengon(){
+  for(let i=1;i<=30;i++){
+    const dt=new Date(today); dt.setDate(dt.getDate()-i);
+    const ds=fmtKey(dt);
+    const day=await getDay(ds);
+    if(day.toTomorrow && day.toTomorrow.text) return {ds, day};
+  }
+  return null;
+}
+// 呟き画面（今日）の伝言カードを描画。未読なら水引、既読（今日読んだ）なら畳んだ一行。
+async function renderDengon(){
+  const wrap=document.getElementById('dengonLetter');
+  if(!wrap) return;
+  wrap.style.display='none';
+  wrap.classList.remove('open','folded','opening');
+  dengonState=null;
+  if(murmurDay!==todayKey) return;
+  const found=await findLatestDengon();
+  if(!found) return;
+  const t=found.day.toTomorrow;
+  const readToday = t.readAt && fmtKey(new Date(t.readAt))===todayKey;
+  if(t.readAt && !readToday) return;   // 以前の日に読み終えた伝言はもう出さない
+  dengonState={ds:found.ds};
+  const who=agoLabel(found.ds)+'のわたしから';
+  document.getElementById('dgCap').textContent=who+'、文が届いています';
+  document.getElementById('dgFrom').textContent=who;
+  document.getElementById('dgMiniLabel').textContent=who+' — タップで読み返す';
+  document.getElementById('dgText').textContent=t.text;
+  if(readToday) wrap.classList.add('folded');
+  wrap.style.display='block';
+}
+// 開封：水引がほどける → 便箋。既読を保存。
+async function openDengon(){
+  const wrap=document.getElementById('dengonLetter');
+  if(!wrap||wrap.classList.contains('opening')||wrap.classList.contains('open')) return;
+  wrap.classList.add('opening');
+  setTimeout(()=>{ wrap.classList.remove('opening'); wrap.classList.add('open'); }, 680);
+  if(dengonState){
+    const d=await getDay(dengonState.ds);
+    if(d.toTomorrow && !d.toTomorrow.readAt){ d.toTomorrow.readAt=Date.now(); await setDay(dengonState.ds,d); }
+  }
+}
+
 /* ============ reflection ============ */
 function updateSaveBtn(){
   const txt=document.getElementById('reflectInput').value.trim();
-  document.getElementById('saveReflect').disabled=!txt.length;
+  // 今日なら「あしたへの伝言」だけでも文を出せる
+  const dgEl=document.getElementById('dengonInput');
+  const dgTxt=(murmurDay===todayKey && dgEl)?dgEl.value.trim():'';
+  document.getElementById('saveReflect').disabled=!txt.length && !dgTxt.length;
 }
 async function renderGathered(){
   const day=await getDay(murmurDay);
@@ -461,21 +523,32 @@ async function loadReflection(){
   } else {
     inp.value=''; note.textContent='';
   }
+  const dgEl=document.getElementById('dengonInput');
+  if(dgEl) dgEl.value=(day.toTomorrow&&day.toTomorrow.text)||'';
   updateSaveBtn();
 }
 async function saveReflection(){
   const txt=document.getElementById('reflectInput').value.trim();
-  if(!txt) return;
   const isToday=murmurDay===todayKey;
+  const dgEl=document.getElementById('dengonInput');
+  const dgTxt=(isToday && dgEl)?dgEl.value.trim():'';
+  if(!txt && !dgTxt) return;
   const day=await getDay(murmurDay);
-  const prev=day.reflection||{};
-  day.reflection={text:txt, savedAt:Date.now()};
-  if(!isToday) day.reflection.late=true;   // 過去日にあとから挟んだ振り返り
-  if(prev.source) day.reflection.source=prev.source;
+  if(txt){
+    const prev=day.reflection||{};
+    day.reflection={text:txt, savedAt:Date.now()};
+    if(!isToday) day.reflection.late=true;   // 過去日にあとから挟んだ振り返り
+    if(prev.source) day.reflection.source=prev.source;
+  }
+  // あしたへの伝言（今日のみ・1通・上書き。空にして保存すると取り消し）
+  if(isToday && dgEl){
+    if(dgTxt) day.toTomorrow={text:dgTxt, ts:Date.now()};
+    else if(day.toTomorrow) delete day.toTomorrow;
+  }
   await setDay(murmurDay,day);
-  document.getElementById('savedNote').textContent='保存済み — いつでも書き直せます';
+  if(txt) document.getElementById('savedNote').textContent='保存済み — いつでも書き直せます';
   refreshMeta();
-  toast(isToday?'あしたへ文を出しました':murmurDayLabel()+'から文を出しました');
+  toast(isToday?(dgTxt&&!txt?'あしたへ伝言を結びました':'あしたへ文を出しました'):murmurDayLabel()+'から文を出しました');
 }
 
 /* ============ ai reflection draft (share bridge) ============ */
@@ -565,8 +638,13 @@ async function openDetail(ds){
     html+=`<div class="sb-section-label">振り返り${rbadge}${rlate}</div>`;
     html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
   }
+  if(day.toTomorrow && day.toTomorrow.text){
+    const mt=html?' style="margin-top:22px"':'';
+    html+=`<div class="sb-section-label"${mt}>あしたへの伝言</div>`;
+    html+=`<div class="sb-dengon">${escapeHtml(day.toTomorrow.text)}</div>`;
+  }
   if(day.murmurs.length){
-    const mt=day.reflection?' style="margin-top:22px"':'';
+    const mt=html?' style="margin-top:22px"':'';
     html+=`<div class="sb-section-label"${mt}>呟き</div>`;
     [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
       const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
@@ -574,7 +652,7 @@ async function openDetail(ds){
       html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}${ech}</span></div>`;
     });
   }
-  if(!day.murmurs.length && !day.reflection){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
+  if(!day.murmurs.length && !day.reflection && !(day.toTomorrow&&day.toTomorrow.text)){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
   body.innerHTML=html;
   body.scrollTop=0;
   document.getElementById('overlay').classList.add('show');
@@ -676,7 +754,7 @@ async function buildExportMd(fromDs,toDs){
   while(d<=end){
     const ds=fmtKey(d);
     const day=await getDay(ds);
-    if((day.murmurs&&day.murmurs.length)||day.reflection){
+    if((day.murmurs&&day.murmurs.length)||day.reflection||(day.toTomorrow&&day.toTomorrow.text)){
       has=true;
       out+=`\n## ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${WD[d.getDay()]})\n`;
       if(day.murmurs&&day.murmurs.length){
@@ -688,6 +766,9 @@ async function buildExportMd(fromDs,toDs){
       }
       if(day.reflection){
         out+=`\n### 振り返り${day.reflection.source==='hand'?'（手書き）':''}\n${day.reflection.text}\n`;
+      }
+      if(day.toTomorrow&&day.toTomorrow.text){
+        out+=`\n### あしたへの伝言\n${day.toTomorrow.text}\n`;
       }
     }
     d.setDate(d.getDate()+1);
@@ -753,7 +834,14 @@ function mergeDay(a, b){
   if(b.reflection){
     if(!reflection || (b.reflection.savedAt||0)>(reflection.savedAt||0)) reflection=b.reflection;
   }
-  return {murmurs, reflection};
+  // あしたへの伝言も新しい方を採用
+  let toTomorrow=a.toTomorrow||null;
+  if(b.toTomorrow){
+    if(!toTomorrow || (b.toTomorrow.ts||0)>(toTomorrow.ts||0)) toTomorrow=b.toTomorrow;
+  }
+  const out={murmurs, reflection};
+  if(toTomorrow) out.toTomorrow=toTomorrow;
+  return out;
 }
 
 /* ============ 旧アプリ（感情記録版）バックアップの取り込み ============
@@ -1095,7 +1183,7 @@ function customRange(){
 }
 function digestArr(arr){
   return arr.map(o=>{
-    const day=o.day; if(!day.murmurs.length && !day.reflection) return null;
+    const day=o.day; if(!day.murmurs.length && !day.reflection && !(day.toTomorrow&&day.toTomorrow.text)) return null;
     const mur=day.murmurs.map(m=>{
       const ech=(m.echoes||[]).map(e=>e.text).join(' / ');
       return m.text+(ech?`（追伸: ${ech}）`:'');
@@ -1104,6 +1192,7 @@ function digestArr(arr){
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
     if(mur) s+=` 呟き:${mur}`;
     if(ref) s+=` 振り返り:${ref}`;
+    if(day.toTomorrow&&day.toTomorrow.text) s+=` 翌日への伝言:${day.toTomorrow.text}`;
     return s;
   }).filter(Boolean).join('\n');
 }
@@ -1314,6 +1403,14 @@ async function init(){
   document.getElementById('reflectInput').addEventListener('input',updateSaveBtn);
   document.getElementById('saveReflect').onclick=saveReflection;
   document.getElementById('aiDraftBtn').onclick=draftReflection;
+
+  // 伝言（あしたのわたしへ／きのうのわたしから）
+  const dgIn=document.getElementById('dengonInput');
+  dgIn.addEventListener('input',()=>{ dgIn.style.height='auto'; dgIn.style.height=dgIn.scrollHeight+'px'; updateSaveBtn(); });
+  document.getElementById('dgClosed').onclick=openDengon;
+  document.getElementById('dgClosed').addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); openDengon(); } });
+  document.getElementById('dgFold').onclick=()=>{ const w=document.getElementById('dengonLetter'); w.classList.remove('open'); w.classList.add('folded'); };
+  document.getElementById('dgMini').onclick=()=>{ const w=document.getElementById('dengonLetter'); w.classList.remove('folded'); w.classList.add('open'); };
 
   // nav
   document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>switchScreen(b.dataset.screen));

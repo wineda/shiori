@@ -193,6 +193,45 @@ textarea,input{font-family:inherit}
 .murmur .tsn-input::placeholder{color:var(--muted)}
 .murmur .tsn-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.18)}
 
+/* ---------- 伝言（きのうのわたしからの文・水引） ---------- */
+.dg-letter{margin-bottom:16px}
+.dg-closed{position:relative;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:16px;
+  padding:20px 18px 18px;text-align:center;cursor:pointer;transition:transform .15s;overflow:hidden}
+.dg-closed:active{transform:scale(.985)}
+.dg-cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em}
+.dg-sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+.dg-mizuhiki{display:block;margin:2px auto 12px;width:78%;height:30px}
+.dg-mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+/* ほどける：結びが伸びて一本の線になり、フェード */
+.dg-letter.opening .dg-mizuhiki{animation:dgUntie .55s ease forwards}
+@keyframes dgUntie{50%{transform:scaleX(1.06);opacity:1}100%{transform:scaleX(1.15);opacity:0}}
+.dg-letter.opening .dg-closed{animation:dgFade .4s ease .3s forwards}
+@keyframes dgFade{to{opacity:0;transform:translateY(-6px)}}
+/* 便箋（開封後） */
+.dg-note{display:none;background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:16px;padding:16px 18px 12px}
+.dg-letter.open .dg-closed{display:none}
+.dg-letter.open .dg-note{display:block;animation:fade .5s cubic-bezier(.22,.61,.36,1)}
+.dg-meta{font-size:10px;color:var(--accent);letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.dg-meta::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.dg-text{font-size:14px;line-height:1.8;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.dg-fold{display:block;margin:8px 0 0 auto;font-size:11px;color:var(--muted);padding:4px 8px}
+/* 畳んだ一行（既読） */
+.dg-mini{display:none;width:100%;text-align:left;font-size:11px;color:var(--muted);padding:9px 13px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;cursor:pointer;letter-spacing:.03em}
+.dg-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.5;margin-right:7px;vertical-align:1px}
+.dg-letter.folded .dg-closed,.dg-letter.folded .dg-note{display:none}
+.dg-letter.folded .dg-mini{display:block;animation:fade .3s ease}
+
+/* ---------- 伝言（あしたのわたしへ・振り返り画面の入力欄） ---------- */
+.dengon{margin:16px 0 2px}
+.dengon .d-label{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.dengon .d-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
+.dengon textarea{width:100%;box-sizing:border-box;resize:none;border:1px solid var(--hairline-strong);background:var(--surface-2);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7;min-height:52px;color:var(--ink);outline:none}
+.dengon textarea::placeholder{color:var(--muted)}
+.dengon textarea:focus{border-color:var(--ink-soft)}
+.dengon .d-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6}
+/* 履歴の詳細シートの伝言 */
+.sb-dengon{font-size:14px;line-height:1.8;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
+
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;line-height:1.9}
 .empty .big{font-family:var(--mincho);font-size:16px;color:var(--ink-soft);display:block;margin-bottom:6px}
 
