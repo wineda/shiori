@@ -507,10 +507,61 @@ function renderDengon(){
   const who=(ago==='きのう'?'きのう':jpMD(t.from))+'のわたしから';
   document.getElementById('dgCap').textContent=who+'、文が届いています';
   document.getElementById('dgFrom').textContent=who+(ago==='きのう'?'':'（'+ago+'）');
-  document.getElementById('dgMiniLabel').textContent=who+' — タップで読み返す';
+  document.getElementById('dgMiniLabel').textContent=who+(t.reply&&t.reply.text?'（返事あり）':'')+' — タップで読み返す';
   document.getElementById('dgText').textContent=t.text;
+  refreshHenji(t);
   if(folded) wrap.classList.add('folded');
   wrap.style.display='block';
+}
+/* --- 返事（往復書簡） --- */
+// 表示中の伝言（届いた文）を取り出す
+function currentDengonLetter(){
+  return dengonState ? LETTERS.find(l=>l.to===dengonState.to) : null;
+}
+// 便箋の返事まわり（表示・ボタン）を今の状態に合わせる
+function refreshHenji(l){
+  const view=document.getElementById('henjiView');
+  const box=document.getElementById('henjiBox');
+  const btn=document.getElementById('henjiBtn');
+  const edit=document.getElementById('henjiEditBtn');
+  if(!view) return;
+  box.style.display='none';
+  const has=!!(l && l.reply && l.reply.text);
+  view.style.display=has?'block':'none';
+  if(has){
+    document.getElementById('henjiMeta').textContent=(l.reply.day===todayKey?'きょう':jpMD(l.reply.day))+'のわたしより、返事';
+    document.getElementById('henjiText').textContent=l.reply.text;
+  }
+  btn.style.display=has?'none':'inline-block';
+  edit.style.display=has?'inline-block':'none';
+}
+// 返事の入力欄をひらく（書き直しにも使う）
+function openHenjiBox(){
+  const l=currentDengonLetter();
+  if(!l) return;
+  const ago=agoLabel(l.from);
+  document.getElementById('henjiCap').textContent=(ago==='きのう'?'きのう':jpMD(l.from))+'のわたしへ、返事';
+  document.getElementById('henjiView').style.display='none';
+  document.getElementById('henjiBtn').style.display='none';
+  document.getElementById('henjiEditBtn').style.display='none';
+  const box=document.getElementById('henjiBox');
+  box.style.display='block';
+  const ta=document.getElementById('henjiInput');
+  ta.value=(l.reply&&l.reply.text)||'';
+  ta.style.height='auto'; ta.style.height=Math.max(52,ta.scrollHeight)+'px';
+  ta.focus();
+}
+async function saveHenji(){
+  const l=currentDengonLetter();
+  if(!l) return;
+  const val=document.getElementById('henjiInput').value.trim();
+  if(!val){ document.getElementById('henjiInput').focus(); return; }
+  l.reply={text:val, ts:Date.now(), day:todayKey};
+  await saveLetters();
+  refreshHenji(l);
+  const ago=agoLabel(l.from);
+  document.getElementById('dgMiniLabel').textContent=((ago==='きのう'?'きのう':jpMD(l.from))+'のわたしから（返事あり） — タップで読み返す');
+  toast((ago==='きのう'?'きのう':jpMD(l.from))+'のわたしへ、返事をのこしました');
 }
 // 開封：水引がほどける → 便箋。既読を保存。
 async function openDengon(){
@@ -735,7 +786,8 @@ async function openDetail(ds){
     const mt=html?' style="margin-top:22px"':'';
     html+=`<div class="sb-section-label"${mt}>伝言</div>`;
     sentLetters.forEach(l=>{
-      html+=`<div class="sb-dengon"><span class="sb-dengon-to">${jpMD(l.to)}のわたしへ</span>${escapeHtml(l.text)}</div>`;
+      const rep=(l.reply&&l.reply.text)?`<div class="sb-henji"><span class="sb-henji-meta">↩ ${jpMD(l.reply.day)}のわたしより、返事</span>${escapeHtml(l.reply.text)}</div>`:'';
+      html+=`<div class="sb-dengon"><span class="sb-dengon-to">${jpMD(l.to)}のわたしへ</span>${escapeHtml(l.text)}${rep}</div>`;
     });
   }
   if(day.murmurs.length){
@@ -865,6 +917,7 @@ async function buildExportMd(fromDs,toDs){
       }
       sentL.forEach(l=>{
         out+=`\n### ${jpMD(l.to)}のわたしへの伝言\n${l.text}\n`;
+        if(l.reply&&l.reply.text) out+=`↩ 返事（${jpMD(l.reply.day)}）: ${l.reply.text}\n`;
       });
     }
     d.setDate(d.getDate()+1);
@@ -1300,7 +1353,7 @@ function digestArr(arr){
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
     if(mur) s+=` 呟き:${mur}`;
     if(ref) s+=` 振り返り:${ref}`;
-    if(sentL.length) s+=' 伝言:'+sentL.map(l=>`（${jpMD(l.to)}へ）${l.text}`).join(' / ');
+    if(sentL.length) s+=' 伝言:'+sentL.map(l=>`（${jpMD(l.to)}へ）${l.text}`+(l.reply&&l.reply.text?`（返事:${l.reply.text}）`:'')).join(' / ');
     return s;
   }).filter(Boolean).join('\n');
 }
@@ -1528,6 +1581,13 @@ async function init(){
   document.getElementById('dgClosed').addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); openDengon(); } });
   // たたむ→再描画（次の未読の文があれば、続けて水引で届く）
   document.getElementById('dgFold').onclick=()=>renderDengon();
+  // 返事（往復書簡）
+  document.getElementById('henjiBtn').onclick=openHenjiBox;
+  document.getElementById('henjiEditBtn').onclick=openHenjiBox;
+  document.getElementById('henjiCancel').onclick=()=>refreshHenji(currentDengonLetter());
+  document.getElementById('henjiSave').onclick=saveHenji;
+  const hjIn=document.getElementById('henjiInput');
+  hjIn.addEventListener('input',()=>{ hjIn.style.height='auto'; hjIn.style.height=hjIn.scrollHeight+'px'; });
   document.getElementById('dgMini').onclick=()=>{ const w=document.getElementById('dengonLetter'); w.classList.remove('folded'); w.classList.add('open'); };
 
   // nav

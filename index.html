@@ -52,7 +52,25 @@
         <div class="dg-note">
           <div class="dg-meta" id="dgFrom">きのうのわたしから</div>
           <div class="dg-text" id="dgText"></div>
-          <button class="dg-fold" id="dgFold" type="button">たたむ</button>
+          <!-- 返事（保存後に表示） -->
+          <div class="henji" id="henjiView" style="display:none">
+            <div class="henji-meta"><span class="arrow">↩</span><span id="henjiMeta"></span></div>
+            <div class="henji-text" id="henjiText"></div>
+          </div>
+          <!-- 返事の入力 -->
+          <div class="henji-box" id="henjiBox" style="display:none">
+            <div class="henji-cap" id="henjiCap">返事</div>
+            <textarea class="henji-input" id="henjiInput" placeholder="この文をくれたわたしに、いま伝えたいこと"></textarea>
+            <div class="henji-actions">
+              <button class="henji-cancel" id="henjiCancel" type="button">やめる</button>
+              <button class="henji-save" id="henjiSave" type="button">返事をのこす</button>
+            </div>
+          </div>
+          <div class="note-foot">
+            <button class="henji-btn" id="henjiBtn" type="button">返事を書く</button>
+            <button class="henji-edit" id="henjiEditBtn" type="button" style="display:none">なおす</button>
+            <button class="dg-fold" id="dgFold" type="button">たたむ</button>
+          </div>
         </div>
         <button class="dg-mini" id="dgMini" type="button"><span class="dg-dot"></span><span id="dgMiniLabel">きのうのわたしから — タップで読み返す</span></button>
       </div>
