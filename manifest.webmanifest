@@ -1,7 +1,7 @@
 {
-  "name": "栞（しおり）",
-  "short_name": "栞",
-  "description": "明日のわたしへの伝言。その場の呟きと一日の振り返りを、言葉だけで束ねる日記。",
+  "name": "文（ふみ）",
+  "short_name": "文",
+  "description": "きのうのわたしから、あしたのわたしへ。その場の呟きと一日の振り返りを、言葉だけで束ねる日記。",
   "lang": "ja",
   "dir": "ltr",
   "start_url": "./index.html",

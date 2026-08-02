@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
-<title>栞 -しおり- 明日のわたしへ</title>
+<title>文 -ふみ- あしたのわたしへ</title>
 <meta name="theme-color" content="#F4F5F2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="栞">
+<meta name="apple-mobile-web-app-title" content="文">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="styles.css">
@@ -18,7 +18,7 @@
   <!-- HEADER -->
   <div class="topbar">
     <div>
-      <div class="date"><span class="logo-mark">栞</span><span style="margin:0 8px;color:var(--hairline-strong)">|</span><span id="todayDate">—</span></div>
+      <div class="date"><span class="logo-mark">文</span><span style="margin:0 8px;color:var(--hairline-strong)">|</span><span id="todayDate">—</span></div>
       <div class="title" id="screenTitle">呟き</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
@@ -97,7 +97,7 @@
       <div class="reflect-box">
         <textarea id="reflectInput" placeholder="ゆっくり、書きたいことを。"></textarea>
       </div>
-      <button class="save-btn" id="saveReflect" disabled>今日に栞を挟む</button>
+      <button class="save-btn" id="saveReflect" disabled>あしたへ文を出す</button>
       <div class="saved-note" id="savedNote"></div>
       </div>
     </div>
@@ -242,13 +242,13 @@
       <div class="pf-hint">復元時に「マージ」か「上書き」を選べます。ときどき保存して、ドライブ／iCloud などに控えておくと安心です。</div>
 
       <button class="reset-btn" id="resetData">サンプルデータを消して、まっさらに</button>
-      <div class="set-foot">「栞（しおり）」は、今日という頁に栞を挟み、明日のわたしがひらく日記です。その場の呟きと一日の振り返りをゆるやかに束ねます。挟んだ栞は、履歴やうつろいでいつでも読み返せます。差し色の紅は、本に綴じられた栞紐の色です。</div>
+      <div class="set-foot">「文（ふみ）」は、きのうのわたしから届いた便りを今日のわたしが読み、あしたのわたしへ短い文を出す日記です。その場の呟きと一日の振り返りをゆるやかに束ね、出した文は履歴やうつろいでいつでも読み返せます。書かなかった日も、物語が途切れたのではなく、しばらく便りが無かっただけ。差し色の朱は、手紙に封をする封蝋の色です。</div>
     </div>
   </div>
 
   <!-- INSTALL HINT (初回のみ・控えめ) -->
   <div class="install-hint" id="installHint" hidden>
-    <div class="ih-text" id="installHintText">ホーム画面に追加すると、栞をアプリのように開けます。</div>
+    <div class="ih-text" id="installHintText">ホーム画面に追加すると、文をアプリのように開けます。</div>
     <div class="ih-actions">
       <button class="ih-add" id="installAdd">追加</button>
       <button class="ih-close" id="installClose" aria-label="閉じる">✕</button>
