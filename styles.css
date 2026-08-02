@@ -186,13 +186,13 @@ textarea,input{font-family:inherit}
 .murmur .echo .edit-actions .echo-delete{color:var(--accent);background:var(--surface-2);margin-right:auto}
 .murmur .echo::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
 .murmur .echo-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:2px;opacity:.85}
-.murmur .echo-text{font-family:var(--mincho);font-size:14px;line-height:1.78;color:var(--ink-soft)}
+.murmur .echo-text{font-size:14px;line-height:1.72;color:var(--ink-soft)}
 /* 追伸の入力欄（明朝） */
 .murmur .tsn-box{margin-top:10px;padding-left:14px;position:relative}
 .murmur .tsn-box::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
 .murmur .tsn-cap{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:6px}
-.murmur .tsn-input{width:100%;box-sizing:border-box;font-family:var(--mincho);font-size:14px;line-height:1.8;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:9px 11px;resize:none;min-height:56px;overflow:hidden}
-.murmur .tsn-input::placeholder{color:var(--muted);font-family:var(--mincho)}
+.murmur .tsn-input{width:100%;box-sizing:border-box;font:inherit;font-size:14px;line-height:1.72;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:9px 11px;resize:none;min-height:56px;overflow:hidden}
+.murmur .tsn-input::placeholder{color:var(--muted)}
 .murmur .tsn-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.18)}
 
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;line-height:1.9}
@@ -210,7 +210,7 @@ textarea,input{font-family:inherit}
 .g-item{font-size:13px;color:var(--ink-soft);display:flex;gap:10px;line-height:1.6}
 .g-item .gd{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
 /* 集めた呟きの追伸（履歴の詳細シートと同じ流儀） */
-.g-echo{position:relative;padding-left:13px;margin-top:4px;font-family:var(--mincho);font-size:12px;line-height:1.7;color:var(--ink-soft)}
+.g-echo{position:relative;padding-left:13px;margin-top:4px;font-size:12px;line-height:1.7;color:var(--ink-soft)}
 .g-echo::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
 .g-echo-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;font-family:var(--sans)}
 .g-empty{font-size:12px;color:var(--muted)}
@@ -286,7 +286,7 @@ textarea,input{font-family:inherit}
 .sb-murmur .t{font-size:11px;color:var(--muted);width:36px;flex-shrink:0;padding-top:3px}
 .sb-murmur .d{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
 /* 詳細シートの追伸 */
-.sb-echo{position:relative;padding-left:13px;margin-top:5px;font-family:var(--mincho);font-size:13px;line-height:1.75;color:var(--ink-soft)}
+.sb-echo{position:relative;padding-left:13px;margin-top:5px;font-size:13px;line-height:1.7;color:var(--ink-soft)}
 .sb-echo::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
 .sb-echo-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;font-family:var(--sans)}
 .sb-reflect{font-family:var(--mincho);font-size:15px;line-height:1.95;color:var(--ink);white-space:pre-wrap;margin-top:6px}
