@@ -214,7 +214,27 @@ textarea,input{font-family:inherit}
 .dg-meta{font-size:10px;color:var(--accent);letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
 .dg-meta::after{content:"";flex:1;height:1px;background:var(--hairline)}
 .dg-text{font-size:14px;line-height:1.8;color:var(--ink);white-space:pre-wrap;word-break:break-word}
-.dg-fold{display:block;margin:8px 0 0 auto;font-size:11px;color:var(--muted);padding:4px 8px}
+/* 返事（往復書簡） */
+.henji{margin-top:12px;padding-left:14px}
+.henji-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.henji-meta .arrow{font-size:11px;opacity:.9}
+.henji-text{font-size:13px;line-height:1.75;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
+.henji-box{margin-top:12px;padding-left:14px}
+.henji-cap{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:6px}
+.henji-input{width:100%;box-sizing:border-box;resize:none;border:1px solid var(--hairline-strong);background:var(--surface);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.7;min-height:52px;color:var(--ink);outline:none;overflow:hidden}
+.henji-input::placeholder{color:var(--muted)}
+.henji-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.15)}
+.henji-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.henji-actions button{font-size:12px;border-radius:999px;padding:6px 16px;border:1px solid var(--hairline)}
+.henji-cancel{color:var(--ink-soft);background:var(--surface)}
+.henji-save{color:#fff;background:var(--accent);border-color:var(--accent)}
+.note-foot{display:flex;align-items:center;margin-top:10px}
+.henji-btn{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:5px 14px;letter-spacing:.05em}
+.henji-edit{font-size:11px;color:var(--muted);padding:5px 10px}
+.dg-fold{margin-left:auto;font-size:11px;color:var(--muted);padding:4px 8px}
+/* 履歴の詳細シートの返事 */
+.sb-henji{margin-top:6px;padding-left:13px;font-size:13px;line-height:1.7;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word}
+.sb-henji-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85}
 /* 畳んだ一行（既読） */
 .dg-mini{display:none;width:100%;text-align:left;font-size:11px;color:var(--muted);padding:9px 13px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;cursor:pointer;letter-spacing:.03em}
 .dg-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.5;margin-right:7px;vertical-align:1px}
