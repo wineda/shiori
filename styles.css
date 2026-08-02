@@ -160,6 +160,29 @@ textarea,input{font-family:inherit}
 .murmur .edit-cancel{color:var(--ink-soft);background:var(--surface-2)}
 .murmur .edit-save{color:#fff;background:var(--accent);border-color:var(--accent)}
 
+/* ---------- 追伸（時間を置いてからの一言） ---------- */
+/* 選択中に「なおす」の左へ「追伸」を出す。 */
+.murmur .tsn{position:absolute;right:144px;bottom:8px;font-size:12px;color:var(--accent);background:var(--surface-2);border:1px solid var(--accent);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
+.murmur.selected .tsn{opacity:1;pointer-events:auto;transform:none}
+.murmur.editing .tsn{opacity:0;pointer-events:none}
+/* 追伸の入力中は下部ボタンを隠す。 */
+.murmur.tsn-editing{background:rgba(156,74,80,.07)}
+.murmur.tsn-editing .tsn,.murmur.tsn-editing .edit,.murmur.tsn-editing .del{opacity:0;pointer-events:none}
+.murmur.tsn-editing .body{padding-bottom:2px}
+/* 保存済みの追伸。栞紅の細い線を添えて、明朝で連なる。 */
+.murmur .echoes{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.murmur .echo{position:relative;padding-left:14px}
+.murmur .echo::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
+.murmur .echo-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:2px;opacity:.85}
+.murmur .echo-text{font-family:var(--mincho);font-size:14px;line-height:1.78;color:var(--ink-soft)}
+/* 追伸の入力欄（明朝） */
+.murmur .tsn-box{margin-top:10px;padding-left:14px;position:relative}
+.murmur .tsn-box::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
+.murmur .tsn-cap{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:6px}
+.murmur .tsn-input{width:100%;box-sizing:border-box;font-family:var(--mincho);font-size:14px;line-height:1.8;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:9px 11px;resize:none;min-height:56px;overflow:hidden}
+.murmur .tsn-input::placeholder{color:var(--muted);font-family:var(--mincho)}
+.murmur .tsn-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.18)}
+
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:44px 20px;line-height:1.9}
 .empty .big{font-family:var(--mincho);font-size:16px;color:var(--ink-soft);display:block;margin-bottom:6px}
 
@@ -246,6 +269,10 @@ textarea,input{font-family:inherit}
 .sb-murmur{display:flex;gap:12px;padding:9px 0;font-size:14px;color:var(--ink-soft);line-height:1.6}
 .sb-murmur .t{font-size:11px;color:var(--muted);width:36px;flex-shrink:0;padding-top:3px}
 .sb-murmur .d{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
+/* 詳細シートの追伸 */
+.sb-echo{position:relative;padding-left:13px;margin-top:5px;font-family:var(--mincho);font-size:13px;line-height:1.75;color:var(--ink-soft)}
+.sb-echo::before{content:"";position:absolute;left:2px;top:3px;bottom:3px;width:2px;background:var(--accent);opacity:.32;border-radius:2px}
+.sb-echo-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;font-family:var(--sans)}
 .sb-reflect{font-family:var(--mincho);font-size:15px;line-height:1.95;color:var(--ink);white-space:pre-wrap;margin-top:6px}
 .sb-empty{font-size:13px;color:var(--muted);padding:20px 0}
 
