@@ -166,16 +166,24 @@ async function renderFeed(){
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
+    // 追伸（時間を置いてからの一言）。呟きの下に明朝で連なる。
+    const echoes=(m.echoes||[]).map(e=>`
+      <div class="echo"><div class="echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
     // 時刻はタップで変更可。実体の time input を透明で重ね、どの環境でも
     // ネイティブの時刻ピッカーが開くようにする（iOS Safari 含む）。
     el.innerHTML=`
       <span class="time time-wrap"><span class="time-text">${m.time}</span><input type="time" class="time-picker" value="${tv}" aria-label="時刻を変更"></span>
       <div class="track"><span class="dot"></span></div>
-      <div class="body">${escapeHtml(m.text)}${badge}${late}</div>
+      <div class="body">${escapeHtml(m.text)}${badge}${late}${echoes?`<div class="echoes">${echoes}</div>`:''}</div>
+      <button class="tsn" data-id="${m.id}">追伸</button>
       <button class="edit" data-id="${m.id}">なおす</button>
       <button class="del" data-id="${m.id}">消す</button>`;
     const tpick=el.querySelector('.time-picker');
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
+    el.querySelector('.tsn').onclick=(e)=>{
+      e.stopPropagation();
+      startTsuishin(m, el);
+    };
     el.querySelector('.edit').onclick=(e)=>{
       e.stopPropagation();
       startEditMurmur(m, el);
@@ -187,9 +195,9 @@ async function renderFeed(){
       await setDay(murmurDay,d);
       renderFeed(); refreshMeta();
     };
-    // タップで選択（ハイライト）→「なおす」「消す」が現れる。時刻・編集・消すのタップは除外。
+    // タップで選択（ハイライト）→「追伸」「なおす」「消す」が現れる。時刻・各ボタン・追伸入力のタップは除外。
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.closest('.edit')||el.classList.contains('editing')) return;
+      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.closest('.edit')||e.target.closest('.tsn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')) return;
       const wasSel=el.classList.contains('selected');
       feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
       if(!wasSel) el.classList.add('selected');
@@ -264,6 +272,60 @@ async function saveMurmurText(id, text){
   toast('呟きをなおしました');
 }
 
+/* ============ 追伸（時間を置いてからの一言） ============ */
+// 呟きの日から書いた日までの経過ラベル（その日/翌日/◯日後/◯週間後/◯か月後/◯年後）。
+function elapsedLabel(fromDs, toDs){
+  const a=new Date(fromDs+'T00:00:00'), b=new Date(toDs+'T00:00:00');
+  const d=Math.round((b-a)/86400000);
+  if(d<=0) return 'その日';
+  if(d===1) return '翌日';
+  if(d<7) return d+'日後';
+  if(d<30) return Math.floor(d/7)+'週間後';
+  if(d<365) return Math.floor(d/30)+'か月後';
+  return Math.floor(d/365)+'年後';
+}
+// 呟きの下に追伸の入力欄（明朝）を開く。
+function startTsuishin(m, el){
+  if(el.querySelector('.tsn-box')||el.classList.contains('editing')) return;
+  el.classList.add('tsn-editing');
+  const body=el.querySelector('.body');
+  const box=document.createElement('div');
+  box.className='tsn-box';
+  box.innerHTML=`
+    <div class="tsn-cap">時間を置いて、いま思うこと</div>
+    <textarea class="tsn-input" aria-label="追伸を書く" placeholder="あの時のことを、いまどう思う?"></textarea>
+    <div class="edit-actions">
+      <button class="edit-cancel" type="button">やめる</button>
+      <button class="edit-save" type="button">追伸をのこす</button>
+    </div>`;
+  body.appendChild(box);
+  const ta=box.querySelector('.tsn-input');
+  const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input',grow);
+  // 入力中のタップで選択が解除されないように、内部のクリックは伝播させない。
+  box.addEventListener('click',e=>e.stopPropagation());
+  const finish=()=>{ el.classList.remove('tsn-editing'); renderFeed(); };
+  box.querySelector('.edit-cancel').onclick=finish;
+  box.querySelector('.edit-save').onclick=async()=>{
+    const val=ta.value.trim();
+    if(!val){ ta.focus(); return; }
+    await saveTsuishin(m.id, val);
+    finish();
+  };
+  grow();
+  ta.focus();
+}
+// 追伸を保存する（元の呟きが属する日の記録に紐づけ、書いた日を持つ）。
+async function saveTsuishin(id, text){
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===id);
+  if(!it) return;
+  if(!Array.isArray(it.echoes)) it.echoes=[];
+  it.echoes.push({id:'e'+Date.now(), text, ts:Date.now(), day:todayKey});
+  await setDay(murmurDay,d);
+  toast('追伸をのこしました');
+}
+
 /* ============ post murmur ============ */
 async function postMurmur(){
   const inp=document.getElementById('murmurInput');
@@ -334,7 +396,7 @@ async function draftReflection(){
   const day=await getDay(murmurDay);
   if(!day.murmurs.length) return;
   const lines=[...day.murmurs].sort((a,b)=>a.ts-b.ts)
-    .map(m=>`- ${m.time} ${m.text}`).join('\n');
+    .map(m=>`- ${m.time} ${m.text}`+((m.echoes||[]).length?`（追伸: ${m.echoes.map(e=>e.text).join(' / ')}）`:'')).join('\n');
   openBridge({
     title:'呟きからAI下書き',
     sub:'呟きをAIに送って、下書きを貼り付け',
@@ -421,7 +483,8 @@ async function openDetail(ds){
     html+=`<div class="sb-section-label"${mt}>呟き</div>`;
     [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
       const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
-      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}</span></div>`;
+      const ech=(m.echoes||[]).map(e=>`<div class="sb-echo"><span class="sb-echo-meta">追伸・${elapsedLabel(ds,e.day)}</span>${escapeHtml(e.text)}</div>`).join('');
+      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}${ech}</span></div>`;
     });
   }
   if(!day.murmurs.length && !day.reflection){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
@@ -484,6 +547,7 @@ async function buildExportMd(fromDs,toDs){
         out+=`\n### 呟き\n`;
         [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
           out+=`- ${m.time} ${m.text}${m.source==='hand'?'（手書き）':''}\n`;
+          (m.echoes||[]).forEach(e=>{ out+=`  - 追伸（${elapsedLabel(ds,e.day)}）: ${e.text}\n`; });
         });
       }
       if(day.reflection){
@@ -896,7 +960,10 @@ function customRange(){
 function digestArr(arr){
   return arr.map(o=>{
     const day=o.day; if(!day.murmurs.length && !day.reflection) return null;
-    const mur=day.murmurs.map(m=>m.text).join(' / ');
+    const mur=day.murmurs.map(m=>{
+      const ech=(m.echoes||[]).map(e=>e.text).join(' / ');
+      return m.text+(ech?`（追伸: ${ech}）`:'');
+    }).join(' / ');
     const ref=day.reflection?day.reflection.text:'';
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
     if(mur) s+=` 呟き:${mur}`;
