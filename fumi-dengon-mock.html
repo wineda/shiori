@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>文 — 伝言（あしたのわたしへ）モック</title>
+<title>文 — 伝言カードのデザイン案</title>
 <style>
 @font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
 @font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
@@ -20,182 +20,150 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:#e9eae6}
-body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;gap:26px;padding:24px 12px 60px}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;gap:22px;padding:24px 12px 60px}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-textarea{font-family:inherit}
-.panel-label{font-size:11px;color:#8a8f89;letter-spacing:.12em;align-self:center}
+.panel-label{font-size:11px;color:#8a8f89;letter-spacing:.12em;align-self:center;text-align:center;line-height:1.7}
 
-.app{width:100%;max-width:400px;background:var(--paper);border-radius:26px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.10)}
-.topbar{padding:18px 22px 12px;border-bottom:1px solid var(--hairline)}
-.brand{font-family:var(--mincho);font-size:19px;font-weight:500;letter-spacing:.08em;position:relative;display:inline-block;padding-bottom:4px}
-.brand::after{content:"";position:absolute;left:0;bottom:0;width:11px;height:2px;border-radius:2px;background:var(--accent)}
-.brand::before{content:"";position:absolute;right:0;bottom:-1px;width:4px;height:4px;border-radius:50%;background:var(--accent)}
-.screen-t{font-family:var(--mincho);font-size:20px;font-weight:500;letter-spacing:.08em;margin-top:6px}
-.pad{padding:16px 20px 26px}
-.daybar{text-align:center;padding:2px 0 14px;font-family:var(--mincho);font-size:15px;letter-spacing:.06em;color:var(--ink)}
+.app{width:100%;max-width:400px;background:var(--paper);border-radius:22px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.10);padding:18px 20px 22px}
 
-/* ============ 封筒カード（きのうのわたしから） ============ */
-.letter{position:relative;margin-bottom:16px}
-/* --- 封筒（未開封） --- */
-.envelope{
-  position:relative;background:var(--surface);border:1px solid var(--hairline-strong);
-  border-radius:16px;padding:22px 18px 18px;text-align:center;cursor:pointer;overflow:hidden;
-  transition:transform .15s;
-}
-.envelope:active{transform:scale(.985)}
-/* 封筒のフラップ（上辺から降りる三角） */
-.envelope .flap{
-  position:absolute;top:0;left:0;right:0;height:46px;pointer-events:none;
-  background:linear-gradient(to bottom right, transparent 49.6%, var(--hairline) 49.6%, var(--hairline) 50.4%, transparent 50.4%) left/50% 100% no-repeat,
-             linear-gradient(to bottom left,  transparent 49.6%, var(--hairline) 49.6%, var(--hairline) 50.4%, transparent 50.4%) right/50% 100% no-repeat;
-}
-.envelope .env-cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-top:40px}
-.envelope .env-sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
-/* 封蝋 */
-.seal{
-  position:absolute;top:9px;left:50%;transform:translateX(-50%);
-  width:26px;height:26px;border-radius:50%;background:var(--accent);
-  box-shadow:0 1px 4px rgba(156,74,80,.4), inset 0 -2px 3px rgba(0,0,0,.15);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--mincho);font-size:12px;color:#fff;font-weight:500;
-  transition:transform .2s;
-}
-/* --- 開封アニメーション --- */
-.letter.opening .seal{animation:crack .5s ease forwards}
-@keyframes crack{
-  0%{transform:translateX(-50%) scale(1) rotate(0deg)}
-  35%{transform:translateX(-50%) scale(1.15) rotate(-8deg)}
-  60%{transform:translateX(-50%) scale(.9) rotate(6deg);opacity:1}
-  100%{transform:translateX(-50%) scale(.4) rotate(14deg);opacity:0}
-}
-.letter.opening .envelope{animation:envfade .45s ease .35s forwards}
-@keyframes envfade{to{opacity:0;transform:translateY(-6px)}}
-/* --- 便箋（開封後） --- */
+/* ============ 共通：便箋（開いた状態） ============ */
+.letter{position:relative}
 .note{
   display:none;background:var(--card);border:1px solid var(--hairline-strong);border-radius:16px;
-  padding:16px 18px 14px;position:relative;
+  padding:16px 18px 12px;
 }
-.letter.open .envelope{display:none}
+.letter.open .closed{display:none}
 .letter.open .note{display:block;animation:noteIn .5s cubic-bezier(.22,.61,.36,1)}
 @keyframes noteIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .note .n-meta{font-size:10px;color:var(--accent);letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:6px}
 .note .n-meta::after{content:"";flex:1;height:1px;background:var(--hairline)}
 .note .n-text{font-size:14px;line-height:1.8;color:var(--ink)}
-.note .n-fold{display:block;margin:10px 0 0 auto;font-size:11px;color:var(--muted);padding:4px 8px}
-/* --- 畳んだ状態（既読） --- */
-.letter.folded .note{display:none}
-.letter.folded .envelope{display:none}
-.mini{display:none;font-size:11px;color:var(--muted);padding:8px 12px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;cursor:pointer;letter-spacing:.03em}
+.note .n-fold{display:block;margin:8px 0 0 auto;font-size:11px;color:var(--muted);padding:4px 8px}
+.mini{display:none;width:100%;text-align:left;font-size:11px;color:var(--muted);padding:9px 13px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;cursor:pointer;letter-spacing:.03em}
 .mini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.5;margin-right:7px;vertical-align:1px}
+.letter.folded .closed,.letter.folded .note{display:none}
 .letter.folded .mini{display:block;animation:noteIn .3s ease}
 
-/* ============ 呟き部分（簡略） ============ */
-.compose{display:flex;gap:10px;align-items:flex-end;margin-bottom:6px}
-.compose textarea{flex:1;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.6;min-height:46px}
-.compose textarea::placeholder{color:var(--muted)}
-.post{background:var(--accent);color:#fff;font-size:14px;font-weight:500;padding:0 18px;height:46px;border-radius:14px;flex-shrink:0}
+/* ============ 案1：水引をほどく ============ */
+.closed{position:relative;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:16px;
+  padding:20px 18px 18px;text-align:center;cursor:pointer;transition:transform .15s;overflow:hidden}
+.closed:active{transform:scale(.985)}
+.closed .cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em}
+.closed .sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+.mizuhiki{display:block;margin:2px auto 12px;width:78%;height:30px}
+.mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+/* ほどける：結びが伸びて一本の線になり、フェード */
+.letter.opening1 .mizuhiki{animation:untie .55s ease forwards}
+@keyframes untie{
+  50%{transform:scaleX(1.06);opacity:1}
+  100%{transform:scaleX(1.15);opacity:0}
+}
+.letter.opening1 .closed{animation:cfade .4s ease .3s forwards}
+@keyframes cfade{to{opacity:0;transform:translateY(-6px)}}
 
-/* ============ 振り返り画面（書く側） ============ */
-.g-box{background:var(--surface);border:1px solid var(--hairline);border-radius:16px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--ink-soft)}
-.reflect-box textarea{width:100%;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:14px;padding:14px;font-family:var(--mincho);font-size:15px;line-height:1.9;min-height:110px;color:var(--ink)}
-.reflect-box textarea::placeholder{color:var(--muted);font-family:var(--mincho)}
-/* あしたのわたしへ（伝言欄） */
-.dengon{margin-top:16px}
-.dengon .d-label{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:7px}
-.dengon .d-label .seal-mini{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
-.dengon textarea{width:100%;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7;min-height:52px}
-.dengon textarea::placeholder{color:var(--muted)}
-.dengon .d-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6}
-.save-btn{width:100%;margin-top:18px;background:var(--accent);color:#fff;font-family:var(--mincho);font-size:15px;letter-spacing:.14em;padding:15px;border-radius:14px}
+/* ============ 案2：折り便箋をひらく ============ */
+.fold-card{position:relative;background:var(--card);border:1px solid var(--hairline-strong);border-radius:14px;
+  padding:16px 18px;text-align:center;cursor:pointer;transition:transform .15s;overflow:hidden}
+.fold-card:active{transform:scale(.985)}
+/* 三つ折りの折り目 */
+.fold-card::before,.fold-card::after{content:"";position:absolute;left:0;right:0;height:1px;background:var(--hairline)}
+.fold-card::before{top:33%}
+.fold-card::after{top:66%;background:linear-gradient(to right,var(--hairline) 60%,transparent 60%)}
+/* 右下の折り返し（ドッグイア） */
+.fold-card .ear{position:absolute;right:0;bottom:0;width:0;height:0;
+  border-style:solid;border-width:0 0 16px 16px;border-color:transparent transparent var(--paper) transparent;
+  filter:drop-shadow(-1px -1px 1px rgba(0,0,0,.07))}
+.fold-card .cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;position:relative}
+.fold-card .cap b{color:var(--accent);font-weight:500}
+.fold-card .sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em;position:relative}
+.letter.opening2 .fold-card{animation:unfold .5s ease forwards;transform-origin:top center}
+@keyframes unfold{
+  40%{transform:scaleY(1.04)}
+  100%{opacity:0;transform:translateY(-6px)}
+}
 
-.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;padding:11px 20px;border-radius:999px;opacity:0;transition:all .3s;letter-spacing:.04em;pointer-events:none;z-index:9}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ============ 案3：しずかな一行 ============ */
+.quiet{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hairline-strong);
+  border-radius:14px;padding:14px 16px;cursor:pointer;transition:transform .15s;text-align:left}
+.quiet:active{transform:scale(.985)}
+.quiet .q-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.quiet .q-t{font-size:12px;color:var(--ink-soft);letter-spacing:.04em;flex:1}
+.quiet .q-open{font-size:11px;color:var(--accent);letter-spacing:.06em;flex-shrink:0}
+.letter.opening3 .quiet{animation:cfade .35s ease forwards}
 </style>
 </head>
 <body>
 
-<div class="panel-label">① 呟き画面 — きのうの伝言を受け取る（封蝋をタップ）</div>
+<div class="panel-label">届いた伝言カードのデザイン案（それぞれタップで開封できます）</div>
+
+<div class="panel-label">案1 — 水引をほどく<br><span style="letter-spacing:.02em">祝儀袋や文に結ぶ紅の水引。結び目がほどけて、ひらく</span></div>
 <div class="app">
-  <div class="topbar">
-    <span class="brand">文</span>
-    <div class="screen-t">呟き</div>
-  </div>
-  <div class="pad">
-    <div class="daybar">‹　きょう　›</div>
-
-    <!-- 封筒カード -->
-    <div class="letter" id="letter">
-      <div class="envelope" id="envelope" role="button" aria-label="伝言を開く">
-        <div class="flap"></div>
-        <div class="seal">文</div>
-        <div class="env-cap">きのうのわたしから、文が届いています</div>
-        <div class="env-sub">封蝋にふれて、ひらく</div>
-      </div>
-      <div class="note">
-        <div class="n-meta">きのうのわたしから</div>
-        <div class="n-text">8時に資源ごみを出すこと。それから、昨日は少し飲みすぎたから今日は休肝日に。夜には頼んでいた本が届くよ。</div>
-        <button class="n-fold" id="foldBtn">たたむ</button>
-      </div>
-      <button class="mini" id="miniBtn"><span class="dot"></span>きのうのわたしから — タップで読み返す</button>
+  <div class="letter" id="l1">
+    <div class="closed">
+      <svg class="mizuhiki" viewBox="0 0 300 30" aria-hidden="true">
+        <path d="M0 15 H118 C132 15 130 5 143 5 C158 5 158 25 143 25 C130 25 132 15 146 15 C160 15 158 5 171 5 C186 5 186 25 171 25 C158 25 160 15 174 15 H300"/>
+      </svg>
+      <div class="cap">きのうのわたしから、文が届いています</div>
+      <div class="sub">結びをほどいて、ひらく</div>
     </div>
-
-    <div class="compose">
-      <textarea rows="1" placeholder="いま、なにを思ってる?"></textarea>
-      <button class="post">のこす</button>
+    <div class="note">
+      <div class="n-meta">きのうのわたしから</div>
+      <div class="n-text">8時に資源ごみを出すこと。それから、昨日は少し飲みすぎたから今日は休肝日に。夜には頼んでいた本が届くよ。</div>
+      <button class="n-fold">たたむ</button>
     </div>
+    <button class="mini"><span class="dot"></span>きのうのわたしから — タップで読み返す</button>
   </div>
 </div>
 
-<div class="panel-label">② 振り返り画面 — あしたのわたしへ伝言を書く</div>
+<div class="panel-label">案2 — 折り便箋をひらく<br><span style="letter-spacing:.02em">三つ折りの便箋。折り目と、右下の折り返しだけ。飾りは最小</span></div>
 <div class="app">
-  <div class="topbar">
-    <span class="brand">文</span>
-    <div class="screen-t">振り返り</div>
-  </div>
-  <div class="pad">
-    <div class="daybar">‹　きょう　›</div>
-    <div class="g-box">きょう集めた呟き（2件）…</div>
-    <div class="reflect-box">
-      <textarea placeholder="ゆっくり、書きたいことを。"></textarea>
+  <div class="letter" id="l2">
+    <div class="fold-card closed2">
+      <span class="ear"></span>
+      <div class="cap"><b>きのうのわたし</b>から、文が届いています</div>
+      <div class="sub">ひらいて、よむ</div>
     </div>
-
-    <!-- あしたのわたしへ（伝言欄） -->
-    <div class="dengon">
-      <div class="d-label"><span class="seal-mini"></span>あしたのわたしへ、ひとこと</div>
-      <textarea id="dengonInput" rows="2" placeholder="あしたのわたしに、伝えておきたいこと"></textarea>
-      <div class="d-hint">あしたの朝、呟き画面に封をして届きます。書かなくても文は出せます。</div>
+    <div class="note">
+      <div class="n-meta">きのうのわたしから</div>
+      <div class="n-text">8時に資源ごみを出すこと。それから、昨日は少し飲みすぎたから今日は休肝日に。夜には頼んでいた本が届くよ。</div>
+      <button class="n-fold">たたむ</button>
     </div>
-
-    <button class="save-btn" id="saveBtn">あしたへ文を出す</button>
+    <button class="mini"><span class="dot"></span>きのうのわたしから — タップで読み返す</button>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="panel-label">案3 — しずかな一行<br><span style="letter-spacing:.02em">演出なし。紅の点と一行だけ。いちばん控えめ</span></div>
+<div class="app">
+  <div class="letter" id="l3">
+    <button class="quiet closed3">
+      <span class="q-dot"></span>
+      <span class="q-t">きのうのわたしから、文が届いています</span>
+      <span class="q-open">ひらく</span>
+    </button>
+    <div class="note">
+      <div class="n-meta">きのうのわたしから</div>
+      <div class="n-text">8時に資源ごみを出すこと。それから、昨日は少し飲みすぎたから今日は休肝日に。夜には頼んでいた本が届くよ。</div>
+      <button class="n-fold">たたむ</button>
+    </div>
+    <button class="mini"><span class="dot"></span>きのうのわたしから — タップで読み返す</button>
+  </div>
+</div>
 
 <script>
-const letter=document.getElementById('letter');
-const envelope=document.getElementById('envelope');
-
-// 開封：封蝋が割れる → 封筒が消える → 便箋がひらく
-envelope.addEventListener('click',()=>{
-  if(letter.classList.contains('opening')) return;
-  letter.classList.add('opening');
-  setTimeout(()=>{ letter.classList.remove('opening'); letter.classList.add('open'); }, 720);
-});
-// たたむ → 一行に。タップで読み返し
-document.getElementById('foldBtn').onclick=()=>{ letter.classList.remove('open'); letter.classList.add('folded'); };
-document.getElementById('miniBtn').onclick=()=>{ letter.classList.remove('folded'); letter.classList.add('open'); };
-
-// 書く側
-let toastT;
-function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2000); }
-document.getElementById('saveBtn').onclick=()=>{
-  const v=document.getElementById('dengonInput').value.trim();
-  toast(v?'あしたへ文を出しました（伝言つき）':'あしたへ文を出しました');
-};
-const di=document.getElementById('dengonInput');
-di.addEventListener('input',()=>{ di.style.height='auto'; di.style.height=di.scrollHeight+'px'; });
+function wire(id, openingClass, closedSel, delay){
+  const l=document.getElementById(id);
+  const closed=l.querySelector(closedSel);
+  closed.addEventListener('click',()=>{
+    if(l.classList.contains(openingClass)||l.classList.contains('open')) return;
+    l.classList.add(openingClass);
+    setTimeout(()=>{ l.classList.remove(openingClass); l.classList.add('open'); }, delay);
+  });
+  l.querySelector('.n-fold').onclick=()=>{ l.classList.remove('open'); l.classList.add('folded'); };
+  l.querySelector('.mini').onclick=()=>{ l.classList.remove('folded'); l.classList.add('open'); };
+}
+wire('l1','opening1','.closed',680);
+wire('l2','opening2','.fold-card',500);
+wire('l3','opening3','.quiet',330);
 </script>
 </body>
 </html>
