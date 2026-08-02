@@ -4,7 +4,7 @@
    重要：ユーザーデータ（IndexedDB）は SW の管轄外。ここでは一切触れない。
         キャッシュの更新・削除をしても IndexedDB は消えない（別枠）。 */
 
-const CACHE = 'shiori-shell-v13';
+const CACHE = 'shiori-shell-v14';
 
 // プリキャッシュするアプリ本体。バージョンを上げたら CACHE 名も上げる。
 const SHELL = [
@@ -27,7 +27,10 @@ const SHELL = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(SHELL))
+      // cache:'reload' でブラウザのHTTPキャッシュを飛ばし、必ずネットワークから
+      // 最新を取る。これが無いと、新バージョンのSWが「HTTPキャッシュに残った
+      // 古い app.js 等」をプリキャッシュしてしまい、更新が反映されない。
+      .then((c) => Promise.all(SHELL.map((u) => c.add(new Request(u, { cache: 'reload' })))))
       .then(() => self.skipWaiting())
   );
 });

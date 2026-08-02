@@ -1358,9 +1358,16 @@ document.addEventListener('focusout', (e)=>{
 /* ============ PWA: service worker 登録 ============ */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('service-worker.js')
+    navigator.serviceWorker.register('service-worker.js', {updateViaCache:'none'})
       .then(reg=>console.log('[shiori] SW registered:', reg.scope))
       .catch(err=>console.warn('[shiori] SW register failed:', err));
+  });
+  // 新しいSWが有効になったら一度だけ再読み込みして、その場で新版に切り替える。
+  // （初回インストール時は再読み込みしない）
+  let hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!hadController){ hadController=true; return; }
+    location.reload();
   });
 }
 
