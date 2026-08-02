@@ -113,11 +113,21 @@
       <div class="reflect-box">
         <textarea id="reflectInput" placeholder="ゆっくり、書きたいことを。"></textarea>
       </div>
-      <!-- あしたのわたしへの伝言（今日のみ） -->
+      <!-- 未来のわたしへの伝言（今日のみ） -->
       <div class="dengon" id="dengonWrap">
-        <div class="d-label"><span class="d-dot"></span>あしたのわたしへ、ひとこと</div>
-        <textarea id="dengonInput" rows="2" placeholder="あしたのわたしに、伝えておきたいこと"></textarea>
-        <div class="d-hint">あしたの朝、呟き画面に結んで届きます。書かなくても文は出せます。</div>
+        <div class="d-label"><span class="d-dot"></span>未来のわたしへ、ひとこと</div>
+        <div class="dest-row">
+          <span class="dest-cap">あて先：</span>
+          <button class="dest-chip sel" id="destTomorrow" type="button">あした</button>
+          <button class="dest-chip" id="destPick" type="button">日付をえらぶ<input type="date" id="destDate" aria-label="あて先の日付" tabindex="-1"></button>
+        </div>
+        <div class="dest-note" id="destNote" style="display:none"></div>
+        <textarea id="dengonInput" rows="2" placeholder="その日のわたしに、伝えておきたいこと"></textarea>
+        <div class="d-hint">えらんだ日の朝、呟き画面に結んで届きます。書かなくても文は出せます。</div>
+        <div class="pending" id="pendingWrap" style="display:none">
+          <div class="p-title">結ばれている文</div>
+          <div id="pendingList"></div>
+        </div>
       </div>
       <button class="save-btn" id="saveReflect" disabled>あしたへ文を出す</button>
       <div class="saved-note" id="savedNote"></div>

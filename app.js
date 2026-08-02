@@ -433,8 +433,39 @@ async function postMurmur(){
   toast(isToday?'呟きをのこしました':murmurDayLabel()+'に呟きをのこしました');
 }
 
-/* ============ 伝言（きのうのわたしから） ============ */
-let dengonState=null;   // 表示中の伝言の { ds }
+/* ============ 伝言（未来のわたしへ／過去のわたしから） ============
+   宛先の日付を選んで文を結べる。保存は journal:letters（宛先日ごとに1通）：
+   [{from:'YYYY-MM-DD', to:'YYYY-MM-DD', text, ts, readAt?}] */
+let LETTERS=[];
+let dengonState=null;      // 表示中の伝言 { to }
+let dengonDest='tomorrow'; // 書く側のあて先（'tomorrow' | 'YYYY-MM-DD'）
+async function loadLetters(){ LETTERS=(await Store.get('journal:letters'))||[]; }
+async function saveLetters(){ await Store.set('journal:letters', LETTERS); }
+// 旧形式（day.toTomorrow）を journal:letters へ吸収する（初回・復元後）。
+async function absorbToTomorrow(){
+  const keys=await Store.listDays();
+  let changed=false;
+  for(const k of keys){
+    const day=await Store.get(k);
+    if(day && day.toTomorrow && day.toTomorrow.text){
+      const ds=k.slice('journal:day:'.length);
+      const [y,m,d]=ds.split('-').map(Number);
+      const to=fmtKey(new Date(y,m-1,d+1));
+      if(!LETTERS.some(l=>l.to===to)){
+        const e={from:ds, to, text:day.toTomorrow.text, ts:day.toTomorrow.ts||0};
+        if(day.toTomorrow.readAt) e.readAt=day.toTomorrow.readAt;
+        LETTERS.push(e);
+      }
+      delete day.toTomorrow;
+      await Store.set(k,day);
+      changed=true;
+    }
+  }
+  if(changed) await saveLetters();
+}
+function tomorrowKey(){ const d=new Date(today); d.setDate(d.getDate()+1); return fmtKey(d); }
+function destKey(){ return dengonDest==='tomorrow'?tomorrowKey():dengonDest; }
+function jpMD(ds){ const [y,m,d]=ds.split('-').map(Number); return m+'月'+d+'日'; }
 // 書いた日から見た「◯前のわたし」ラベル
 function agoLabel(fromDs){
   const a=new Date(fromDs+'T00:00:00'), b=new Date(todayKey+'T00:00:00');
@@ -442,38 +473,43 @@ function agoLabel(fromDs){
   if(d<=1) return 'きのう';
   if(d<7) return d+'日前';
   if(d<30) return Math.floor(d/7)+'週間前';
-  return Math.floor(d/30)+'か月前';
+  if(d<365) return Math.floor(d/30)+'か月前';
+  return Math.floor(d/365)+'年前';
 }
-// 直近30日をさかのぼり、最後に結ばれた伝言を探す
-async function findLatestDengon(){
-  for(let i=1;i<=30;i++){
-    const dt=new Date(today); dt.setDate(dt.getDate()-i);
-    const ds=fmtKey(dt);
-    const day=await getDay(ds);
-    if(day.toTomorrow && day.toTomorrow.text) return {ds, day};
-  }
-  return null;
+// 今日から見た「◯後」ラベル（あて先表示用）
+function aheadLabel(toDs){
+  const d=Math.round((new Date(toDs+'T00:00:00')-new Date(todayKey+'T00:00:00'))/86400000);
+  if(d<=1) return 'あした';
+  if(d<7) return d+'日後';
+  if(d<30) return Math.floor(d/7)+'週間後';
+  if(d<365) return Math.floor(d/30)+'か月後';
+  return Math.floor(d/365)+'年後';
 }
-// 呟き画面（今日）の伝言カードを描画。未読なら水引、既読（今日読んだ）なら畳んだ一行。
-async function renderDengon(){
+// 呟き画面（今日）の伝言カードを描画。
+// 宛先日が来た未読の文（複数あれば宛先の新しい順に1通ずつ）→ 水引。今日読んだ文 → 畳んだ一行。
+function renderDengon(){
   const wrap=document.getElementById('dengonLetter');
   if(!wrap) return;
   wrap.style.display='none';
   wrap.classList.remove('open','folded','opening');
   dengonState=null;
   if(murmurDay!==todayKey) return;
-  const found=await findLatestDengon();
-  if(!found) return;
-  const t=found.day.toTomorrow;
-  const readToday = t.readAt && fmtKey(new Date(t.readAt))===todayKey;
-  if(t.readAt && !readToday) return;   // 以前の日に読み終えた伝言はもう出さない
-  dengonState={ds:found.ds};
-  const who=agoLabel(found.ds)+'のわたしから';
+  const arrived=LETTERS.filter(l=>l.to<=todayKey && l.text);
+  let t=arrived.filter(l=>!l.readAt).sort((a,b)=>a.to<b.to?1:-1)[0];
+  let folded=false;
+  if(!t){
+    t=arrived.find(l=>l.readAt && fmtKey(new Date(l.readAt))===todayKey);
+    folded=!!t;
+  }
+  if(!t) return;
+  dengonState={to:t.to};
+  const ago=agoLabel(t.from);
+  const who=(ago==='きのう'?'きのう':jpMD(t.from))+'のわたしから';
   document.getElementById('dgCap').textContent=who+'、文が届いています';
-  document.getElementById('dgFrom').textContent=who;
+  document.getElementById('dgFrom').textContent=who+(ago==='きのう'?'':'（'+ago+'）');
   document.getElementById('dgMiniLabel').textContent=who+' — タップで読み返す';
   document.getElementById('dgText').textContent=t.text;
-  if(readToday) wrap.classList.add('folded');
+  if(folded) wrap.classList.add('folded');
   wrap.style.display='block';
 }
 // 開封：水引がほどける → 便箋。既読を保存。
@@ -483,9 +519,57 @@ async function openDengon(){
   wrap.classList.add('opening');
   setTimeout(()=>{ wrap.classList.remove('opening'); wrap.classList.add('open'); }, 680);
   if(dengonState){
-    const d=await getDay(dengonState.ds);
-    if(d.toTomorrow && !d.toTomorrow.readAt){ d.toTomorrow.readAt=Date.now(); await setDay(dengonState.ds,d); }
+    const l=LETTERS.find(x=>x.to===dengonState.to);
+    if(l && !l.readAt){ l.readAt=Date.now(); await saveLetters(); }
   }
+}
+/* --- 書く側（振り返り画面）：あて先と結ばれている文 --- */
+function setDengonDest(v){
+  dengonDest=v;
+  const chipT=document.getElementById('destTomorrow');
+  const chipP=document.getElementById('destPick');
+  const note=document.getElementById('destNote');
+  const isT=v==='tomorrow';
+  chipT.classList.toggle('sel',isT);
+  chipP.classList.toggle('sel',!isT);
+  chipP.firstChild.textContent=isT?'日付をえらぶ':jpMD(v);
+  if(isT){ note.style.display='none'; }
+  else { note.textContent=jpMD(v)+'（'+aheadLabel(v)+'）のわたしへ'; note.style.display='block'; }
+  // あて先の日に結ばれている文があれば呼び出す（上書き編集）
+  const dgEl=document.getElementById('dengonInput');
+  if(dgEl){
+    const ex=LETTERS.find(l=>l.to===destKey());
+    dgEl.value=ex?ex.text:'';
+    dgEl.style.height='auto'; dgEl.style.height=dgEl.scrollHeight+'px';
+  }
+  updateSaveBtn();
+}
+// 結ばれている文（今日以降に届く文）の一覧
+function renderPending(){
+  const wrap=document.getElementById('pendingWrap'), list=document.getElementById('pendingList');
+  if(!wrap||!list) return;
+  const pend=LETTERS.filter(l=>l.to>todayKey && l.text).sort((a,b)=>a.to<b.to?-1:1);
+  wrap.style.display=pend.length?'block':'none';
+  list.innerHTML='';
+  pend.forEach(l=>{
+    const el=document.createElement('div');
+    el.className='p-item';
+    el.innerHTML=`
+      <svg class="p-knot" viewBox="0 0 22 14" aria-hidden="true"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>
+      <div class="p-body">
+        <div class="p-to">${jpMD(l.to)}（${aheadLabel(l.to)}）のわたしへ</div>
+        <div class="p-text"></div>
+      </div>
+      <button class="p-undo" type="button">解く</button>`;
+    el.querySelector('.p-text').textContent=l.text;
+    el.querySelector('.p-undo').onclick=async()=>{
+      LETTERS=LETTERS.filter(x=>x.to!==l.to);
+      await saveLetters();
+      renderPending(); setDengonDest(dengonDest);
+      toast('結びを解きました');
+    };
+    list.appendChild(el);
+  });
 }
 
 /* ============ reflection ============ */
@@ -523,8 +607,8 @@ async function loadReflection(){
   } else {
     inp.value=''; note.textContent='';
   }
-  const dgEl=document.getElementById('dengonInput');
-  if(dgEl) dgEl.value=(day.toTomorrow&&day.toTomorrow.text)||'';
+  // 伝言のあて先を「あした」に戻し、結ばれている文を読み込む
+  if(murmurDay===todayKey && document.getElementById('dengonInput')){ setDengonDest('tomorrow'); renderPending(); }
   updateSaveBtn();
 }
 async function saveReflection(){
@@ -540,15 +624,23 @@ async function saveReflection(){
     if(!isToday) day.reflection.late=true;   // 過去日にあとから挟んだ振り返り
     if(prev.source) day.reflection.source=prev.source;
   }
-  // あしたへの伝言（今日のみ・1通・上書き。空にして保存すると取り消し）
-  if(isToday && dgEl){
-    if(dgTxt) day.toTomorrow={text:dgTxt, ts:Date.now()};
-    else if(day.toTomorrow) delete day.toTomorrow;
-  }
   await setDay(murmurDay,day);
+  // 未来のわたしへの伝言（今日のみ・宛先日ごとに1通・上書き。空にして保存すると取り消し）
+  let dgToast='';
+  if(isToday && dgEl){
+    const to=destKey();
+    const had=LETTERS.some(l=>l.to===to);
+    LETTERS=LETTERS.filter(l=>l.to!==to);
+    if(dgTxt){
+      LETTERS.push({from:todayKey, to, text:dgTxt, ts:Date.now()});
+      dgToast = to===tomorrowKey() ? 'あしたへ伝言を結びました' : jpMD(to)+'のわたしへ、文を結びました';
+    }
+    if(dgTxt||had) await saveLetters();
+    renderPending();
+  }
   if(txt) document.getElementById('savedNote').textContent='保存済み — いつでも書き直せます';
   refreshMeta();
-  toast(isToday?(dgTxt&&!txt?'あしたへ伝言を結びました':'あしたへ文を出しました'):murmurDayLabel()+'から文を出しました');
+  toast(txt ? (isToday?'あしたへ文を出しました':murmurDayLabel()+'から文を出しました') : dgToast||'あしたへ文を出しました');
 }
 
 /* ============ ai reflection draft (share bridge) ============ */
@@ -638,10 +730,13 @@ async function openDetail(ds){
     html+=`<div class="sb-section-label">振り返り${rbadge}${rlate}</div>`;
     html+=`<div class="sb-reflect">${escapeHtml(day.reflection.text)}</div>`;
   }
-  if(day.toTomorrow && day.toTomorrow.text){
+  const sentLetters=LETTERS.filter(l=>l.from===ds && l.text).sort((a,b)=>a.to<b.to?-1:1);
+  if(sentLetters.length){
     const mt=html?' style="margin-top:22px"':'';
-    html+=`<div class="sb-section-label"${mt}>あしたへの伝言</div>`;
-    html+=`<div class="sb-dengon">${escapeHtml(day.toTomorrow.text)}</div>`;
+    html+=`<div class="sb-section-label"${mt}>伝言</div>`;
+    sentLetters.forEach(l=>{
+      html+=`<div class="sb-dengon"><span class="sb-dengon-to">${jpMD(l.to)}のわたしへ</span>${escapeHtml(l.text)}</div>`;
+    });
   }
   if(day.murmurs.length){
     const mt=html?' style="margin-top:22px"':'';
@@ -652,7 +747,7 @@ async function openDetail(ds){
       html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}${ech}</span></div>`;
     });
   }
-  if(!day.murmurs.length && !day.reflection && !(day.toTomorrow&&day.toTomorrow.text)){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
+  if(!day.murmurs.length && !day.reflection && !sentLetters.length){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
   body.innerHTML=html;
   body.scrollTop=0;
   document.getElementById('overlay').classList.add('show');
@@ -754,7 +849,8 @@ async function buildExportMd(fromDs,toDs){
   while(d<=end){
     const ds=fmtKey(d);
     const day=await getDay(ds);
-    if((day.murmurs&&day.murmurs.length)||day.reflection||(day.toTomorrow&&day.toTomorrow.text)){
+    const sentL=LETTERS.filter(l=>l.from===ds && l.text).sort((a,b)=>a.to<b.to?-1:1);
+    if((day.murmurs&&day.murmurs.length)||day.reflection||sentL.length){
       has=true;
       out+=`\n## ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${WD[d.getDay()]})\n`;
       if(day.murmurs&&day.murmurs.length){
@@ -767,9 +863,9 @@ async function buildExportMd(fromDs,toDs){
       if(day.reflection){
         out+=`\n### 振り返り${day.reflection.source==='hand'?'（手書き）':''}\n${day.reflection.text}\n`;
       }
-      if(day.toTomorrow&&day.toTomorrow.text){
-        out+=`\n### あしたへの伝言\n${day.toTomorrow.text}\n`;
-      }
+      sentL.forEach(l=>{
+        out+=`\n### ${jpMD(l.to)}のわたしへの伝言\n${l.text}\n`;
+      });
     }
     d.setDate(d.getDate()+1);
   }
@@ -943,6 +1039,15 @@ async function applyRestore(mode){
       if(k.startsWith('journal:day:')){
         const cur=await Store.get(k);
         await Store.set(k, cur?mergeDay(cur,data[k]):data[k]);
+      } else if(k==='journal:letters'){
+        // 伝言は宛先日ごとに新しい方を採用
+        const cur=(await Store.get(k))||[];
+        const map=new Map(cur.map(l=>[l.to,l]));
+        for(const l of (data[k]||[])){
+          const e=map.get(l.to);
+          if(!e || (l.ts||0)>(e.ts||0)) map.set(l.to,l);
+        }
+        await Store.set(k,[...map.values()]);
       } else {
         const cur=await Store.get(k);           // 設定・読み解きキャッシュは既存を尊重
         if(cur==null) await Store.set(k, data[k]);
@@ -951,7 +1056,9 @@ async function applyRestore(mode){
   }
   hideRestoreConfirm();
   closeSheets();
-  // 画面を作り直す
+  // 画面を作り直す（伝言は旧形式の吸収も含めて読み直す）
+  await loadLetters();
+  await absorbToTomorrow();
   await loadSettings();
   setMurmurDay(murmurDay);
   await refreshMeta();
@@ -1183,7 +1290,8 @@ function customRange(){
 }
 function digestArr(arr){
   return arr.map(o=>{
-    const day=o.day; if(!day.murmurs.length && !day.reflection && !(day.toTomorrow&&day.toTomorrow.text)) return null;
+    const sentL=LETTERS.filter(l=>l.from===o.ds && l.text);
+    const day=o.day; if(!day.murmurs.length && !day.reflection && !sentL.length) return null;
     const mur=day.murmurs.map(m=>{
       const ech=(m.echoes||[]).map(e=>e.text).join(' / ');
       return m.text+(ech?`（追伸: ${ech}）`:'');
@@ -1192,7 +1300,7 @@ function digestArr(arr){
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
     if(mur) s+=` 呟き:${mur}`;
     if(ref) s+=` 振り返り:${ref}`;
-    if(day.toTomorrow&&day.toTomorrow.text) s+=` 翌日への伝言:${day.toTomorrow.text}`;
+    if(sentL.length) s+=' 伝言:'+sentL.map(l=>`（${jpMD(l.to)}へ）${l.text}`).join(' / ');
     return s;
   }).filter(Boolean).join('\n');
 }
@@ -1365,6 +1473,8 @@ async function seedIfEmpty(){
 async function init(){
   await Store.init();
   await seedIfEmpty();
+  await loadLetters();
+  await absorbToTomorrow();   // 旧形式（day.toTomorrow）を journal:letters へ
   document.getElementById('todayDate').textContent=jpDate(today);
   await loadSettings();
   await renderFeed();
@@ -1404,12 +1514,20 @@ async function init(){
   document.getElementById('saveReflect').onclick=saveReflection;
   document.getElementById('aiDraftBtn').onclick=draftReflection;
 
-  // 伝言（あしたのわたしへ／きのうのわたしから）
+  // 伝言（未来のわたしへ／過去のわたしから）
   const dgIn=document.getElementById('dengonInput');
   dgIn.addEventListener('input',()=>{ dgIn.style.height='auto'; dgIn.style.height=dgIn.scrollHeight+'px'; updateSaveBtn(); });
+  // あて先の選択（あした／日付をえらぶ）
+  document.getElementById('destTomorrow').onclick=()=>setDengonDest('tomorrow');
+  const destDate=document.getElementById('destDate');
+  const dMin=new Date(today); dMin.setDate(dMin.getDate()+1);
+  destDate.min=fmtKey(dMin);
+  document.getElementById('destPick').onclick=()=>{ destDate.showPicker?destDate.showPicker():destDate.click(); };
+  destDate.onchange=()=>{ if(destDate.value && destDate.value>todayKey) setDengonDest(destDate.value); };
   document.getElementById('dgClosed').onclick=openDengon;
   document.getElementById('dgClosed').addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); openDengon(); } });
-  document.getElementById('dgFold').onclick=()=>{ const w=document.getElementById('dengonLetter'); w.classList.remove('open'); w.classList.add('folded'); };
+  // たたむ→再描画（次の未読の文があれば、続けて水引で届く）
+  document.getElementById('dgFold').onclick=()=>renderDengon();
   document.getElementById('dgMini').onclick=()=>{ const w=document.getElementById('dengonLetter'); w.classList.remove('folded'); w.classList.add('open'); };
 
   // nav
