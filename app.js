@@ -444,7 +444,9 @@ async function renderGathered(){
   [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
     const el=document.createElement('div');
     el.className='g-item';
-    el.innerHTML=`<span class="gd"></span><span>${escapeHtml(m.text)}</span>`;
+    // 追伸も内省の素材として、呟きの下に添える
+    const ech=(m.echoes||[]).map(e=>`<div class="g-echo"><span class="g-echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</span>${escapeHtml(e.text)}</div>`).join('');
+    el.innerHTML=`<span class="gd"></span><span>${escapeHtml(m.text)}${ech}</span>`;
     list.appendChild(el);
   });
 }
