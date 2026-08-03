@@ -1138,28 +1138,6 @@ function toast(msg){
 }
 
 /* ============ handwriting import ============ */
-let impState=null;   // {storeUrl, result, error}
-let revType='reflect', revDate=todayKey;
-
-function loadImage(file){
-  return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('decode')); im.src=r.result; };
-    r.onerror=()=>rej(new Error('read')); r.readAsDataURL(file);
-  });
-}
-function drawResize(img,max,q){
-  const c=document.createElement('canvas');
-  let w=img.width,h=img.height;
-  const s=Math.min(1,max/Math.max(w,h));
-  c.width=Math.round(w*s); c.height=Math.round(h*s);
-  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  return c.toDataURL('image/jpeg',q);
-}
-async function processImage(file){
-  const img=await loadImage(file);
-  return { storeUrl:drawResize(img,640,0.72) };
-}
 function openImportSheet(){
   document.getElementById('overlay').classList.add('show');
   document.getElementById('importSheet').classList.add('show');
@@ -1201,112 +1179,6 @@ function openBridge(opts){
 function insightHTML(text){
   return `<div class="u-review"><div class="u-insight">${escapeHtml(text)}</div><button class="u-regen" id="uRegen">AIに送り直す</button></div>`;
 }
-function defaultPromptFor(type){
-  return type==='murmur'
-    ? '添付の手書きメモを、書かれている日本語のとおりに文字起こししてください。結果の本文だけを返してください。'
-    : '添付の手書きの日記を文字起こしし、内容を数文でやさしく要約してください。結果の本文だけを返してください。';
-}
-function renderShareImport(){
-  revType=impState.defaultType || 'murmur';
-  revDate=murmurDay;   // 呟き・振り返りとも、選択中の日を既定にする
-  document.getElementById('impTitle').textContent='画像から取り込む';
-  document.getElementById('impSub').textContent='AIアプリに共有 → 結果を貼り付け';
-  const body=document.getElementById('importBody');
-  const canShare = !!(navigator.share);
-  body.innerHTML=`
-    ${impState.storeUrl?`<img class="imp-preview" src="${impState.storeUrl}">`:''}
-    <div class="imp-label">AIへのお願い（編集できます）</div>
-    <textarea class="imp-textarea" id="sharePrompt" style="min-height:76px;font-family:var(--sans);font-size:14px">${escapeHtml(defaultPromptFor(revType))}</textarea>
-    <div class="share-row">
-      <button class="r-action" id="shareBtn">${canShare?'AIアプリに共有':'お願いをコピー'}</button>
-      <button class="r-action" id="copyPromptBtn">お願いをコピー</button>
-    </div>
-    <div class="ai-note">「共有」を押すとお願いも自動でコピーされます。AIアプリで画像に添えて（必要なら貼り付けて）実行し、返ってきた文章をコピーして戻ってきてください。</div>
-
-    <div class="imp-divider">結果を貼り付け</div>
-    <div class="imp-label">しゅるい</div>
-    <div class="type-seg" id="revType">
-      <button data-t="murmur">呟き</button>
-      <button data-t="reflect">振り返り</button>
-    </div>
-    <div class="imp-label">AIの結果</div>
-    <textarea class="imp-textarea" id="pasteText" placeholder="ここにAIの文章を貼り付け"></textarea>
-    <div class="imp-label">この記録の日付</div>
-    <input type="date" class="imp-date" id="revDate" value="${revDate}" max="${todayKey}">
-    <button class="imp-confirm" id="impConfirm" disabled>取り込む</button>`;
-
-  const typeSeg=document.getElementById('revType');
-  const syncType=()=>[...typeSeg.children].forEach(b=>b.classList.toggle('sel',b.dataset.t===revType));
-  [...typeSeg.children].forEach(b=>b.onclick=()=>{ revType=b.dataset.t; syncType(); });
-  syncType();
-
-  document.getElementById('revDate').onchange=e=>{ revDate=e.target.value||todayKey; };
-
-  document.getElementById('shareBtn').onclick=doShare;
-  document.getElementById('copyPromptBtn').onclick=copyPrompt;
-
-  const paste=document.getElementById('pasteText');
-  const conf=document.getElementById('impConfirm');
-  const upd=()=>conf.disabled=!paste.value.trim();
-  paste.addEventListener('input',upd); upd();
-  conf.onclick=confirmImport;
-}
-async function doShare(){
-  const prompt=document.getElementById('sharePrompt').value;
-  // お願いは常にクリップボードにも入れておく（共有時にテキストが落ちても貼れるように）
-  try{ await navigator.clipboard.writeText(prompt); }catch(e){}
-  try{
-    if(navigator.canShare && impState.file && navigator.canShare({files:[impState.file]})){
-      await navigator.share({files:[impState.file], text:prompt});
-      toast('お願いはコピー済み。AIアプリで画像に添えて貼り付けを');
-    } else if(navigator.share){
-      await navigator.share({text:prompt});
-      toast('画像はAIアプリで手動添付してください');
-    } else {
-      toast('この環境は共有非対応。お願いをコピーしました');
-    }
-  }catch(e){ /* ユーザーがキャンセル */ }
-}
-async function copyPrompt(){
-  try{ await navigator.clipboard.writeText(document.getElementById('sharePrompt').value); toast('お願いをコピーしました'); }
-  catch(e){ toast('コピーできませんでした'); }
-}
-async function confirmImport(){
-  const text=document.getElementById('pasteText').value.trim();
-  if(!text) return;
-  const ds=revDate;
-  const day=await getDay(ds);
-  // 画像は AI アプリへの橋渡し（共有）専用。文字起こしした本文だけを残し、
-  // 画像そのものは保存しない（source:'hand' で手書き由来だけ記録に残す）。
-  if(revType==='murmur'){
-    const entry={id:'h'+Date.now(),text,ts:new Date(ds+'T12:00:00').getTime(),time:'✎',source:'hand'};
-    if(ds!==todayKey) entry.late=true;   // 過去日への取り込みは「あとから」（手入力と揃える）
-    day.murmurs.push(entry);
-  }else{
-    day.reflection={text,savedAt:Date.now(),source:'hand'};
-    if(ds!==todayKey) day.reflection.late=true;   // 過去日への取り込みは「あとから」
-  }
-  await setDay(ds,day);
-  closeSheets(); impState=null;
-  await renderFeed(); await refreshMeta();
-  if(document.getElementById('screen-history').classList.contains('active')) renderCalendar();
-  if(document.getElementById('screen-reflect').classList.contains('active')){ renderGathered(); loadReflection(); }
-  toast('取り込みました');
-}
-async function startImport(file, defaultType){
-  impState={storeUrl:null, file:file, defaultType:(defaultType||'murmur')};
-  openImportSheet();
-  document.getElementById('importBody').innerHTML=`<div class="imp-loading"><div class="spinner"></div><div class="lt">画像を読み込んでいます…</div></div>`;
-  try{
-    const {storeUrl}=await processImage(file);
-    impState.storeUrl=storeUrl;
-    renderShareImport();
-  }catch(err){
-    impState.storeUrl=null;
-    renderShareImport();
-  }
-}
-
 /* ============ image viewer ============ */
 function openImg(src){
   document.getElementById('imgFull').src=src;
@@ -1637,13 +1509,6 @@ async function init(){
   // sheets
   document.getElementById('overlay').onclick=closeSheets;
   document.getElementById('openSettings').onclick=openSettings;
-
-  // import (murmur / reflection)
-  const fileInput=document.getElementById('importFile');
-  let pendingType='murmur';
-  document.getElementById('importBtn').onclick=()=>{ pendingType='murmur'; fileInput.click(); };
-  document.getElementById('reflectImportBtn').onclick=()=>{ pendingType='reflect'; fileInput.click(); };
-  fileInput.onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(f) startImport(f,pendingType); };
 
   // image viewer
   document.getElementById('imgViewer').onclick=closeImg;
