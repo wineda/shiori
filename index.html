@@ -66,6 +66,14 @@
               <button class="henji-save" id="henjiSave" type="button">返事をのこす</button>
             </div>
           </div>
+          <!-- こころみのリレー：結果を書いたあと、次の日付へつづきを結べる -->
+          <div class="relay" id="relayRow" style="display:none">
+            <span class="relay-cap">つづきを結ぶ？</span>
+            <button class="relay-chip" type="button" data-d="3">3日後</button>
+            <button class="relay-chip" type="button" data-d="7">1週間後</button>
+            <button class="relay-chip" type="button" data-d="30">1か月後</button>
+          </div>
+          <div class="relay-done" id="relayDone" style="display:none"></div>
           <div class="note-foot">
             <button class="henji-btn" id="henjiBtn" type="button">返事を書く</button>
             <button class="henji-edit" id="henjiEditBtn" type="button" style="display:none">なおす</button>

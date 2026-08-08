@@ -539,6 +539,29 @@ function refreshHenji(l){
   btn.textContent=kk?'結果を書く':'返事を書く';
   btn.style.display=has?'none':'inline-block';
   edit.style.display=has?'inline-block':'none';
+  // こころみのリレー：結果を書いたあと、まだ結んでいなければ「つづきを結ぶ？」
+  const relayRow=document.getElementById('relayRow');
+  const relayDone=document.getElementById('relayDone');
+  if(relayRow&&relayDone){
+    const relayedTo=(l&&l.relayTo&&LETTERS.some(x=>x.to===l.relayTo))?l.relayTo:null;
+    relayRow.style.display=(has&&kk&&!relayedTo)?'flex':'none';
+    relayDone.style.display=relayedTo?'block':'none';
+    if(relayedTo) relayDone.textContent='つづき：'+jpMD(relayedTo)+'のわたしへ結ばれています';
+  }
+}
+// つづきを結ぶ：同じこころみの文を、n日後のわたしへもう一度
+async function relayKokoromi(days){
+  const l=currentDengonLetter();
+  if(!l||!l.kokoromi||!l.reply) return;
+  const dt=new Date(today); dt.setDate(dt.getDate()+days);
+  const to=fmtKey(dt);
+  if(LETTERS.some(x=>x.to===to)){ toast(jpMD(to)+'には、すでに文が結ばれています'); return; }
+  LETTERS.push({from:todayKey, to, text:l.text, ts:Date.now(), kokoromi:true});
+  l.relayTo=to;
+  await saveLetters();
+  refreshHenji(l);
+  renderPending();
+  toast(jpMD(to)+'のわたしへ、つづきを結びました');
 }
 // 返事の入力欄をひらく（書き直しにも使う）
 function openHenjiBox(){
@@ -648,6 +671,7 @@ function renderPending(){
       LETTERS=LETTERS.filter(x=>x.to!==l.to);
       await saveLetters();
       renderPending(); setDengonDest(dengonDest);
+      renderDengon();   // 呟き画面の便箋（つづきの表示など）も最新に
       toast('結びを解きました');
     };
     list.appendChild(el);
@@ -1488,6 +1512,10 @@ async function init(){
   destDate.onchange=()=>{ if(destDate.value && destDate.value>todayKey) setDengonDest(destDate.value); };
   // こころみの印
   document.getElementById('destKokoromi').onclick=()=>setDengonKokoromi(!dengonKokoromi);
+  // こころみのリレー（つづきを結ぶ）
+  document.querySelectorAll('#relayRow .relay-chip').forEach(b=>{
+    b.onclick=()=>relayKokoromi(parseInt(b.dataset.d,10));
+  });
   document.getElementById('dgClosed').onclick=openDengon;
   document.getElementById('dgClosed').addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); openDengon(); } });
   // たたむ→再描画（次の未読の文があれば、続けて水引で届く）
