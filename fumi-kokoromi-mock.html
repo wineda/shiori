@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>文 — こころみ（試し）のモック</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e9eae6}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px 12px 60px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+textarea{font-family:inherit}
+.panel-label{font-size:11px;color:#8a8f89;letter-spacing:.12em;align-self:center;text-align:center;line-height:1.8;max-width:400px}
+.panel-label b{color:var(--accent);font-weight:500}
+.app{width:100%;max-width:400px;background:var(--paper);border-radius:22px;box-shadow:0 8px 40px rgba(0,0,0,.10);padding:18px 20px 22px}
+
+/* ============ 書く側 ============ */
+.d-label{font-size:12px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.d-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block}
+.dest-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.dest-cap{font-size:11px;color:var(--muted)}
+.chip{font-size:12px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hairline-strong);border-radius:999px;padding:7px 15px;letter-spacing:.04em;cursor:pointer}
+.chip.sel{color:var(--accent);border-color:var(--accent);background:var(--card)}
+/* こころみチップ（○が●になる） */
+.chip-kokoromi{display:inline-flex;align-items:center;gap:7px}
+.chip-kokoromi .mark{width:11px;height:11px;border-radius:50%;border:1.6px solid var(--muted);flex-shrink:0;transition:all .18s}
+.chip-kokoromi.sel .mark{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 2px var(--card)}
+.dest-note{font-size:11px;color:var(--accent);letter-spacing:.04em;margin-bottom:8px}
+.dengon textarea{width:100%;resize:none;border:1px solid var(--hairline-strong);background:var(--card);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.7;min-height:58px;color:var(--ink);outline:none}
+.dengon textarea::placeholder{color:var(--muted)}
+.dengon textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.14)}
+.d-hint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.7}
+.d-hint em{font-style:normal;color:var(--ink-soft)}
+.save-btn{width:100%;margin-top:16px;background:var(--accent);color:#fff;font-family:var(--mincho);font-size:15px;letter-spacing:.14em;padding:14px;border-radius:14px}
+
+/* 結ばれている文 */
+.pending{margin-top:20px}
+.p-title{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.p-title::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.p-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:10px 13px;margin-bottom:8px}
+.p-knot{flex-shrink:0;width:22px;height:14px}
+.p-knot path{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round;opacity:.75}
+.p-body{flex:1;min-width:0}
+.p-to{font-size:11px;color:var(--accent);letter-spacing:.05em;display:flex;align-items:center;gap:6px}
+.p-text{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.badge-k{font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:0 5px;letter-spacing:.05em;opacity:.9}
+
+/* ============ 届く側 ============ */
+.dg-closed{position:relative;background:var(--surface);border:1px solid var(--hairline-strong);border-radius:16px;
+  padding:20px 18px 18px;text-align:center;cursor:pointer;transition:transform .15s;overflow:hidden}
+.dg-closed:active{transform:scale(.985)}
+.dg-cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em}
+.dg-sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+.dg-mizuhiki{display:block;margin:2px auto 12px;width:78%;height:30px}
+.dg-mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
+.letter.opening .dg-mizuhiki{animation:untie .55s ease forwards}
+@keyframes untie{50%{transform:scaleX(1.06)}100%{transform:scaleX(1.15);opacity:0}}
+.letter.opening .dg-closed{animation:cfade .4s ease .3s forwards}
+@keyframes cfade{to{opacity:0;transform:translateY(-6px)}}
+.dg-note{display:none;background:var(--card);border:1px solid var(--hairline-strong);border-radius:16px;padding:16px 18px 12px}
+.letter.open .dg-closed{display:none}
+.letter.open .dg-note{display:block;animation:noteIn .5s cubic-bezier(.22,.61,.36,1)}
+@keyframes noteIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dg-meta{font-size:10px;color:var(--accent);letter-spacing:.08em;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.dg-meta::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.dg-text{font-size:14px;line-height:1.8;color:var(--ink)}
+/* 返事＝結果 */
+.henji{margin-top:12px;padding-left:14px}
+.henji-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;margin-bottom:2px}
+.henji-text{font-size:13px;line-height:1.75;color:var(--ink-soft)}
+.henji-box{margin-top:12px;padding-left:14px}
+.henji-cap{font-size:11px;color:var(--accent);letter-spacing:.05em;margin-bottom:6px}
+.henji-input{width:100%;resize:none;border:1px solid var(--hairline-strong);background:var(--surface);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.7;min-height:56px;color:var(--ink);outline:none}
+.henji-input::placeholder{color:var(--muted)}
+.henji-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.15)}
+.henji-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.henji-actions button{font-size:12px;border-radius:999px;padding:6px 16px;border:1px solid var(--hairline)}
+.henji-cancel{color:var(--ink-soft);background:var(--surface)}
+.henji-save{color:#fff;background:var(--accent);border-color:var(--accent)}
+.note-foot{display:flex;align-items:center;margin-top:10px}
+.henji-btn{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:5px 14px;letter-spacing:.05em}
+.dg-fold{margin-left:auto;font-size:11px;color:var(--muted);padding:4px 8px}
+
+/* ============ 記録（履歴） ============ */
+.sb-label{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:10px}
+.sb-dengon{font-size:13px;line-height:1.8;color:var(--ink-soft)}
+.sb-to{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:2px}
+.sb-henji{margin-top:6px;padding-left:13px;font-size:13px;line-height:1.7;color:var(--ink-soft)}
+.sb-henji-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;padding:11px 20px;border-radius:999px;opacity:0;transition:all .3s;letter-spacing:.04em;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="panel-label">① 書く — 伝言に<b>こころみ</b>の印をつける<br>チップを押して、ON／OFFの違いを見てください</div>
+<div class="app">
+  <div class="dengon">
+    <div class="d-label"><span class="d-dot"></span><span id="dLabel">未来のわたしへ、ひとこと</span></div>
+    <div class="dest-row">
+      <span class="dest-cap">あて先：</span>
+      <button class="chip sel" id="chipT">あした</button>
+      <button class="chip" id="chipD">1週間後</button>
+    </div>
+    <div class="dest-row">
+      <button class="chip chip-kokoromi" id="chipK"><span class="mark"></span>こころみにする</button>
+    </div>
+    <div class="dest-note" id="destNote">8月9日（1週間後）のわたしへ</div>
+    <textarea id="dgInput" rows="2" placeholder="その日のわたしに、伝えておきたいこと"></textarea>
+    <div class="d-hint" id="dHint">えらんだ日の朝、呟き画面に結んで届きます。</div>
+    <button class="save-btn" id="saveBtn">この日へ結ぶ</button>
+
+    <div class="pending">
+      <div class="p-title">結ばれている文</div>
+      <div id="pendingList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-label">② 届く — その日、<b>過去の自分が訊いてくる</b><br>水引をタップ → ひらく → 結果をのこす</div>
+<div class="app">
+  <div class="letter" id="letter">
+    <div class="dg-closed" id="dgClosed">
+      <svg class="dg-mizuhiki" viewBox="0 0 300 30" aria-hidden="true">
+        <path d="M0 15 H118 C132 15 130 5 143 5 C158 5 158 25 143 25 C130 25 132 15 146 15 C160 15 158 5 171 5 C186 5 186 25 171 25 C158 25 160 15 174 15 H300"/>
+      </svg>
+      <div class="dg-cap">7月26日のわたしから、<b style="color:var(--accent);font-weight:500">こころみ</b>の文が届いています</div>
+      <div class="dg-sub">結びをほどいて、ひらく</div>
+    </div>
+    <div class="dg-note">
+      <div class="dg-meta"><span>7月26日のわたしから（1週間前）</span><span class="badge-k">こころみ</span></div>
+      <div class="dg-text">今週は、夜11時に寝てみる。ちゃんと眠れて、朝がラクになったかな?</div>
+
+      <div class="henji" id="henjiView" style="display:none">
+        <div class="henji-meta">↩ きょうのわたしより、結果</div>
+        <div class="henji-text" id="henjiText"></div>
+      </div>
+
+      <div class="henji-box" id="henjiBox" style="display:none">
+        <div class="henji-cap">やってみて、どうだった?</div>
+        <textarea class="henji-input" id="henjiInput" placeholder="できたこと、できなかったこと。気づいたこと"></textarea>
+        <div class="henji-actions">
+          <button class="henji-cancel" id="henjiCancel" type="button">やめる</button>
+          <button class="henji-save" id="henjiSave" type="button">結果をのこす</button>
+        </div>
+      </div>
+
+      <div class="note-foot">
+        <button class="henji-btn" id="henjiBtn" type="button">結果を書く</button>
+        <button class="dg-fold" id="dgFold" type="button">たたむ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-label">③ 残る — 履歴に「やってみたこと」と「どうだったか」が一対で</div>
+<div class="app">
+  <div class="sb-label">7月26日（日）</div>
+  <div class="sb-dengon">
+    <span class="sb-to">8月2日のわたしへ <span class="badge-k">こころみ</span></span>
+    今週は、夜11時に寝てみる。ちゃんと眠れて、朝がラクになったかな?
+    <div class="sb-henji">
+      <span class="sb-henji-meta">↩ 8月2日のわたしより、結果</span>
+      4日はできた。3日は無理だった。でも朝の重さは明らかに違う。来週も続けてみる。
+    </div>
+  </div>
+</div>
+
+<div class="panel-label">アプリはあなたを評価しません。<br><b>1週間前のあなたが、訊いてくるだけ</b>です。</div>
+
+<script>
+let dest='1week', kokoromi=false;
+const chipT=document.getElementById('chipT'), chipD=document.getElementById('chipD'), chipK=document.getElementById('chipK');
+const dLabel=document.getElementById('dLabel'), note=document.getElementById('destNote');
+const input=document.getElementById('dgInput'), hint=document.getElementById('dHint'), saveBtn=document.getElementById('saveBtn');
+
+function syncWrite(){
+  chipT.classList.toggle('sel',dest==='tomorrow');
+  chipD.classList.toggle('sel',dest==='1week');
+  note.textContent = dest==='tomorrow' ? 'あしたのわたしへ' : '8月9日（1週間後）のわたしへ';
+  chipK.classList.toggle('sel',kokoromi);
+  if(kokoromi){
+    dLabel.textContent='未来のわたしへ、こころみの文';
+    input.placeholder='やってみること。そして、確かめたいこと';
+    hint.innerHTML='えらんだ日の朝、届きます。その日の返事が、そのまま結果になります。<br>例）<em>今週は夜11時に寝てみる。朝がラクになったかな?</em>';
+    saveBtn.textContent='こころみを結ぶ';
+  }else{
+    dLabel.textContent='未来のわたしへ、ひとこと';
+    input.placeholder='その日のわたしに、伝えておきたいこと';
+    hint.innerHTML='えらんだ日の朝、呟き画面に結んで届きます。';
+    saveBtn.textContent='この日へ結ぶ';
+  }
+}
+chipT.onclick=()=>{ dest='tomorrow'; syncWrite(); };
+chipD.onclick=()=>{ dest='1week'; syncWrite(); };
+chipK.onclick=()=>{ kokoromi=!kokoromi; syncWrite(); };
+
+let pending=[{to:'8月9日', ago:'1週間後', text:'今週は夜11時に寝てみる。朝がラクになったかな?', k:true}];
+const list=document.getElementById('pendingList');
+function renderPending(){
+  list.innerHTML='';
+  pending.forEach(it=>{
+    const el=document.createElement('div');
+    el.className='p-item';
+    el.innerHTML=`<svg class="p-knot" viewBox="0 0 22 14"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>
+      <div class="p-body">
+        <div class="p-to">${it.to}（${it.ago}）のわたしへ ${it.k?'<span class="badge-k">こころみ</span>':''}</div>
+        <div class="p-text"></div>
+      </div>`;
+    el.querySelector('.p-text').textContent=it.text;
+    list.appendChild(el);
+  });
+}
+renderPending();
+saveBtn.onclick=()=>{
+  const v=input.value.trim(); if(!v){ input.focus(); return; }
+  pending.push({to: dest==='tomorrow'?'8月3日':'8月9日', ago: dest==='tomorrow'?'あした':'1週間後', text:v, k:kokoromi});
+  input.value=''; renderPending();
+  toast(kokoromi?'こころみを結びました':'文を結びました');
+};
+
+/* 届く側 */
+const letter=document.getElementById('letter');
+document.getElementById('dgClosed').onclick=()=>{
+  if(letter.classList.contains('opening')||letter.classList.contains('open')) return;
+  letter.classList.add('opening');
+  setTimeout(()=>{ letter.classList.remove('opening'); letter.classList.add('open'); },680);
+};
+const view=document.getElementById('henjiView'), box=document.getElementById('henjiBox'), btn=document.getElementById('henjiBtn');
+btn.onclick=()=>{ box.style.display='block'; btn.style.display='none'; view.style.display='none'; document.getElementById('henjiInput').focus(); };
+document.getElementById('henjiCancel').onclick=()=>{ box.style.display='none'; btn.style.display='inline-block'; };
+document.getElementById('henjiSave').onclick=()=>{
+  const v=document.getElementById('henjiInput').value.trim();
+  if(!v){ document.getElementById('henjiInput').focus(); return; }
+  document.getElementById('henjiText').textContent=v;
+  view.style.display='block'; box.style.display='none';
+  toast('結果をのこしました');
+};
+document.getElementById('dgFold').onclick=()=>letter.classList.remove('open');
+
+let tt;
+function toast(m){ const t=document.getElementById('toastEl'); t.textContent=m; t.classList.add('show');
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2000); }
+syncWrite();
+</script>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>
