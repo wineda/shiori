@@ -229,6 +229,12 @@ textarea,input{font-family:inherit}
 .henji-actions button{font-size:12px;border-radius:999px;padding:6px 16px;border:1px solid var(--hairline)}
 .henji-cancel{color:var(--ink-soft);background:var(--surface)}
 .henji-save{color:#fff;background:var(--accent);border-color:var(--accent)}
+/* こころみのリレー（つづきを結ぶ） */
+.relay{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px;padding-left:14px}
+.relay-cap{font-size:11px;color:var(--ink-soft);letter-spacing:.04em}
+.relay-chip{font-size:11px;color:var(--accent);background:var(--surface);border:1px solid var(--hairline-strong);border-radius:999px;padding:5px 12px;letter-spacing:.04em;cursor:pointer}
+.relay-chip:active{background:var(--surface-2)}
+.relay-done{margin-top:10px;padding-left:14px;font-size:10px;color:var(--accent);letter-spacing:.05em;opacity:.9}
 .note-foot{display:flex;align-items:center;margin-top:10px}
 .henji-btn{font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:5px 14px;letter-spacing:.05em}
 .henji-edit{font-size:11px;color:var(--muted);padding:5px 10px}
