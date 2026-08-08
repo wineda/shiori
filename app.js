@@ -439,6 +439,7 @@ async function postMurmur(){
 let LETTERS=[];
 let dengonState=null;      // 表示中の伝言 { to }
 let dengonDest='tomorrow'; // 書く側のあて先（'tomorrow' | 'YYYY-MM-DD'）
+let dengonKokoromi=false;  // 書く側の「こころみ」印（やってみることを託す文）
 async function loadLetters(){ LETTERS=(await Store.get('journal:letters'))||[]; }
 async function saveLetters(){ await Store.set('journal:letters', LETTERS); }
 // 旧形式（day.toTomorrow）を journal:letters へ吸収する（初回・復元後）。
@@ -505,9 +506,10 @@ function renderDengon(){
   dengonState={to:t.to};
   const ago=agoLabel(t.from);
   const who=(ago==='きのう'?'きのう':jpMD(t.from))+'のわたしから';
-  document.getElementById('dgCap').textContent=who+'、文が届いています';
-  document.getElementById('dgFrom').textContent=who+(ago==='きのう'?'':'（'+ago+'）');
-  document.getElementById('dgMiniLabel').textContent=who+(t.reply&&t.reply.text?'（返事あり）':'')+' — タップで読み返す';
+  const kk=!!t.kokoromi;
+  document.getElementById('dgCap').innerHTML=escapeHtml(who)+'、'+(kk?'<b class="dg-kk">こころみ</b>の':'')+'文が届いています';
+  document.getElementById('dgFrom').innerHTML='<span>'+escapeHtml(who+(ago==='きのう'?'':'（'+ago+'）'))+'</span>'+(kk?'<span class="badge-k">こころみ</span>':'');
+  document.getElementById('dgMiniLabel').textContent=who+(t.reply&&t.reply.text?(kk?'（結果あり）':'（返事あり）'):'')+' — タップで読み返す';
   document.getElementById('dgText').textContent=t.text;
   refreshHenji(t);
   if(folded) wrap.classList.add('folded');
@@ -527,11 +529,14 @@ function refreshHenji(l){
   if(!view) return;
   box.style.display='none';
   const has=!!(l && l.reply && l.reply.text);
+  const kk=!!(l && l.kokoromi);
   view.style.display=has?'block':'none';
   if(has){
-    document.getElementById('henjiMeta').textContent=(l.reply.day===todayKey?'きょう':jpMD(l.reply.day))+'のわたしより、返事';
+    document.getElementById('henjiMeta').textContent=(l.reply.day===todayKey?'きょう':jpMD(l.reply.day))+'のわたしより、'+(kk?'結果':'返事');
     document.getElementById('henjiText').textContent=l.reply.text;
   }
+  // こころみの文には「結果」を訊く
+  btn.textContent=kk?'結果を書く':'返事を書く';
   btn.style.display=has?'none':'inline-block';
   edit.style.display=has?'inline-block':'none';
 }
@@ -540,7 +545,10 @@ function openHenjiBox(){
   const l=currentDengonLetter();
   if(!l) return;
   const ago=agoLabel(l.from);
-  document.getElementById('henjiCap').textContent=(ago==='きのう'?'きのう':jpMD(l.from))+'のわたしへ、返事';
+  const kk=!!l.kokoromi;
+  document.getElementById('henjiCap').textContent=kk?'やってみて、どうだった?':(ago==='きのう'?'きのう':jpMD(l.from))+'のわたしへ、返事';
+  document.getElementById('henjiInput').placeholder=kk?'できたこと、できなかったこと。気づいたこと':'この文をくれたわたしに、いま伝えたいこと';
+  document.getElementById('henjiSave').textContent=kk?'結果をのこす':'返事をのこす';
   document.getElementById('henjiView').style.display='none';
   document.getElementById('henjiBtn').style.display='none';
   document.getElementById('henjiEditBtn').style.display='none';
@@ -560,8 +568,9 @@ async function saveHenji(){
   await saveLetters();
   refreshHenji(l);
   const ago=agoLabel(l.from);
-  document.getElementById('dgMiniLabel').textContent=((ago==='きのう'?'きのう':jpMD(l.from))+'のわたしから（返事あり） — タップで読み返す');
-  toast((ago==='きのう'?'きのう':jpMD(l.from))+'のわたしへ、返事をのこしました');
+  const who=(ago==='きのう'?'きのう':jpMD(l.from))+'のわたし';
+  document.getElementById('dgMiniLabel').textContent=who+'から（'+(l.kokoromi?'結果':'返事')+'あり） — タップで読み返す';
+  toast(l.kokoromi?'こころみの結果をのこしました':who+'へ、返事をのこしました');
 }
 // 開封：水引がほどける → 便箋。既読を保存。
 async function openDengon(){
@@ -586,14 +595,36 @@ function setDengonDest(v){
   chipP.firstChild.textContent=isT?'日付をえらぶ':jpMD(v);
   if(isT){ note.style.display='none'; }
   else { note.textContent=jpMD(v)+'（'+aheadLabel(v)+'）のわたしへ'; note.style.display='block'; }
-  // あて先の日に結ばれている文があれば呼び出す（上書き編集）
+  // あて先の日に結ばれている文があれば呼び出す（こころみの印も一緒に戻す）
   const dgEl=document.getElementById('dengonInput');
   if(dgEl){
     const ex=LETTERS.find(l=>l.to===destKey());
     dgEl.value=ex?ex.text:'';
     dgEl.style.height='auto'; dgEl.style.height=dgEl.scrollHeight+'px';
+    // 既にその日へ結んだ文があればその印を、無ければ書きかけの意思をそのまま残す
+    setDengonKokoromi(ex?!!ex.kokoromi:dengonKokoromi);
   }
   updateSaveBtn();
+}
+// こころみ（やってみることを託す文）の印。見出し・書き出しの促しが変わる。
+function setDengonKokoromi(on){
+  dengonKokoromi=!!on;
+  const chip=document.getElementById('destKokoromi');
+  const label=document.getElementById('dengonLabel');
+  const input=document.getElementById('dengonInput');
+  const hint=document.getElementById('dengonHint');
+  if(!chip) return;
+  chip.classList.toggle('sel',dengonKokoromi);
+  chip.setAttribute('aria-pressed',dengonKokoromi?'true':'false');
+  if(dengonKokoromi){
+    label.textContent='未来のわたしへ、こころみの文';
+    input.placeholder='やってみること。そして、確かめたいこと';
+    hint.innerHTML='えらんだ日の朝、届きます。その日の返事が、そのまま結果になります。<br>例）<em>今週は夜11時に寝てみる。朝がラクになったかな?</em>';
+  }else{
+    label.textContent='未来のわたしへ、ひとこと';
+    input.placeholder='その日のわたしに、伝えておきたいこと';
+    hint.innerHTML='えらんだ日の朝、呟き画面に結んで届きます。書かなくても文は出せます。';
+  }
 }
 // 結ばれている文（今日以降に届く文）の一覧
 function renderPending(){
@@ -608,7 +639,7 @@ function renderPending(){
     el.innerHTML=`
       <svg class="p-knot" viewBox="0 0 22 14" aria-hidden="true"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>
       <div class="p-body">
-        <div class="p-to">${jpMD(l.to)}（${aheadLabel(l.to)}）のわたしへ</div>
+        <div class="p-to">${jpMD(l.to)}（${aheadLabel(l.to)}）のわたしへ${l.kokoromi?' <span class="badge-k">こころみ</span>':''}</div>
         <div class="p-text"></div>
       </div>
       <button class="p-undo" type="button">解く</button>`;
@@ -659,7 +690,8 @@ async function loadReflection(){
     inp.value=''; note.textContent='';
   }
   // 伝言のあて先を「あした」に戻し、結ばれている文を読み込む
-  if(murmurDay===todayKey && document.getElementById('dengonInput')){ setDengonDest('tomorrow'); renderPending(); }
+  // 画面に入るたび、あて先と印はまっさらから（結んだ文を選べば復元される）
+  if(murmurDay===todayKey && document.getElementById('dengonInput')){ dengonKokoromi=false; setDengonDest('tomorrow'); renderPending(); }
   updateSaveBtn();
 }
 async function saveReflection(){
@@ -683,8 +715,12 @@ async function saveReflection(){
     const had=LETTERS.some(l=>l.to===to);
     LETTERS=LETTERS.filter(l=>l.to!==to);
     if(dgTxt){
-      LETTERS.push({from:todayKey, to, text:dgTxt, ts:Date.now()});
-      dgToast = to===tomorrowKey() ? 'あしたへ伝言を結びました' : jpMD(to)+'のわたしへ、文を結びました';
+      const entry={from:todayKey, to, text:dgTxt, ts:Date.now()};
+      if(dengonKokoromi) entry.kokoromi=true;
+      LETTERS.push(entry);
+      dgToast = dengonKokoromi ? jpMD(to)+'のわたしへ、こころみを結びました'
+              : to===tomorrowKey() ? 'あしたへ伝言を結びました'
+              : jpMD(to)+'のわたしへ、文を結びました';
     }
     if(dgTxt||had) await saveLetters();
     renderPending();
@@ -786,8 +822,9 @@ async function openDetail(ds){
     const mt=html?' style="margin-top:22px"':'';
     html+=`<div class="sb-section-label"${mt}>伝言</div>`;
     sentLetters.forEach(l=>{
-      const rep=(l.reply&&l.reply.text)?`<div class="sb-henji"><span class="sb-henji-meta">↩ ${jpMD(l.reply.day)}のわたしより、返事</span>${escapeHtml(l.reply.text)}</div>`:'';
-      html+=`<div class="sb-dengon"><span class="sb-dengon-to">${jpMD(l.to)}のわたしへ</span>${escapeHtml(l.text)}${rep}</div>`;
+      const rep=(l.reply&&l.reply.text)?`<div class="sb-henji"><span class="sb-henji-meta">↩ ${jpMD(l.reply.day)}のわたしより、${l.kokoromi?'結果':'返事'}</span>${escapeHtml(l.reply.text)}</div>`:'';
+      const kk=l.kokoromi?' <span class="badge-k">こころみ</span>':'';
+      html+=`<div class="sb-dengon"><span class="sb-dengon-to">${jpMD(l.to)}のわたしへ${kk}</span>${escapeHtml(l.text)}${rep}</div>`;
     });
   }
   if(day.murmurs.length){
@@ -916,8 +953,8 @@ async function buildExportMd(fromDs,toDs){
         out+=`\n### 振り返り${day.reflection.source==='hand'?'（手書き）':''}\n${day.reflection.text}\n`;
       }
       sentL.forEach(l=>{
-        out+=`\n### ${jpMD(l.to)}のわたしへの伝言\n${l.text}\n`;
-        if(l.reply&&l.reply.text) out+=`↩ 返事（${jpMD(l.reply.day)}）: ${l.reply.text}\n`;
+        out+=`\n### ${jpMD(l.to)}のわたしへの${l.kokoromi?'こころみ':'伝言'}\n${l.text}\n`;
+        if(l.reply&&l.reply.text) out+=`↩ ${l.kokoromi?'結果':'返事'}（${jpMD(l.reply.day)}）: ${l.reply.text}\n`;
       });
     }
     d.setDate(d.getDate()+1);
@@ -1225,7 +1262,7 @@ function digestArr(arr){
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
     if(mur) s+=` 呟き:${mur}`;
     if(ref) s+=` 振り返り:${ref}`;
-    if(sentL.length) s+=' 伝言:'+sentL.map(l=>`（${jpMD(l.to)}へ）${l.text}`+(l.reply&&l.reply.text?`（返事:${l.reply.text}）`:'')).join(' / ');
+    if(sentL.length) s+=' 伝言:'+sentL.map(l=>`（${jpMD(l.to)}へ${l.kokoromi?'・こころみ':''}）${l.text}`+(l.reply&&l.reply.text?`（${l.kokoromi?'結果':'返事'}:${l.reply.text}）`:'')).join(' / ');
     return s;
   }).filter(Boolean).join('\n');
 }
@@ -1449,6 +1486,8 @@ async function init(){
   destDate.min=fmtKey(dMin);
   document.getElementById('destPick').onclick=()=>{ destDate.showPicker?destDate.showPicker():destDate.click(); };
   destDate.onchange=()=>{ if(destDate.value && destDate.value>todayKey) setDengonDest(destDate.value); };
+  // こころみの印
+  document.getElementById('destKokoromi').onclick=()=>setDengonKokoromi(!dengonKokoromi);
   document.getElementById('dgClosed').onclick=openDengon;
   document.getElementById('dgClosed').addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); openDengon(); } });
   // たたむ→再描画（次の未読の文があれば、続けて水引で届く）

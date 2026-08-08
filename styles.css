@@ -200,6 +200,7 @@ textarea,input{font-family:inherit}
 .dg-closed:active{transform:scale(.985)}
 .dg-cap{font-size:12px;color:var(--ink-soft);letter-spacing:.05em}
 .dg-sub{font-size:10px;color:var(--muted);margin-top:5px;letter-spacing:.04em}
+.dg-kk{color:var(--accent);font-weight:500}
 .dg-mizuhiki{display:block;margin:2px auto 12px;width:78%;height:30px}
 .dg-mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round}
 /* ほどける：結びが伸びて一本の線になり、フェード */
@@ -256,6 +257,12 @@ textarea,input{font-family:inherit}
 .dest-chip.sel{color:var(--accent);border-color:var(--accent);background:var(--surface-2)}
 .dest-chip input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:0;padding:0;margin:0;pointer-events:none}
 .dest-note{font-size:11px;color:var(--accent);letter-spacing:.04em;margin-bottom:8px}
+/* こころみ（試し）の印。○が●になる */
+.chip-kokoromi{display:inline-flex;align-items:center;gap:7px}
+.chip-kokoromi .mark{width:11px;height:11px;border-radius:50%;border:1.6px solid var(--muted);flex-shrink:0;transition:all .18s}
+.chip-kokoromi.sel .mark{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 2px var(--surface-2)}
+.badge-k{display:inline-block;font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:0 5px;letter-spacing:.05em;opacity:.9;vertical-align:1px}
+.dengon .d-hint em{font-style:normal;color:var(--ink-soft)}
 /* 結ばれている文（これから届く文の一覧） */
 .pending{margin-top:16px}
 .p-title{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:9px;display:flex;align-items:center;gap:8px}
