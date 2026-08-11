@@ -192,9 +192,10 @@ function feedEditingElsewhere(el){
   const o=f && f.querySelector('.murmur.editing, .murmur.tsn-editing');
   return (o && o!==el) ? o : null;
 }
-// 編集を始めるとき、他の呟きの選択をすべて解除する
+// 編集を始めるとき、呟き・追伸の選択をすべて解除する
 function clearFeedSelection(){
   document.querySelectorAll('#murmurFeed .murmur.selected').forEach(x=>x.classList.remove('selected'));
+  document.querySelectorAll('#murmurFeed .echo.selected').forEach(x=>x.classList.remove('selected'));
 }
 // 追伸/結果のメタ表示（結果は同日なら「結果」だけ）
 function echoMeta(e, baseDs){
@@ -221,7 +222,12 @@ async function renderFeed(){
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
     // 追伸（時間を置いてからの一言）と結果。呟きの下に連なる。タップで編集。
     const echoes=(m.echoes||[]).map(e=>`
-      <div class="echo" data-eid="${e.id}"><div class="echo-meta">${echoMeta(e, murmurDay)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
+      <div class="echo" data-eid="${e.id}"><div class="echo-meta">${echoMeta(e, murmurDay)}</div><div class="echo-text">${escapeHtml(e.text)}</div>
+        <div class="echo-actions">
+          <button class="act e-edit" type="button" aria-label="なおす" title="なおす">${ICO_EDIT}</button>
+          <button class="act e-del" type="button" aria-label="消す" title="消す">${ICO_DEL}</button>
+        </div>
+      </div>`).join('');
     // こころみで結果がまだなら「どうだった?」の促し
     const hasResult=(m.echoes||[]).some(e=>e.result);
     const ask=(m.kokoromi&&!hasResult)?'<div class="ask-row"><button class="ask-btn" type="button">どうだった?</button></div>':'';
@@ -250,13 +256,30 @@ async function renderFeed(){
       e.stopPropagation();
       startTsuishin(m, el);
     };
-    // 追伸のタップ→その追伸をインライン編集（親の呟き選択には伝播させない）
+    // 追伸・結果のタップ→まず選択（ペン・ゴミ箱のアイコンを出すだけ）。編集はペンから。
     el.querySelectorAll('.echo').forEach(eEl=>{
+      const echoOf=()=> (m.echoes||[]).find(x=>x.id===eEl.dataset.eid);
       eEl.addEventListener('click',(ev)=>{
         ev.stopPropagation();
-        const echo=(m.echoes||[]).find(x=>x.id===eEl.dataset.eid);
-        if(echo) startEditEcho(m, echo, el, eEl);
+        if(ev.target.closest('.echo-actions')||eEl.classList.contains('editing')) return;
+        if(el.classList.contains('editing')||el.classList.contains('tsn-editing')||feedEditingElsewhere(el)) return;
+        const was=eEl.classList.contains('selected');
+        clearFeedSelection();
+        if(!was) eEl.classList.add('selected');
       });
+      eEl.querySelector('.e-edit').onclick=(ev)=>{
+        ev.stopPropagation();
+        const echo=echoOf();
+        if(echo) startEditEcho(m, echo, el, eEl);
+      };
+      eEl.querySelector('.e-del').onclick=async(ev)=>{
+        ev.stopPropagation();
+        const echo=echoOf();
+        if(!echo) return;
+        await deleteEcho(m.id, echo.id);
+        renderFeed();
+        if(murmurDay===todayKey) renderGathered();
+      };
     });
     el.querySelector('.edit').onclick=(e)=>{
       e.stopPropagation();
@@ -274,7 +297,7 @@ async function renderFeed(){
     el.addEventListener('click',(e)=>{
       if(e.target.closest('.time-wrap')||e.target.closest('.actions')||e.target.closest('.ask-btn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')||feedEditingElsewhere(el)) return;
       const wasSel=el.classList.contains('selected');
-      feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
+      clearFeedSelection();   // 呟き・追伸の選択をひとつに保つ
       if(!wasSel) el.classList.add('selected');
     });
     feed.appendChild(el);
@@ -455,7 +478,6 @@ function startEditEcho(m, echo, murmurEl, echoEl){
   body.innerHTML=`
     <textarea class="tsn-input" aria-label="追伸を編集"></textarea>
     <div class="edit-actions">
-      <button class="echo-delete" type="button">消す</button>
       <button class="edit-cancel" type="button">やめる</button>
       <button class="edit-save" type="button">保存</button>
     </div>`;
@@ -468,13 +490,8 @@ function startEditEcho(m, echo, murmurEl, echoEl){
   body.querySelector('.edit-save').onclick=async(e)=>{
     e.stopPropagation();
     const val=ta.value.trim();
-    if(!val){ ta.focus(); return; }   // 空にはできない（消したいときは「消す」）
+    if(!val){ ta.focus(); return; }   // 空にはできない（消したいときはゴミ箱から）
     await saveEchoText(m.id, echo.id, val);
-    finish();
-  };
-  body.querySelector('.echo-delete').onclick=async(e)=>{
-    e.stopPropagation();
-    await deleteEcho(m.id, echo.id);
     finish();
   };
   grow();
