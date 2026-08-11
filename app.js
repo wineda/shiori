@@ -185,6 +185,17 @@ const ICO_BULB_TOGGLE='<svg viewBox="0 0 24 24"><path d="M12 5a5 5 0 0 0-3 9c.7.
 const ICO_TSN='<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M12 8.6v5.8M9.1 11.5h5.8"/></svg>';
 const ICO_EDIT='<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
 const ICO_DEL='<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M6 6l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
+// フィード内で別の呟きが編集中（なおす・追伸・結果の入力中）なら、その要素を返す。
+// アクティブな呟きは常に1つ：編集中は他の呟きへの操作を受け付けない。
+function feedEditingElsewhere(el){
+  const f=document.getElementById('murmurFeed');
+  const o=f && f.querySelector('.murmur.editing, .murmur.tsn-editing');
+  return (o && o!==el) ? o : null;
+}
+// 編集を始めるとき、他の呟きの選択をすべて解除する
+function clearFeedSelection(){
+  document.querySelectorAll('#murmurFeed .murmur.selected').forEach(x=>x.classList.remove('selected'));
+}
 // 追伸/結果のメタ表示（結果は同日なら「結果」だけ）
 function echoMeta(e, baseDs){
   const el=elapsedLabel(baseDs, e.day);
@@ -259,8 +270,9 @@ async function renderFeed(){
       renderFeed(); refreshMeta();
     };
     // タップで選択（ハイライト）→操作アイコンが現れる。時刻・ボタン・入力欄のタップは除外。
+    // 別の呟きが編集中の間は選択を受け付けない（書きかけを守り、アクティブを1つに保つ）。
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.time-wrap')||e.target.closest('.actions')||e.target.closest('.ask-btn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')) return;
+      if(e.target.closest('.time-wrap')||e.target.closest('.actions')||e.target.closest('.ask-btn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')||feedEditingElsewhere(el)) return;
       const wasSel=el.classList.contains('selected');
       feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
       if(!wasSel) el.classList.add('selected');
@@ -295,7 +307,8 @@ async function editMurmurTime(id, value){
 
 // 登録済みの呟きの本文を、その場で編集する（インライン編集）。
 function startEditMurmur(m, el){
-  if(el.classList.contains('editing')) return;
+  if(el.classList.contains('editing')||feedEditingElsewhere(el)) return;
+  clearFeedSelection();
   el.classList.add('editing');
   const body=el.querySelector('.body');
   body.innerHTML=`
@@ -349,7 +362,8 @@ async function toggleKokoromi(id){
 }
 // 「どうだった?」→ その場で結果をのこす（追伸と同じ入力欄・見出しだけ変える）
 function startResult(m, el){
-  if(el.querySelector('.tsn-box')||el.classList.contains('editing')) return;
+  if(el.querySelector('.tsn-box')||el.classList.contains('editing')||feedEditingElsewhere(el)) return;
+  clearFeedSelection();
   el.classList.add('tsn-editing');
   const body=el.querySelector('.body');
   const box=document.createElement('div');
@@ -401,7 +415,8 @@ function elapsedLabel(fromDs, toDs){
 }
 // 呟きの下に追伸の入力欄（明朝）を開く。
 function startTsuishin(m, el){
-  if(el.querySelector('.tsn-box')||el.classList.contains('editing')) return;
+  if(el.querySelector('.tsn-box')||el.classList.contains('editing')||feedEditingElsewhere(el)) return;
+  clearFeedSelection();
   el.classList.add('tsn-editing');
   const body=el.querySelector('.body');
   const box=document.createElement('div');
@@ -432,7 +447,8 @@ function startTsuishin(m, el){
 }
 // 追伸をその場で編集する（保存・消すも可）。親の呟きの編集とは独立。
 function startEditEcho(m, echo, murmurEl, echoEl){
-  if(murmurEl.classList.contains('editing')||murmurEl.querySelector('.tsn-box')||echoEl.classList.contains('editing')) return;
+  if(murmurEl.classList.contains('editing')||murmurEl.querySelector('.tsn-box')||echoEl.classList.contains('editing')||feedEditingElsewhere(murmurEl)) return;
+  clearFeedSelection();
   murmurEl.classList.add('tsn-editing');   // 編集中は下部ボタンを隠す（追伸入力時と同じ）
   echoEl.classList.add('editing');
   const body=echoEl.querySelector('.echo-text');
