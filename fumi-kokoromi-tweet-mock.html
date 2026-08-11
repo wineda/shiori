@@ -34,16 +34,16 @@ textarea{font-family:inherit}
 .murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;align-self:stretch;position:relative}
 .murmur .track .dot{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
 .murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px}
-.murmur.selected .body{padding-bottom:38px}
 .badge-k{display:inline-block;font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:0 5px;margin-left:8px;letter-spacing:.05em;vertical-align:2px;opacity:.9}
 
-/* 選択時のボタン（本体と同じ absolute 配置＋左にこころみトグル） */
-.act{position:absolute;bottom:8px;font-size:12px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:all .2s}
-.murmur.selected .act{opacity:1;pointer-events:auto;transform:none}
-.act.del{right:8px;color:var(--accent)}
-.act.edit{right:70px;color:var(--ink-soft)}
-.act.tsn{right:144px;color:var(--accent);border-color:var(--accent)}
-.act.kk{left:52px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px}
+/* 選択時のボタン：折り返せる行レイアウト（こころみは左、他は右） */
+.actions{display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.murmur.selected .actions{display:flex}
+.act{font-size:12px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 13px}
+.act.del{color:var(--accent)}
+.act.edit{color:var(--ink-soft)}
+.act.tsn{color:var(--accent);border-color:var(--accent)}
+.act.kk{color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px;margin-right:auto}
 .act.kk .mark{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);transition:all .18s}
 .act.kk.on{color:var(--accent);border-color:var(--accent)}
 .act.kk.on .mark{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 1.6px var(--surface-2)}
@@ -135,13 +135,15 @@ function render(){
       <div class="body">${esc(m.text)}${m.kokoromi?'<span class="badge-k">こころみ</span>':''}
         ${echoes?`<div class="echoes">${echoes}</div>`:''}
         ${m.kokoromi&&!hasResult?`<div class="ask-row"><button class="ask-btn" data-id="${m.id}">どうだった?</button></div>`:''}
-      </div>
-      <button class="act kk${m.kokoromi?' on':''}" data-id="${m.id}"><span class="mark"></span>こころみ</button>
-      <button class="act tsn">追伸</button>
-      <button class="act edit">なおす</button>
-      <button class="act del">消す</button>`;
+        <div class="actions">
+          <button class="act kk${m.kokoromi?' on':''}" data-id="${m.id}"><span class="mark"></span>こころみ</button>
+          <button class="act tsn">追伸</button>
+          <button class="act edit">なおす</button>
+          <button class="act del">消す</button>
+        </div>
+      </div>`;
     el.addEventListener('click',e=>{
-      if(e.target.closest('.act')||e.target.closest('.ask-btn')||e.target.closest('.res-box')) return;
+      if(e.target.closest('.actions')||e.target.closest('.ask-btn')||e.target.closest('.res-box')) return;
       selected=(selected===m.id)?null:m.id;
       render();
     });
