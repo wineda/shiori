@@ -192,9 +192,17 @@ textarea,input{font-family:inherit}
 .murmur.tsn-editing .body{padding-bottom:2px}
 /* 保存済みの追伸。栞紅の細い線を添えて、明朝で連なる。 */
 .murmur .echoes{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-.murmur .echo{position:relative;padding-left:14px;cursor:pointer;border-radius:8px}
+.murmur .echo{position:relative;padding:4px 6px 4px 14px;margin-left:-6px;cursor:pointer;border-radius:10px;transition:background .18s}
+.murmur .echo.selected{background:rgba(156,74,80,.07)}
 .murmur .echo.editing{cursor:auto}
-.murmur .echo .edit-actions .echo-delete{color:var(--accent);background:var(--surface-2);margin-right:auto}
+/* 追伸・結果の選択時アイコン（ペン・ゴミ箱）。編集はペンから */
+.murmur .echo .echo-actions{display:none;align-items:center;gap:8px;justify-content:flex-end;margin-top:8px}
+.murmur .echo.selected .echo-actions{display:flex}
+.murmur .echo.editing .echo-actions{display:none}
+.murmur .echo .echo-actions .act{width:30px;height:30px}
+.murmur .echo .echo-actions .act svg{width:15px;height:15px}
+.murmur .echo .echo-actions .e-edit{color:var(--ink-soft)}
+.murmur .echo .echo-actions .e-del{color:var(--accent)}
 .murmur .echo-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:2px;opacity:.85}
 .murmur .echo-text{font-size:14px;line-height:1.72;color:var(--ink-soft)}
 /* 追伸の入力欄（明朝） */
