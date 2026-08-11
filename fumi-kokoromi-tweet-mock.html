@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>文 — 呟きのこころみ（1日内の行動とフィードバック）モック</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --surface-2:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e9eae6}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px 12px 60px}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+textarea{font-family:inherit}
+.panel-label{font-size:11px;color:#8a8f89;letter-spacing:.12em;text-align:center;line-height:1.8;max-width:400px}
+.panel-label b{color:var(--accent);font-weight:500}
+.app{width:100%;max-width:400px;background:var(--paper);border-radius:22px;box-shadow:0 8px 40px rgba(0,0,0,.10);padding:18px 20px 22px}
+.feed-label{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px}
+
+/* ---- 呟き（本体と同じ構成） ---- */
+.murmur{position:relative;display:flex;gap:12px;padding:12px 2px;border-radius:12px;transition:background .18s}
+.murmur.selected{background:rgba(156,74,80,.07)}
+.murmur .time{font-size:11px;color:var(--muted);width:38px;flex-shrink:0;padding-top:3px}
+.murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;align-self:stretch;position:relative}
+.murmur .track .dot{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
+.murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px}
+.murmur.selected .body{padding-bottom:38px}
+.badge-k{display:inline-block;font-size:9px;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:0 5px;margin-left:8px;letter-spacing:.05em;vertical-align:2px;opacity:.9}
+
+/* 選択時のボタン（本体と同じ absolute 配置＋左にこころみトグル） */
+.act{position:absolute;bottom:8px;font-size:12px;background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:all .2s}
+.murmur.selected .act{opacity:1;pointer-events:auto;transform:none}
+.act.del{right:8px;color:var(--accent)}
+.act.edit{right:70px;color:var(--ink-soft)}
+.act.tsn{right:144px;color:var(--accent);border-color:var(--accent)}
+.act.kk{left:52px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px}
+.act.kk .mark{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);transition:all .18s}
+.act.kk.on{color:var(--accent);border-color:var(--accent)}
+.act.kk.on .mark{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 1.6px var(--surface-2)}
+
+/* どうだった? の促し（こころみで結果が未記入のとき） */
+.ask-row{margin-top:8px}
+.ask-btn{font-size:11px;color:var(--accent);border:1px dashed var(--accent);border-radius:999px;padding:4px 13px;letter-spacing:.05em;opacity:.85}
+
+/* 結果・追伸 */
+.echoes{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.echo{padding-left:14px}
+.echo-meta{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:2px}
+.echo-text{font-size:14px;line-height:1.72;color:var(--ink-soft)}
+
+/* 結果の入力 */
+.res-box{margin-top:10px;padding-left:14px}
+.res-cap{font-size:10px;color:var(--accent);letter-spacing:.06em;margin-bottom:6px}
+.res-input{width:100%;border:1px solid var(--hairline-strong);background:var(--surface-2);border-radius:10px;padding:9px 11px;font-size:14px;line-height:1.72;resize:none;min-height:52px;outline:none}
+.res-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.15)}
+.res-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.res-actions button{font-size:12px;border-radius:999px;padding:6px 16px;border:1px solid var(--hairline)}
+.res-cancel{color:var(--ink-soft);background:var(--surface-2)}
+.res-save{color:#fff;background:var(--accent);border-color:var(--accent)}
+
+/* 振り返り側 */
+.g-box{background:var(--surface);border:1px solid var(--hairline);border-radius:16px;padding:14px 16px}
+.g-title{font-size:11px;color:var(--muted);letter-spacing:.08em;margin-bottom:10px}
+.g-item{font-size:13px;color:var(--ink-soft);display:flex;gap:10px;line-height:1.6;margin-bottom:8px}
+.g-item .gd{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
+.g-echo{padding-left:13px;margin-top:3px;font-size:12px;color:var(--ink-soft)}
+.g-echo-meta{display:block;font-size:10px;color:var(--accent)}
+.g-ask{font-size:10px;color:var(--accent);opacity:.8;margin-top:2px;padding-left:13px}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;font-size:13px;padding:11px 20px;border-radius:999px;opacity:0;transition:all .3s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="panel-label">① 呟きをタップ → 左の<b>「◯ こころみ」</b>で印をつける<br>（外すのも同じボタン）</div>
+<div class="app">
+  <div class="feed-label">きょうの呟き</div>
+  <div id="feed"></div>
+</div>
+
+<div class="panel-label">② こころみの呟きには<b>「どうだった?」</b>が現れる<br>タップ → その場で結果をのこす（同じ日のうちに一往復）</div>
+
+<div class="panel-label">③ 夜の振り返り — 結果がまだの こころみ にはそっと印が残る</div>
+<div class="app">
+  <div class="g-box">
+    <div class="g-title">きょう集めた呟き（3件）</div>
+    <div class="g-item"><span class="gd"></span><span>朝のコーヒーがおいしかった</span></div>
+    <div class="g-item"><span class="gd"></span>
+      <span>会議で一回は発言してみる<span class="badge-k">こころみ</span>
+        <span class="g-echo"><span class="g-echo-meta">結果</span>言えた。思ったより怖くなかった。</span>
+      </span>
+    </div>
+    <div class="g-item"><span class="gd"></span>
+      <span>昼は階段を使う<span class="badge-k">こころみ</span>
+        <span class="g-ask">— どうだった?（まだ結果がありません）</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="panel-label">アプリは数えません・褒めません・叱りません。<br><b>けさのあなたが、夕方のあなたに訊くだけ</b>です。</div>
+
+<script>
+let murmurs=[
+  {id:'m1', time:'08:12', text:'朝のコーヒーがおいしかった', kokoromi:false, echoes:[]},
+  {id:'m2', time:'09:30', text:'会議で一回は発言してみる', kokoromi:true, echoes:[]},
+];
+let selected=null;
+const feed=document.getElementById('feed');
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function render(){
+  feed.innerHTML='';
+  murmurs.forEach(m=>{
+    const el=document.createElement('div');
+    el.className='murmur'+(selected===m.id?' selected':'');
+    const hasResult=m.echoes.some(e=>e.result);
+    const echoes=m.echoes.map(e=>`
+      <div class="echo"><div class="echo-meta">${e.result?'結果':'追伸・その日'}</div><div class="echo-text">${esc(e.text)}</div></div>`).join('');
+    el.innerHTML=`
+      <span class="time">${m.time}</span>
+      <div class="track"><span class="dot"></span></div>
+      <div class="body">${esc(m.text)}${m.kokoromi?'<span class="badge-k">こころみ</span>':''}
+        ${echoes?`<div class="echoes">${echoes}</div>`:''}
+        ${m.kokoromi&&!hasResult?`<div class="ask-row"><button class="ask-btn" data-id="${m.id}">どうだった?</button></div>`:''}
+      </div>
+      <button class="act kk${m.kokoromi?' on':''}" data-id="${m.id}"><span class="mark"></span>こころみ</button>
+      <button class="act tsn">追伸</button>
+      <button class="act edit">なおす</button>
+      <button class="act del">消す</button>`;
+    el.addEventListener('click',e=>{
+      if(e.target.closest('.act')||e.target.closest('.ask-btn')||e.target.closest('.res-box')) return;
+      selected=(selected===m.id)?null:m.id;
+      render();
+    });
+    el.querySelector('.act.kk').onclick=(e)=>{
+      e.stopPropagation();
+      m.kokoromi=!m.kokoromi;
+      selected=null;
+      render();
+      toast(m.kokoromi?'こころみの印をつけました':'こころみの印を外しました');
+    };
+    const ask=el.querySelector('.ask-btn');
+    if(ask) ask.onclick=(e)=>{ e.stopPropagation(); openResult(m, el); };
+    feed.appendChild(el);
+  });
+}
+function openResult(m, el){
+  const body=el.querySelector('.body');
+  const row=el.querySelector('.ask-row');
+  if(row) row.style.display='none';
+  const box=document.createElement('div');
+  box.className='res-box';
+  box.innerHTML=`
+    <div class="res-cap">やってみて、どうだった?</div>
+    <textarea class="res-input" placeholder="できたこと、できなかったこと。気づいたこと"></textarea>
+    <div class="res-actions">
+      <button class="res-cancel" type="button">やめる</button>
+      <button class="res-save" type="button">結果をのこす</button>
+    </div>`;
+  body.appendChild(box);
+  box.addEventListener('click',e=>e.stopPropagation());
+  const ta=box.querySelector('.res-input'); ta.focus();
+  box.querySelector('.res-cancel').onclick=()=>render();
+  box.querySelector('.res-save').onclick=()=>{
+    const v=ta.value.trim(); if(!v){ta.focus();return;}
+    m.echoes.push({text:v, result:true});
+    selected=null;
+    render();
+    toast('こころみの結果をのこしました');
+  };
+}
+let tt;
+function toast(msg){ const t=document.getElementById('toastEl'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2000); }
+render();
+</script>
+<div class="toast" id="toastEl"></div>
+</body>
+</html>
