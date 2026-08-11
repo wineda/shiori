@@ -151,17 +151,31 @@ textarea,input{font-family:inherit}
 .murmur .time-wrap:hover .time-text{color:var(--ink-soft);border-bottom-color:var(--muted)}
 .murmur .time-picker{position:absolute;top:-4px;left:-6px;width:50px;height:26px;opacity:0;margin:0;padding:0;border:0;background:none;font-size:16px;cursor:pointer}
 .murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;position:relative;align-self:stretch}
-.murmur .track .dot{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--paper)}
-.murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px}
-.murmur .del{position:absolute;right:8px;bottom:8px;font-size:12px;color:var(--accent);background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
-.murmur.selected .del{opacity:1;pointer-events:auto;transform:none}
-.murmur.selected .body{padding-bottom:34px}   /* 「なおす」「消す」の一行分を確保して被りを防ぐ */
-/* 選択中に「消す」の左へ「なおす」を出す。タップでインライン編集に入る。 */
-.murmur .edit{position:absolute;right:70px;bottom:8px;font-size:12px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--hairline);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
-.murmur.selected .edit{opacity:1;pointer-events:auto;transform:none}
-/* 編集中は下部ボタンを隠し、本文欄をインライン編集フォームに置き換える。 */
+/* タイムラインの印：呟き=フキダシ、こころみ=電球（線画） */
+.murmur .mark-wrap{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;background:var(--paper);border-radius:50%;color:var(--accent)}
+.murmur.selected .mark-wrap,.murmur.editing .mark-wrap,.murmur.tsn-editing .mark-wrap{background:transparent}
+.murmur .mark-wrap svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.murmur .body{flex:1;font-size:15px;line-height:1.72;color:var(--ink);padding-bottom:2px;min-width:0}
+/* 選択時の操作アイコン（こころみは左、追伸・なおす・消すは右） */
+.murmur .actions{display:none;align-items:center;gap:8px;margin-top:10px}
+.murmur.selected .actions{display:flex}
+.murmur .act{width:34px;height:34px;border-radius:50%;background:var(--surface-2);border:1px solid var(--hairline);
+  display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.murmur .act svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.murmur .act.del{color:var(--accent)}
+.murmur .act.edit{color:var(--ink-soft)}
+.murmur .act.tsn{color:var(--accent)}
+.murmur .act.kk{color:var(--muted);margin-right:auto}
+.murmur .act.kk.on{color:var(--accent);border-color:var(--accent)}
+.murmur .act.kk svg .rays{opacity:0;transition:opacity .18s}
+.murmur .act.kk.on svg .rays{opacity:1}
+/* どうだった?（こころみで結果が未記入のとき） */
+.ask-row{margin-top:8px}
+.ask-btn{font-size:11px;color:var(--accent);border:1px dashed var(--accent);border-radius:999px;padding:4px 13px;letter-spacing:.05em;opacity:.85;cursor:pointer;background:none}
+/* 編集中は操作アイコンを隠し、本文欄をインライン編集フォームに置き換える。 */
 .murmur.editing{background:rgba(156,74,80,.07)}
-.murmur.editing .edit,.murmur.editing .del{opacity:0;pointer-events:none}
+.murmur.editing .actions,.murmur.editing .ask-row{display:none}
 .murmur.editing .body{padding-bottom:2px}
 .murmur .edit-input{width:100%;box-sizing:border-box;font:inherit;font-size:15px;line-height:1.72;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:8px 10px;resize:none;min-height:44px;overflow:hidden}
 .murmur .edit-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.18)}
@@ -172,12 +186,9 @@ textarea,input{font-family:inherit}
 
 /* ---------- 追伸（時間を置いてからの一言） ---------- */
 /* 選択中に「なおす」の左へ「追伸」を出す。 */
-.murmur .tsn{position:absolute;right:144px;bottom:8px;font-size:12px;color:var(--accent);background:var(--surface-2);border:1px solid var(--accent);border-radius:999px;padding:5px 14px;opacity:0;pointer-events:none;transform:translateY(2px);transition:opacity .2s,transform .2s}
-.murmur.selected .tsn{opacity:1;pointer-events:auto;transform:none}
-.murmur.editing .tsn{opacity:0;pointer-events:none}
 /* 追伸の入力中は下部ボタンを隠す。 */
 .murmur.tsn-editing{background:rgba(156,74,80,.07)}
-.murmur.tsn-editing .tsn,.murmur.tsn-editing .edit,.murmur.tsn-editing .del{opacity:0;pointer-events:none}
+.murmur.tsn-editing .actions,.murmur.tsn-editing .ask-row{display:none}
 .murmur.tsn-editing .body{padding-bottom:2px}
 /* 保存済みの追伸。栞紅の細い線を添えて、明朝で連なる。 */
 .murmur .echoes{margin-top:8px;display:flex;flex-direction:column;gap:8px}
@@ -297,7 +308,9 @@ textarea,input{font-family:inherit}
 .reflect-gathered .g-count{font-size:11px;color:var(--muted)}
 .g-list{display:flex;flex-direction:column;gap:8px}
 .g-item{font-size:13px;color:var(--ink-soft);display:flex;gap:10px;line-height:1.6}
-.g-item .gd{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
+.g-item .gd{flex-shrink:0;margin-top:3px;width:14px;height:14px;color:var(--accent)}
+.g-item .gd svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.g-ask{font-size:10px;color:var(--accent);opacity:.8;margin-top:2px;padding-left:13px}
 /* 集めた呟きの追伸（履歴の詳細シートと同じ流儀） */
 .g-echo{position:relative;padding-left:13px;margin-top:4px;font-size:12px;line-height:1.7;color:var(--ink-soft)}
 .g-echo-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;font-family:var(--sans)}
@@ -372,7 +385,8 @@ textarea,input{font-family:inherit}
 .sb-section-label{font-size:11px;letter-spacing:.14em;color:var(--muted);margin:6px 0 12px}
 .sb-murmur{display:flex;gap:12px;padding:9px 0;font-size:14px;color:var(--ink-soft);line-height:1.6}
 .sb-murmur .t{font-size:11px;color:var(--muted);width:36px;flex-shrink:0;padding-top:3px}
-.sb-murmur .d{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px;background:var(--accent)}
+.sb-murmur .d{flex-shrink:0;margin-top:3px;width:14px;height:14px;color:var(--accent)}
+.sb-murmur .d svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* 詳細シートの追伸 */
 .sb-echo{position:relative;padding-left:13px;margin-top:5px;font-size:13px;line-height:1.7;color:var(--ink-soft)}
 .sb-echo-meta{display:block;font-size:10px;color:var(--accent);letter-spacing:.06em;opacity:.85;font-family:var(--sans)}

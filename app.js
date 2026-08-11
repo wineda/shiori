@@ -178,6 +178,19 @@ function shiftMurmurDay(n){
 }
 
 /* ============ render: murmur feed ============ */
+// タイムラインの印と操作アイコン（線画）。呟き=フキダシ、こころみ=電球。
+const ICO_BUBBLE='<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+const ICO_BULB='<svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.6 10.8c.8.6 1.1 1.4 1.1 2.2h5c0-.8.3-1.6 1.1-2.2A6 6 0 0 0 12 3z"/><path d="M9.8 19.5h4.4"/><path d="M10.6 22h2.8"/></svg>';
+const ICO_BULB_TOGGLE='<svg viewBox="0 0 24 24"><path d="M12 5a5 5 0 0 0-3 9c.7.5.9 1.1.9 1.8h4.2c0-.7.2-1.3.9-1.8a5 5 0 0 0-3-9z"/><path d="M10.2 18.6h3.6"/><path d="M10.9 21h2.2"/><g class="rays"><path d="M12 1.2v1.6"/><path d="M4.6 4.6l1.2 1.2"/><path d="M19.4 4.6l-1.2 1.2"/><path d="M2.6 11h1.6"/><path d="M19.8 11h1.6"/></g></svg>';
+const ICO_TSN='<svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><path d="M12 8.6v5.8M9.1 11.5h5.8"/></svg>';
+const ICO_EDIT='<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+const ICO_DEL='<svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M6 6l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
+// 追伸/結果のメタ表示（結果は同日なら「結果」だけ）
+function echoMeta(e, baseDs){
+  const el=elapsedLabel(baseDs, e.day);
+  if(e.result) return '結果'+(el==='その日'?'':'・'+el);
+  return '追伸・'+el;
+}
 async function renderFeed(){
   const day = await getDay(murmurDay);
   const feed = document.getElementById('murmurFeed');
@@ -195,20 +208,33 @@ async function renderFeed(){
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
-    // 追伸（時間を置いてからの一言）。呟きの下に明朝で連なる。タップでその追伸を編集。
+    // 追伸（時間を置いてからの一言）と結果。呟きの下に連なる。タップで編集。
     const echoes=(m.echoes||[]).map(e=>`
-      <div class="echo" data-eid="${e.id}"><div class="echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
+      <div class="echo" data-eid="${e.id}"><div class="echo-meta">${echoMeta(e, murmurDay)}</div><div class="echo-text">${escapeHtml(e.text)}</div></div>`).join('');
+    // こころみで結果がまだなら「どうだった?」の促し
+    const hasResult=(m.echoes||[]).some(e=>e.result);
+    const ask=(m.kokoromi&&!hasResult)?'<div class="ask-row"><button class="ask-btn" type="button">どうだった?</button></div>':'';
     // 時刻はタップで変更可。実体の time input を透明で重ね、どの環境でも
     // ネイティブの時刻ピッカーが開くようにする（iOS Safari 含む）。
     el.innerHTML=`
       <span class="time time-wrap"><span class="time-text">${m.time}</span><input type="time" class="time-picker" value="${tv}" aria-label="時刻を変更"></span>
-      <div class="track"><span class="dot"></span></div>
-      <div class="body">${escapeHtml(m.text)}${badge}${late}${echoes?`<div class="echoes">${echoes}</div>`:''}</div>
-      <button class="tsn" data-id="${m.id}">追伸</button>
-      <button class="edit" data-id="${m.id}">なおす</button>
-      <button class="del" data-id="${m.id}">消す</button>`;
+      <div class="track"><span class="mark-wrap">${m.kokoromi?ICO_BULB:ICO_BUBBLE}</span></div>
+      <div class="body">${escapeHtml(m.text)}${badge}${late}${echoes?`<div class="echoes">${echoes}</div>`:''}${ask}
+        <div class="actions">
+          <button class="act kk${m.kokoromi?' on':''}" type="button" aria-label="こころみの印" title="こころみ">${ICO_BULB_TOGGLE}</button>
+          <button class="act tsn" type="button" aria-label="追伸を書く" title="追伸">${ICO_TSN}</button>
+          <button class="act edit" type="button" aria-label="なおす" title="なおす">${ICO_EDIT}</button>
+          <button class="act del" type="button" aria-label="消す" title="消す">${ICO_DEL}</button>
+        </div>
+      </div>`;
     const tpick=el.querySelector('.time-picker');
     tpick.onchange=()=>editMurmurTime(m.id, tpick.value);
+    el.querySelector('.act.kk').onclick=(e)=>{
+      e.stopPropagation();
+      toggleKokoromi(m.id);
+    };
+    const askBtn=el.querySelector('.ask-btn');
+    if(askBtn) askBtn.onclick=(e)=>{ e.stopPropagation(); startResult(m, el); };
     el.querySelector('.tsn').onclick=(e)=>{
       e.stopPropagation();
       startTsuishin(m, el);
@@ -232,9 +258,9 @@ async function renderFeed(){
       await setDay(murmurDay,d);
       renderFeed(); refreshMeta();
     };
-    // タップで選択（ハイライト）→「追伸」「なおす」「消す」が現れる。時刻・各ボタン・追伸入力のタップは除外。
+    // タップで選択（ハイライト）→操作アイコンが現れる。時刻・ボタン・入力欄のタップは除外。
     el.addEventListener('click',(e)=>{
-      if(e.target.closest('.time-wrap')||e.target.closest('.del')||e.target.closest('.edit')||e.target.closest('.tsn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')) return;
+      if(e.target.closest('.time-wrap')||e.target.closest('.actions')||e.target.closest('.ask-btn')||e.target.closest('.tsn-box')||el.classList.contains('editing')||el.classList.contains('tsn-editing')) return;
       const wasSel=el.classList.contains('selected');
       feed.querySelectorAll('.murmur.selected').forEach(x=>x.classList.remove('selected'));
       if(!wasSel) el.classList.add('selected');
@@ -309,6 +335,58 @@ async function saveMurmurText(id, text){
   toast('呟きをなおしました');
 }
 
+/* ============ こころみ（1日内の行動とフィードバック） ============ */
+// 呟きのこころみ印をつけ外しする
+async function toggleKokoromi(id){
+  const d=await getDay(murmurDay);
+  const it=(d.murmurs||[]).find(x=>x.id===id);
+  if(!it) return;
+  if(it.kokoromi) delete it.kokoromi; else it.kokoromi=true;
+  await setDay(murmurDay,d);
+  renderFeed();
+  if(murmurDay===todayKey) renderGathered();
+  toast(it.kokoromi?'こころみの印をつけました':'こころみの印を外しました');
+}
+// 「どうだった?」→ その場で結果をのこす（追伸と同じ入力欄・見出しだけ変える）
+function startResult(m, el){
+  if(el.querySelector('.tsn-box')||el.classList.contains('editing')) return;
+  el.classList.add('tsn-editing');
+  const body=el.querySelector('.body');
+  const box=document.createElement('div');
+  box.className='tsn-box';
+  box.innerHTML=`
+    <div class="tsn-cap">やってみて、どうだった?</div>
+    <textarea class="tsn-input" aria-label="結果を書く" placeholder="できたこと、できなかったこと。気づいたこと"></textarea>
+    <div class="edit-actions">
+      <button class="edit-cancel" type="button">やめる</button>
+      <button class="edit-save" type="button">結果をのこす</button>
+    </div>`;
+  const ask=el.querySelector('.ask-row'); if(ask) ask.style.display='none';
+  body.insertBefore(box, el.querySelector('.actions'));
+  const ta=box.querySelector('.tsn-input');
+  const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
+  ta.addEventListener('input',grow);
+  box.addEventListener('click',e=>e.stopPropagation());
+  const finish=()=>{ el.classList.remove('tsn-editing'); renderFeed(); };
+  box.querySelector('.edit-cancel').onclick=finish;
+  box.querySelector('.edit-save').onclick=async()=>{
+    const val=ta.value.trim();
+    if(!val){ ta.focus(); return; }
+    const d=await getDay(murmurDay);
+    const it=(d.murmurs||[]).find(x=>x.id===m.id);
+    if(it){
+      if(!Array.isArray(it.echoes)) it.echoes=[];
+      it.echoes.push({id:'e'+Date.now(), text:val, ts:Date.now(), day:todayKey, result:true});
+      await setDay(murmurDay,d);
+      toast('こころみの結果をのこしました');
+    }
+    finish();
+    if(murmurDay===todayKey) renderGathered();
+  };
+  grow();
+  ta.focus();
+}
+
 /* ============ 追伸（時間を置いてからの一言） ============ */
 // 呟きの日から書いた日までの経過ラベル（その日/翌日/◯日後/◯週間後/◯か月後/◯年後）。
 function elapsedLabel(fromDs, toDs){
@@ -335,7 +413,7 @@ function startTsuishin(m, el){
       <button class="edit-cancel" type="button">やめる</button>
       <button class="edit-save" type="button">追伸をのこす</button>
     </div>`;
-  body.appendChild(box);
+  body.insertBefore(box, el.querySelector('.actions'));
   const ta=box.querySelector('.tsn-input');
   const grow=()=>{ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; };
   ta.addEventListener('input',grow);
@@ -696,9 +774,12 @@ async function renderGathered(){
   [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
     const el=document.createElement('div');
     el.className='g-item';
-    // 追伸も内省の素材として、呟きの下に添える
-    const ech=(m.echoes||[]).map(e=>`<div class="g-echo"><span class="g-echo-meta">追伸・${elapsedLabel(murmurDay, e.day)}</span>${escapeHtml(e.text)}</div>`).join('');
-    el.innerHTML=`<span class="gd"></span><span>${escapeHtml(m.text)}${ech}</span>`;
+    // 追伸・結果も内省の素材として、呟きの下に添える
+    const ech=(m.echoes||[]).map(e=>`<div class="g-echo"><span class="g-echo-meta">${echoMeta(e, murmurDay)}</span>${escapeHtml(e.text)}</div>`).join('');
+    // 結果がまだのこころみには、そっと印を残す
+    const hasResult=(m.echoes||[]).some(e=>e.result);
+    const askNote=(m.kokoromi&&!hasResult)?'<div class="g-ask">— どうだった?（まだ結果がありません）</div>':'';
+    el.innerHTML=`<span class="gd">${m.kokoromi?ICO_BULB:ICO_BUBBLE}</span><span>${escapeHtml(m.text)}${ech}${askNote}</span>`;
     list.appendChild(el);
   });
 }
@@ -759,7 +840,7 @@ async function draftReflection(){
   const day=await getDay(murmurDay);
   if(!day.murmurs.length) return;
   const lines=[...day.murmurs].sort((a,b)=>a.ts-b.ts)
-    .map(m=>`- ${m.time} ${m.text}`+((m.echoes||[]).length?`（追伸: ${m.echoes.map(e=>e.text).join(' / ')}）`:'')).join('\n');
+    .map(m=>`- ${m.time} ${m.kokoromi?'【こころみ】':''}${m.text}`+((m.echoes||[]).length?`（${m.echoes.map(e=>(e.result?'結果: ':'追伸: ')+e.text).join(' / ')}）`:'')).join('\n');
   openBridge({
     title:'呟きからAI下書き',
     sub:'呟きをAIに送って、下書きを貼り付け',
@@ -856,8 +937,8 @@ async function openDetail(ds){
     html+=`<div class="sb-section-label"${mt}>呟き</div>`;
     [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
       const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
-      const ech=(m.echoes||[]).map(e=>`<div class="sb-echo"><span class="sb-echo-meta">追伸・${elapsedLabel(ds,e.day)}</span>${escapeHtml(e.text)}</div>`).join('');
-      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d"></span><span>${escapeHtml(m.text)}${badge}${ech}</span></div>`;
+      const ech=(m.echoes||[]).map(e=>`<div class="sb-echo"><span class="sb-echo-meta">${echoMeta(e, ds)}</span>${escapeHtml(e.text)}</div>`).join('');
+      html+=`<div class="sb-murmur"><span class="t">${m.time}</span><span class="d">${m.kokoromi?ICO_BULB:ICO_BUBBLE}</span><span>${escapeHtml(m.text)}${badge}${ech}</span></div>`;
     });
   }
   if(!day.murmurs.length && !day.reflection && !sentLetters.length){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
@@ -969,8 +1050,8 @@ async function buildExportMd(fromDs,toDs){
       if(day.murmurs&&day.murmurs.length){
         out+=`\n### 呟き\n`;
         [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
-          out+=`- ${m.time} ${m.text}${m.source==='hand'?'（手書き）':''}\n`;
-          (m.echoes||[]).forEach(e=>{ out+=`  - 追伸（${elapsedLabel(ds,e.day)}）: ${e.text}\n`; });
+          out+=`- ${m.time} ${m.kokoromi?'【こころみ】':''}${m.text}${m.source==='hand'?'（手書き）':''}\n`;
+          (m.echoes||[]).forEach(e=>{ out+=`  - ${e.result?'結果':'追伸（'+elapsedLabel(ds,e.day)+'）'}: ${e.text}\n`; });
         });
       }
       if(day.reflection){
@@ -1279,8 +1360,8 @@ function digestArr(arr){
     const sentL=LETTERS.filter(l=>l.from===o.ds && l.text);
     const day=o.day; if(!day.murmurs.length && !day.reflection && !sentL.length) return null;
     const mur=day.murmurs.map(m=>{
-      const ech=(m.echoes||[]).map(e=>e.text).join(' / ');
-      return m.text+(ech?`（追伸: ${ech}）`:'');
+      const ech=(m.echoes||[]).map(e=>(e.result?'結果: ':'追伸: ')+e.text).join(' / ');
+      return (m.kokoromi?'【こころみ】':'')+m.text+(ech?`（${ech}）`:'');
     }).join(' / ');
     const ref=day.reflection?day.reflection.text:'';
     let s=`${o.date.getMonth()+1}/${o.date.getDate()}(${WD[o.date.getDay()]})`;
