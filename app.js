@@ -197,11 +197,19 @@ function clearFeedSelection(){
   document.querySelectorAll('#murmurFeed .murmur.selected').forEach(x=>x.classList.remove('selected'));
   document.querySelectorAll('#murmurFeed .echo.selected').forEach(x=>x.classList.remove('selected'));
 }
-// 追伸/結果のメタ表示（結果は同日なら「結果」だけ）
+// 追伸/結果の書いた時刻（HH:MM）。古いデータで ts が無ければ空。
+function echoTime(e){
+  if(!e.ts) return '';
+  const d=new Date(e.ts);
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+// 追伸/結果のメタ表示。同日は「追伸・14:22」、後日は「追伸・3日後 14:22」。
 function echoMeta(e, baseDs){
+  const head=e.result?'結果':'追伸';
   const el=elapsedLabel(baseDs, e.day);
-  if(e.result) return '結果'+(el==='その日'?'':'・'+el);
-  return '追伸・'+el;
+  const t=echoTime(e);
+  const parts=[el==='その日'?null:el, t].filter(Boolean);
+  return head+(parts.length?'・'+parts.join(' '):'');
 }
 async function renderFeed(){
   const day = await getDay(murmurDay);
@@ -1084,7 +1092,11 @@ async function buildExportMd(fromDs,toDs){
         out+=`\n### 呟き\n`;
         [...day.murmurs].sort((a,b)=>a.ts-b.ts).forEach(m=>{
           out+=`- ${m.time} ${m.kokoromi?'【こころみ】':''}${m.text}${m.source==='hand'?'（手書き）':''}\n`;
-          (m.echoes||[]).forEach(e=>{ out+=`  - ${e.result?'結果':'追伸（'+elapsedLabel(ds,e.day)+'）'}: ${e.text}\n`; });
+          (m.echoes||[]).forEach(e=>{
+            const el=elapsedLabel(ds,e.day), t=echoTime(e);
+            const inner=[el==='その日'?null:el, t].filter(Boolean).join(' ');
+            out+=`  - ${e.result?'結果':'追伸'}${inner?'（'+inner+'）':''}: ${e.text}\n`;
+          });
         });
       }
       if(day.reflection){
