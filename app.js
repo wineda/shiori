@@ -2008,7 +2008,10 @@ async function initSync(){
     try{ db=fsM.initializeFirestore(app,{localCache:fsM.persistentLocalCache()}); }
     catch(e){ db=fsM.getFirestore(app); }   // プライベートモード等で永続キャッシュ不可なら通常モード
     fb={auth, db, authM, fsM, user:null, unsub:null};
-    authM.getRedirectResult(auth).catch(()=>{});
+    authM.getRedirectResult(auth).catch(e=>{
+      console.warn('[fumi] redirect result:',e);
+      toast('ログインできませんでした。ブラウザ側の保護機能でブロックされた可能性があります');
+    });
     authM.onAuthStateChanged(auth, async(user)=>{
       const wasOut=!(fb&&fb.user);
       fb.user=user||null;
@@ -2028,6 +2031,10 @@ async function initSync(){
     if(btn){ btn.disabled=true; btn.textContent='同期を準備できません'; }
   }
 }
+// インストール版（スタンドアロン表示）かどうか。ポップアップが塞がれやすい環境。
+function isStandaloneApp(){
+  return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true;
+}
 function wireSyncUI(){
   const btn=document.getElementById('syncLoginBtn');
   if(!btn) return;
@@ -2039,11 +2046,23 @@ function wireSyncUI(){
       return;
     }
     const prov=new fb.authM.GoogleAuthProvider();
-    try{ await fb.authM.signInWithPopup(fb.auth, prov); }
-    catch(e){
-      // ポップアップが塞がれる環境ではリダイレクトで再挑戦
-      try{ await fb.authM.signInWithRedirect(fb.auth, prov); }
-      catch(e2){ console.warn('[fumi] login failed:',e2); toast('ログインできませんでした'); }
+    prov.setCustomParameters({prompt:'select_account'});
+    try{
+      if(isStandaloneApp()){
+        // インストール版はポップアップが開けないことが多い → 最初からリダイレクト
+        toast('Googleへ移動します…');
+        await fb.authM.signInWithRedirect(fb.auth, prov);
+      } else {
+        try{ await fb.authM.signInWithPopup(fb.auth, prov); }
+        catch(e){
+          // ポップアップが塞がれたらリダイレクトで再挑戦
+          toast('Googleへ移動します…');
+          await fb.authM.signInWithRedirect(fb.auth, prov);
+        }
+      }
+    }catch(e2){
+      console.warn('[fumi] login failed:',e2);
+      toast('ログインできませんでした。ブラウザで開いてお試しください');
     }
   };
 }
