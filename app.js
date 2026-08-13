@@ -1882,4 +1882,170 @@ if('serviceWorker' in navigator){
   });
 }
 
-init();
+/* ============ 同期（Firebase・任意） ============
+   仕組み：保存の正は従来どおり端末の IndexedDB（Store）。Googleログイン中だけ
+   - 書き込み：Store.set/del をフックして Firestore（users/{uid}/journal/{key}）へも送る
+   - 受け取り：onSnapshot で他端末の変更を受け、Store に書き戻して画面を作り直す
+   - 初回ログイン：ローカルとリモートを非破壊マージ（復元マージと同じ考え方）
+   未ログインなら一切動かない（完全ローカル）。設定値は公開識別子で秘密ではない。 */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyDkOZKSdQzEDsHeIpLuXf5XQeKsOqyFsgk",
+  authDomain:"fumi-862e6.firebaseapp.com",
+  projectId:"fumi-862e6",
+  storageBucket:"fumi-862e6.firebasestorage.app",
+  messagingSenderId:"674804307316",
+  appId:"1:674804307316:web:be269cb9637a5c7489c821"
+};
+let fb=null;                 // {auth, db, authM, fsM, user, unsub}
+let applyingRemote=false;    // リモート→ローカル反映中は押し返さない
+const _storeSet=Store.set.bind(Store);
+const _storeDel=Store.del.bind(Store);
+Store.set=async(k,v)=>{ await _storeSet(k,v); syncPush(k,v); };
+Store.del=async(k)=>{ await _storeDel(k); syncPush(k,null); };
+
+async function syncPush(k,v){
+  if(!fb||!fb.user||applyingRemote||!k.startsWith('journal:')) return;
+  try{
+    const {fsM,db,user}=fb;
+    const ref=fsM.doc(db,'users',user.uid,'journal',k);
+    if(v==null) await fsM.deleteDoc(ref);
+    else await fsM.setDoc(ref,{v:JSON.parse(JSON.stringify(v)), at:Date.now()});
+  }catch(e){ console.warn('[fumi] sync push failed:',k,e); }
+}
+// 伝言リストのマージ（宛先日ごとに新しい方）。復元マージと同じ規則。
+function mergeLettersArr(a,b){
+  const map=new Map((a||[]).map(l=>[l.to,l]));
+  for(const l of (b||[])){
+    const e=map.get(l.to);
+    if(!e||(l.ts||0)>(e.ts||0)) map.set(l.to,l);
+  }
+  return [...map.values()];
+}
+function mergeKeyValue(k, lv, rv){
+  if(lv==null) return rv;
+  if(rv==null) return lv;
+  if(k.startsWith('journal:day:')) return mergeDay(lv,rv);
+  if(k==='journal:letters') return mergeLettersArr(lv,rv);
+  return lv;   // 設定・読み解きキャッシュ等はこの端末を優先
+}
+// 初回ログイン：リモート全件とローカル全件を非破壊マージし、両側へ書き戻す
+async function syncFirstMerge(){
+  const {fsM,db,user}=fb;
+  const snap=await fsM.getDocs(fsM.collection(db,'users',user.uid,'journal'));
+  const remote=new Map();
+  snap.forEach(d=>{ if(d.id.startsWith('journal:')) remote.set(d.id,(d.data()||{}).v); });
+  const localKeys=(await Store.listAll()).filter(k=>k.startsWith('journal:'));
+  const keys=new Set([...remote.keys(), ...localKeys]);
+  applyingRemote=true;
+  try{
+    for(const k of keys){
+      const mv=mergeKeyValue(k, await Store.get(k), remote.has(k)?remote.get(k):null);
+      if(mv!=null) await _storeSet(k,mv);
+    }
+  } finally { applyingRemote=false; }
+  for(const k of keys){
+    const v=await Store.get(k);
+    if(v!=null) await syncPush(k,v);
+  }
+  await syncRefreshUI();
+}
+// 他端末の変更を受けて画面を作り直す
+async function syncRefreshUI(){
+  await loadLetters();
+  await loadSettings();
+  await refreshMeta();
+  setMurmurDay(murmurDay);
+  const act=document.querySelector('.screen.active');
+  if(act&&act.id==='screen-history') renderCalendar();
+  if(act&&act.id==='screen-utsuroi') renderUtsuroi();
+}
+function syncWatch(){
+  const {fsM,db,user}=fb;
+  fb.unsub=fsM.onSnapshot(fsM.collection(db,'users',user.uid,'journal'), async(snap)=>{
+    let changed=false;
+    for(const ch of snap.docChanges()){
+      if(ch.doc.metadata.hasPendingWrites) continue;   // 自分の書き込みのエコーは無視
+      const k=ch.doc.id;
+      if(!k.startsWith('journal:')) continue;
+      applyingRemote=true;
+      try{
+        if(ch.type==='removed') await _storeDel(k);
+        else await _storeSet(k,(ch.doc.data()||{}).v);
+      } finally { applyingRemote=false; }
+      changed=true;
+    }
+    if(changed) await syncRefreshUI();
+  }, e=>console.warn('[fumi] sync watch error:',e));
+}
+function updateSyncUI(){
+  const st=document.getElementById('syncStatus');
+  const dt=document.getElementById('syncDetail');
+  const btn=document.getElementById('syncLoginBtn');
+  if(!st||!dt||!btn) return;
+  if(fb&&fb.user){
+    st.textContent='同期中';
+    dt.textContent=fb.user.email||'ログイン済み';
+    btn.textContent='ログアウト';
+  } else {
+    st.textContent='未ログイン';
+    dt.textContent='この端末のみに保存';
+    btn.textContent='Googleでログイン';
+  }
+}
+async function initSync(){
+  const btn=document.getElementById('syncLoginBtn');
+  try{
+    const V='10.12.2';
+    const [appM,authM,fsM]=await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+    ]);
+    const app=appM.initializeApp(FIREBASE_CONFIG);
+    const auth=authM.getAuth(app);
+    auth.languageCode='ja';
+    let db;
+    try{ db=fsM.initializeFirestore(app,{localCache:fsM.persistentLocalCache()}); }
+    catch(e){ db=fsM.getFirestore(app); }   // プライベートモード等で永続キャッシュ不可なら通常モード
+    fb={auth, db, authM, fsM, user:null, unsub:null};
+    authM.getRedirectResult(auth).catch(()=>{});
+    authM.onAuthStateChanged(auth, async(user)=>{
+      const wasOut=!(fb&&fb.user);
+      fb.user=user||null;
+      if(fb.unsub){ fb.unsub(); fb.unsub=null; }
+      updateSyncUI();
+      if(user){
+        try{
+          if(wasOut) toast('同期をはじめます…');
+          await syncFirstMerge();
+          syncWatch();
+          toast('同期しました');
+        }catch(e){ console.warn('[fumi] sync merge failed:',e); toast('同期に失敗しました'); }
+      }
+    });
+  }catch(e){
+    console.warn('[fumi] sync unavailable:',e);
+    if(btn){ btn.disabled=true; btn.textContent='同期を準備できません'; }
+  }
+}
+function wireSyncUI(){
+  const btn=document.getElementById('syncLoginBtn');
+  if(!btn) return;
+  btn.onclick=async()=>{
+    if(!fb){ toast('同期の準備ができていません'); return; }
+    if(fb.user){
+      await fb.authM.signOut(fb.auth);
+      toast('ログアウトしました（記録はこの端末に残ります）');
+      return;
+    }
+    const prov=new fb.authM.GoogleAuthProvider();
+    try{ await fb.authM.signInWithPopup(fb.auth, prov); }
+    catch(e){
+      // ポップアップが塞がれる環境ではリダイレクトで再挑戦
+      try{ await fb.authM.signInWithRedirect(fb.auth, prov); }
+      catch(e2){ console.warn('[fumi] login failed:',e2); toast('ログインできませんでした'); }
+    }
+  };
+}
+
+init().then(()=>{ wireSyncUI(); initSync(); });

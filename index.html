@@ -272,6 +272,16 @@
       <div id="angleList"></div>
       <button class="ex-btn" id="addAngle" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">＋ 角度を追加</button>
 
+      <div class="set-section">同期（複数端末）</div>
+      <div class="pf-hint" style="margin-bottom:12px">Googleでログインすると、複数の端末で同じ記録をひらけます。未ログインのままなら、これまで通りこの端末だけに保存されます。</div>
+      <div class="set-row">
+        <div class="sr-l">
+          <div class="sr-t" id="syncStatus">未ログイン</div>
+          <div class="sr-d" id="syncDetail">この端末のみに保存</div>
+        </div>
+      </div>
+      <button class="ex-btn" id="syncLoginBtn" style="margin-bottom:10px">Googleでログイン</button>
+
       <div class="set-section">エクスポート</div>
       <div class="ex-dates">
         <div><div class="ex-l">開始</div><input type="date" class="ex-date" id="exFrom"></div>
