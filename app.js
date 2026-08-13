@@ -1994,6 +1994,8 @@ function updateSyncUI(){
 }
 async function initSync(){
   const btn=document.getElementById('syncLoginBtn');
+  const dt=document.getElementById('syncDetail');
+  if(dt) dt.textContent='同期の準備中…';
   try{
     const V='10.12.2';
     const [appM,authM,fsM]=await Promise.all([
@@ -2029,6 +2031,7 @@ async function initSync(){
   }catch(e){
     console.warn('[fumi] sync unavailable:',e);
     if(btn){ btn.disabled=true; btn.textContent='同期を準備できません'; }
+    if(dt) dt.textContent='読み込みに失敗：'+String(e&&e.message||e).slice(0,80);
   }
 }
 // インストール版（スタンドアロン表示）かどうか。ポップアップが塞がれやすい環境。
@@ -2039,7 +2042,7 @@ function wireSyncUI(){
   const btn=document.getElementById('syncLoginBtn');
   if(!btn) return;
   btn.onclick=async()=>{
-    if(!fb){ toast('同期の準備ができていません'); return; }
+    if(!fb){ toast('同期の準備ができていません。少し待つか、開き直してください'); initSync(); return; }
     if(fb.user){
       await fb.authM.signOut(fb.auth);
       toast('ログアウトしました（記録はこの端末に残ります）');
@@ -2067,4 +2070,9 @@ function wireSyncUI(){
   };
 }
 
-init().then(()=>{ wireSyncUI(); initSync(); });
+// ログインボタンの配線と同期の初期化は、アプリ初期化の成否に関わらず必ず走らせる
+// （initのどこかで転けても、同期だけは生かす）
+wireSyncUI();
+init()
+  .catch(e=>console.warn('[fumi] init error:',e))
+  .finally(()=>{ initSync(); });
