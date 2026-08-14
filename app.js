@@ -1903,12 +1903,14 @@ Store.del=async(k)=>{ await _storeDel(k); syncPush(k,null); };
 
 async function syncPush(k,v){
   if(!fb||!fb.user||applyingRemote||!k.startsWith('journal:')) return;
+  syncActivity(1);
   try{
     const {fsM,db,user}=fb;
     const ref=fsM.doc(db,'users',user.uid,'journal',k);
     if(v==null) await fsM.deleteDoc(ref);
     else await fsM.setDoc(ref,{v:JSON.parse(JSON.stringify(v)), at:Date.now()});
   }catch(e){ console.warn('[fumi] sync push failed:',k,e); }
+  finally{ syncActivity(-1); }
 }
 // 伝言リストのマージ（宛先日ごとに新しい方）。復元マージと同じ規則。
 function mergeLettersArr(a,b){
@@ -1928,6 +1930,8 @@ function mergeKeyValue(k, lv, rv){
 }
 // 初回ログイン：リモート全件とローカル全件を非破壊マージし、両側へ書き戻す
 async function syncFirstMerge(){
+  syncActivity(1);
+  try{
   const {fsM,db,user}=fb;
   const snap=await fsM.getDocs(fsM.collection(db,'users',user.uid,'journal'));
   const remote=new Map();
@@ -1946,6 +1950,7 @@ async function syncFirstMerge(){
     if(v!=null) await syncPush(k,v);
   }
   await syncRefreshUI();
+  } finally { syncActivity(-1); }
 }
 // 他端末の変更を受けて画面を作り直す
 async function syncRefreshUI(){
@@ -1961,6 +1966,8 @@ function syncWatch(){
   const {fsM,db,user}=fb;
   fb.unsub=fsM.onSnapshot(fsM.collection(db,'users',user.uid,'journal'), async(snap)=>{
     let changed=false;
+    syncActivity(1);
+    try{
     for(const ch of snap.docChanges()){
       if(ch.doc.metadata.hasPendingWrites) continue;   // 自分の書き込みのエコーは無視
       const k=ch.doc.id;
@@ -1983,16 +1990,31 @@ function syncWatch(){
       changed=true;
     }
     if(changed) await syncRefreshUI();
+    } finally { syncActivity(-1); }
   }, e=>console.warn('[fumi] sync watch error:',e));
 }
-// ヘッダーの雲アイコン：'on'=同期中（栞紅＋チェック）/'off'=未ログイン（斜線）/'wait'=準備中
+// ヘッダーの雲アイコン：
+// 'on'=同期完了（栞紅＋チェック）/'syncing'=同期中（脈動）/'off'=未同期（斜線）/'wait'=準備中
 function setSyncBadge(state, title){
   const b=document.getElementById('syncBadge');
   if(!b) return;
   b.classList.toggle('on', state==='on');
   b.classList.toggle('off', state==='off');
+  b.classList.toggle('syncing', state==='syncing');
   b.title=title||'同期';
   b.setAttribute('aria-label', title||'同期の状態');
+}
+// 同期の進行中カウント。>0 の間は雲が脈動する。
+let syncBusy=0;
+function syncActivity(d){
+  syncBusy=Math.max(0, syncBusy+d);
+  refreshSyncBadge();
+}
+function refreshSyncBadge(){
+  if(!fb){ setSyncBadge('wait','同期の準備中…'); return; }
+  if(!fb.user){ setSyncBadge('off','未同期（この端末のみに保存）'); return; }
+  if(syncBusy>0) setSyncBadge('syncing','同期中…');
+  else setSyncBadge('on','同期済み：'+(fb.user.email||''));
 }
 function updateSyncUI(){
   const st=document.getElementById('syncStatus');
@@ -2000,18 +2022,17 @@ function updateSyncUI(){
   const btn=document.getElementById('syncLoginBtn');
   if(!st||!dt||!btn) return;
   if(fb&&fb.user){
-    st.textContent='同期中';
+    st.textContent='ログイン中';
     dt.textContent=fb.user.email||'ログイン済み';
     btn.textContent='ログアウト';
-    setSyncBadge('on','同期中：'+(fb.user.email||''));
     const sub=document.getElementById('accSyncSub'); if(sub) sub.textContent='同期中';
   } else {
     st.textContent='未ログイン';
     dt.textContent='この端末のみに保存';
     btn.textContent='Googleでログイン';
-    setSyncBadge('off','未ログイン（この端末のみに保存）');
     const sub=document.getElementById('accSyncSub'); if(sub) sub.textContent='';
   }
+  refreshSyncBadge();
 }
 async function initSync(){
   const btn=document.getElementById('syncLoginBtn');
@@ -2037,16 +2058,14 @@ async function initSync(){
       toast('ログインできませんでした。ブラウザ側の保護機能でブロックされた可能性があります');
     });
     authM.onAuthStateChanged(auth, async(user)=>{
-      const wasOut=!(fb&&fb.user);
       fb.user=user||null;
       if(fb.unsub){ fb.unsub(); fb.unsub=null; }
       updateSyncUI();
       if(user){
         try{
-          if(wasOut) toast('同期をはじめます…');
+          // 進行の表現は雲アイコンの脈動だけ（トーストは出さない）
           await syncFirstMerge();
           syncWatch();
-          toast('同期しました');
         }catch(e){ console.warn('[fumi] sync merge failed:',e); toast('同期に失敗しました'); }
       }
     });
