@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文 — PC版・見開きノート（モック）</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --card:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --desk:#E3E4DF;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--sans);color:var(--ink);background:var(--desk);-webkit-font-smoothing:antialiased;display:flex;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+textarea{font-family:inherit}
+
+/* ============ 左ナビ ============ */
+.rail{width:200px;flex-shrink:0;padding:28px 18px;display:flex;flex-direction:column;gap:4px;background:var(--paper);border-right:1px solid var(--hairline)}
+.logo{position:relative;display:inline-block;font-family:var(--mincho);font-weight:500;font-size:30px;padding-bottom:7px;margin:0 0 26px 10px;align-self:flex-start}
+.logo::after{content:"";position:absolute;left:1px;bottom:0;width:20px;height:2.5px;border-radius:3px;background:var(--accent)}
+.logo::before{content:"";position:absolute;right:-2px;bottom:-1px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:12px;font-size:13.5px;color:var(--ink-soft);letter-spacing:.06em;text-align:left}
+.nav-item svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav-item.active{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rail .foot{margin-top:auto;display:flex;flex-direction:column;gap:2px}
+.sync-row{display:flex;align-items:center;gap:9px;padding:10px 12px;font-size:11.5px;color:var(--muted)}
+.sync-row svg{width:16px;height:16px;fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.kbd-hint{padding:8px 12px;font-size:10.5px;color:var(--muted);line-height:1.8}
+.kbd-hint b{font-weight:500;color:var(--ink-soft);border:1px solid var(--hairline-strong);border-radius:4px;padding:0 4px;background:#fff;font-size:10px}
+
+/* ============ 机と見開き ============ */
+.desk{flex:1;display:flex;align-items:center;justify-content:center;padding:34px 46px;position:relative}
+.spread-wrap{display:flex;align-items:center;gap:10px;width:100%;max-width:1120px}
+.flip{width:40px;height:40px;border-radius:50%;color:var(--muted);font-size:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.flip:hover{background:rgba(0,0,0,.04);color:var(--ink-soft)}
+.book{flex:1;display:flex;position:relative;background:var(--surface);border-radius:14px;
+  box-shadow:0 18px 50px rgba(43,46,43,.16), 0 2px 8px rgba(43,46,43,.08);min-height:640px;overflow:hidden}
+/* ノド（綴じ目） */
+.book::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:64px;transform:translateX(-50%);
+  background:linear-gradient(to right, transparent, rgba(43,46,43,.05) 38%, rgba(43,46,43,.10) 50%, rgba(43,46,43,.05) 62%, transparent);pointer-events:none}
+.page{flex:1;padding:34px 40px 30px;display:flex;flex-direction:column;min-width:0}
+.page.left{border-right:1px solid rgba(43,46,43,.04)}
+
+/* ページ共通 */
+.p-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+.p-date{font-family:var(--mincho);font-size:17px;letter-spacing:.08em;color:var(--ink)}
+.p-cap{font-size:11px;color:var(--muted);letter-spacing:.12em}
+.p-head .fill{flex:1}
+.streak{font-size:11px;color:var(--ink-soft);border:1px solid var(--hairline-strong);border-radius:999px;padding:4px 11px;background:#fff;white-space:nowrap}
+
+/* ---- 左ページ：呟き ---- */
+.dg-closed{position:relative;background:#fff;border:1px solid var(--hairline-strong);border-radius:14px;
+  padding:16px;text-align:center;cursor:pointer;margin-bottom:16px}
+.dg-mizuhiki{display:block;margin:0 auto 9px;width:56%;height:24px}
+.dg-mizuhiki path{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round}
+.dg-cap{font-size:11.5px;color:var(--ink-soft);letter-spacing:.05em}
+.compose{display:flex;gap:10px;align-items:flex-end;margin-bottom:20px}
+.compose textarea{flex:1;resize:none;border:1px solid var(--hairline-strong);background:#fff;border-radius:13px;padding:12px 14px;font-size:14px;line-height:1.6;min-height:46px;outline:none}
+.compose textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.12)}
+.post{background:var(--accent);color:#fff;font-size:13px;font-weight:500;padding:0 18px;height:44px;border-radius:12px;flex-shrink:0}
+.feed{flex:1;overflow-y:auto;padding-right:4px}
+.murmur{display:flex;gap:12px;padding:10px 2px}
+.murmur .time{font-size:11px;color:var(--muted);width:36px;flex-shrink:0;padding-top:2px}
+.murmur .track{width:2px;background:var(--hairline);border-radius:2px;flex-shrink:0;position:relative}
+.mark{position:absolute;top:1px;left:50%;transform:translateX(-50%);width:18px;height:18px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:50%;color:var(--accent)}
+.mark svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.murmur .body{flex:1;font-size:14px;line-height:1.7}
+.echo{padding-left:13px;margin-top:5px}
+.echo-meta{font-size:10px;color:var(--accent);letter-spacing:.05em}
+.echo-text{font-size:13px;line-height:1.7;color:var(--ink-soft)}
+
+/* ---- 右ページ：振り返り＋伝言 ---- */
+.g-mini{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.g-mini::after{content:"";flex:1;height:1px;background:var(--hairline)}
+.reflect{width:100%;resize:none;border:1px solid var(--hairline-strong);background:#fff;border-radius:13px;padding:16px;
+  font-family:var(--mincho);font-size:14.5px;line-height:2;min-height:170px;color:var(--ink);outline:none;margin-bottom:16px}
+.reflect::placeholder{color:var(--muted);font-family:var(--mincho)}
+.reflect:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(156,74,80,.12)}
+.d-label{font-size:11.5px;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.d-dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.dengon-row{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.chip{font-size:11.5px;color:var(--accent);background:#fff;border:1px solid var(--accent);border-radius:999px;padding:5px 13px}
+.chip.ghost{color:var(--ink-soft);border-color:var(--hairline-strong)}
+.dengon-input{flex:1;border:1px solid var(--hairline-strong);background:#fff;border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.6;resize:none;min-height:42px;outline:none}
+.save-btn{width:100%;margin-top:14px;background:var(--accent);color:#fff;font-family:var(--mincho);font-size:14px;letter-spacing:.14em;padding:13px;border-radius:12px}
+.pend{margin-top:16px}
+.p-item{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink-soft);padding:7px 2px}
+.p-knot{width:20px;height:13px;flex-shrink:0}
+.p-knot path{fill:none;stroke:var(--accent);stroke-width:1.3;stroke-linecap:round;opacity:.75}
+.p-to{color:var(--accent);font-size:11px;flex-shrink:0}
+.p-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.note{font-size:11px;color:#8a8f89;text-align:center;letter-spacing:.1em;position:absolute;bottom:12px;left:0;right:0}
+</style>
+</head>
+<body>
+
+  <!-- 左ナビ -->
+  <nav class="rail">
+    <span class="logo">文</span>
+    <button class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 0 1 2-2h5v17H6a2 2 0 0 1-2-2z"/><path d="M20 19.5V6a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 0 2-2z"/></svg>
+      きょうの見開き
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      履歴
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M3 15l4-4 3.5 3L18 8"/><circle cx="18" cy="8" r="1.3" fill="currentColor" stroke="none"/><path d="M3 20h18"/></svg>
+      うつろい
+    </button>
+    <button class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      設定
+    </button>
+    <div class="foot">
+      <div class="sync-row">
+        <svg viewBox="0 0 24 24"><path d="M17.5 18.5H7a4 4 0 1 1 .64-7.95A5.5 5.5 0 0 1 18.4 9.7 4.4 4.4 0 0 1 17.5 18.5z"/><path d="M9.5 13.6l2 2 3.4-3.6"/></svg>
+        同期中 · koinobori
+      </div>
+      <div class="kbd-hint"><b>←</b> <b>→</b> で日めくり／<b>N</b> で呟き</div>
+    </div>
+  </nav>
+
+  <!-- 机（見開き） -->
+  <main class="desk">
+    <div class="spread-wrap">
+      <button class="flip" aria-label="前の日">‹</button>
+      <div class="book">
+        <!-- 左ページ：呟き -->
+        <section class="page left">
+          <div class="p-head">
+            <span class="p-date">8月14日（金）</span>
+            <span class="p-cap">きょう</span>
+            <span class="fill"></span>
+            <span class="streak">つづけて 28 日</span>
+          </div>
+
+          <div class="dg-closed">
+            <svg class="dg-mizuhiki" viewBox="0 0 300 30"><path d="M0 15 H118 C132 15 130 5 143 5 C158 5 158 25 143 25 C130 25 132 15 146 15 C160 15 158 5 171 5 C186 5 186 25 171 25 C158 25 160 15 174 15 H300"/></svg>
+            <div class="dg-cap">きのうのわたしから、文が届いています — 結びをほどいて、ひらく</div>
+          </div>
+
+          <div class="compose">
+            <textarea rows="1" placeholder="いま、なにを思ってる?"></textarea>
+            <button class="post">のこす</button>
+          </div>
+
+          <div class="feed">
+            <div class="murmur">
+              <span class="time">09:06</span>
+              <div class="track"><span class="mark"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span></div>
+              <div class="body">PC版のレイアウトを考え中。見開きは気持ちいいかも</div>
+            </div>
+            <div class="murmur">
+              <span class="time">09:48</span>
+              <div class="track"><span class="mark"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.6 10.8c.8.6 1.1 1.4 1.1 2.2h5c0-.8.3-1.6 1.1-2.2A6 6 0 0 0 12 3z"/><path d="M9.8 19.5h4.4"/><path d="M10.6 22h2.8"/></svg></span></div>
+              <div class="body">昼までにこの作業を終わらせてみる
+                <div class="echo"><div class="echo-meta">結果・13:02</div><div class="echo-text">ぎりぎり終わった。締め切りを口に出すと効く。</div></div>
+              </div>
+            </div>
+            <div class="murmur">
+              <span class="time">13:03</span>
+              <div class="track"><span class="mark"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span></div>
+              <div class="body">昼を多めに食べて、夜の食欲をおさえられるか試したい</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 右ページ：振り返り＋伝言 -->
+        <section class="page">
+          <div class="p-head">
+            <span class="p-date" style="font-size:15px">振り返り</span>
+            <span class="fill"></span>
+            <span class="p-cap">あしたのわたしへ</span>
+          </div>
+
+          <div class="g-mini">きょう集めた呟き 3件 · こころみ 1件（結果あり）</div>
+          <textarea class="reflect" placeholder="ゆっくり、書きたいことを。左の頁を眺めながら。"></textarea>
+
+          <div class="d-label"><span class="d-dot"></span>未来のわたしへ、ひとこと</div>
+          <div class="dengon-row">
+            <button class="chip ghost">あした</button>
+            <button class="chip">日付をえらぶ</button>
+          </div>
+          <div class="dengon-row">
+            <textarea class="dengon-input" rows="1" placeholder="その日のわたしに、伝えておきたいこと"></textarea>
+          </div>
+          <button class="save-btn">あしたへ文を出す</button>
+
+          <div class="pend">
+            <div class="g-mini">結ばれている文</div>
+            <div class="p-item">
+              <svg class="p-knot" viewBox="0 0 22 14"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>
+              <span class="p-to">8月20日（6日後）へ</span>
+              <span class="p-text">夜11時に寝るこころみ、つづいてる?</span>
+            </div>
+            <div class="p-item">
+              <svg class="p-knot" viewBox="0 0 22 14"><path d="M1 7 H6 C8 7 8 3 11 3 C14 3 14 11 11 11 C8 11 8 7 10 7 H21"/></svg>
+              <span class="p-to">9月1日（半月後）へ</span>
+              <span class="p-text">誕生日おめでとう。今日は好きなものを。</span>
+            </div>
+          </div>
+        </section>
+      </div>
+      <button class="flip" aria-label="次の日">›</button>
+    </div>
+    <div class="note">見開き＝1日。← → キーやページ端の矢印で日をめくる。900px未満はこれまでのスマホ表示のまま。</div>
+  </main>
+
+</body>
+</html>
