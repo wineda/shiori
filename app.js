@@ -997,6 +997,14 @@ async function openDetail(ds){
     document.querySelectorAll('#calGrid .cell.sel').forEach(c=>c.classList.remove('sel'));
     const cell=document.querySelector(`#calGrid .cell[data-ds="${ds}"]`);
     if(cell) cell.classList.add('sel');
+    else {
+      // 表示中の月の外の日を選んだ（矢印キーで月をまたいだ等）→ カレンダーをその月へ
+      const [yy,mm]=ds.split('-').map(Number);
+      if(calMonth.getFullYear()!==yy || calMonth.getMonth()!==mm-1){
+        calMonth=new Date(yy,mm-1,1);
+        renderCalendar();   // 再描画の最後に同じ日の openDetail が呼ばれ、選択枠も付く
+      }
+    }
     return;
   }
   document.getElementById('detailDate').textContent=jpDateShort(ds);
@@ -1565,19 +1573,20 @@ function switchScreen(name){
   if(name==='utsuroi'){ renderUtsuroi(); }
   document.querySelector('.screen.active').scrollTop=0;
 }
-// PC（900px以上）：← → で日をめくる、N で呟き入力へ。
+// PC（900px以上）：← → で日をめくる（履歴では詳細の日を移動）、N で呟き入力へ。
 // 入力中・シートや確認を開いている間は何もしない
 document.addEventListener('keydown',(e)=>{
   if(!matchMedia('(min-width:900px)').matches) return;
   const onMurmur=document.getElementById('screen-murmur').classList.contains('active');
   const onReflect=document.getElementById('screen-reflect').classList.contains('active');
-  if(!onMurmur&&!onReflect) return;
+  const onHistory=document.getElementById('screen-history').classList.contains('active');
+  if(!onMurmur&&!onReflect&&!onHistory) return;
   if(isTextField(document.activeElement)) return;
   if(document.querySelector('.sheet.show')) return;
   if(document.getElementById('imgViewer').classList.contains('show')) return;
   const co=document.getElementById('confirmOverlay'); if(co&&!co.hidden) return;
-  if(e.key==='ArrowLeft'){ e.preventDefault(); shiftMurmurDay(-1); }
-  else if(e.key==='ArrowRight'){ e.preventDefault(); shiftMurmurDay(1); }
+  if(e.key==='ArrowLeft'){ e.preventDefault(); onHistory?shiftDetailDay(-1):shiftMurmurDay(-1); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); onHistory?shiftDetailDay(1):shiftMurmurDay(1); }
   else if(e.key==='n'||e.key==='N'){ e.preventDefault(); if(!onMurmur) switchScreen('murmur'); document.getElementById('murmurInput').focus(); }
 });
 
