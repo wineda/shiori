@@ -1901,8 +1901,30 @@ const _storeDel=Store.del.bind(Store);
 Store.set=async(k,v)=>{ await _storeSet(k,v); syncPush(k,v); };
 Store.del=async(k)=>{ await _storeDel(k); syncPush(k,null); };
 
+// 値の同一判定。Firestore はオブジェクトのキー順を並べ替えて返すため、
+// JSON.stringify の素の比較では「同じ内容なのに違う」と誤判定する。キーを揃えて比べる。
+function stableStr(x){
+  if(x==null) return 'null';
+  if(Array.isArray(x)) return '['+x.map(stableStr).join(',')+']';
+  if(typeof x==='object') return '{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stableStr(x[k])).join(',')+'}';
+  return JSON.stringify(x);
+}
+const sameVal=(a,b)=>stableStr(a===undefined?null:a)===stableStr(b===undefined?null:b);
+
+// 未ログイン（または同期を準備できない）間に編集したキーの控え。
+// 次のログイン時にこのキーを含む全体マージで拾い、クラウドへ反映する。
+function syncPendingKeys(){ try{ return JSON.parse(localStorage.getItem('fumi:pendingPush')||'[]'); }catch(e){ return []; } }
+function syncAddPending(k){
+  const s=new Set(syncPendingKeys());
+  if(s.has(k)) return;
+  s.add(k);
+  try{ localStorage.setItem('fumi:pendingPush', JSON.stringify([...s])); }catch(e){}
+}
+function syncClearPending(){ try{ localStorage.removeItem('fumi:pendingPush'); }catch(e){} }
+
 async function syncPush(k,v){
-  if(!fb||!fb.user||applyingRemote||!k.startsWith('journal:')) return;
+  if(applyingRemote||!k.startsWith('journal:')) return;
+  if(!fb||!fb.user){ syncAddPending(k); return; }
   syncActivity(1);
   try{
     const {fsM,db,user}=fb;
@@ -1928,28 +1950,44 @@ function mergeKeyValue(k, lv, rv){
   if(k==='journal:letters') return mergeLettersArr(lv,rv);
   return lv;   // 設定・読み解きキャッシュ等はこの端末を優先
 }
-// 初回ログイン：リモート全件とローカル全件を非破壊マージし、両側へ書き戻す
+// 初回ログイン：リモート全件とローカル全件を非破壊マージし、差分だけを書き戻す。
+// 2回目以降の起動では丸ごとスキップ（購読が差分を届けてくれる）。ただし
+// 未ログイン中に編集した控え（pendingPush）が残っていれば、拾うために再実行する。
 async function syncFirstMerge(){
+  const {fsM,db,user}=fb;
+  const mergedFlag='fumi:merged:'+user.uid;
+  if(localStorage.getItem(mergedFlag) && syncPendingKeys().length===0) return;
   syncActivity(1);
   try{
-  const {fsM,db,user}=fb;
   const snap=await fsM.getDocs(fsM.collection(db,'users',user.uid,'journal'));
   const remote=new Map();
   snap.forEach(d=>{ if(d.id.startsWith('journal:')) remote.set(d.id,(d.data()||{}).v); });
   const localKeys=(await Store.listAll()).filter(k=>k.startsWith('journal:'));
   const keys=new Set([...remote.keys(), ...localKeys]);
+  const toPush=[];        // クラウドと差があるキーだけ送る
+  let changedLocal=false; // ローカルに差があったときだけ書き込み・再描画する
   applyingRemote=true;
   try{
     for(const k of keys){
-      const mv=mergeKeyValue(k, await Store.get(k), remote.has(k)?remote.get(k):null);
-      if(mv!=null) await _storeSet(k,mv);
+      const lv=await Store.get(k);
+      const rv=remote.has(k)?remote.get(k):null;
+      const mv=mergeKeyValue(k, lv, rv);
+      if(mv==null) continue;
+      if(!sameVal(mv,lv)){ await _storeSet(k,mv); changedLocal=true; }
+      if(!sameVal(mv,rv)) toPush.push([k,mv]);
     }
   } finally { applyingRemote=false; }
-  for(const k of keys){
-    const v=await Store.get(k);
-    if(v!=null) await syncPush(k,v);
+  // 1件ずつ順番に送ると往復回数ぶん待たされる（これが起動10秒の原因だった）。
+  // 一括バッチで送る。上限500件/バッチのため400件ずつに区切る。
+  for(let i=0;i<toPush.length;i+=400){
+    const batch=fsM.writeBatch(db);
+    for(const [k,v] of toPush.slice(i,i+400))
+      batch.set(fsM.doc(db,'users',user.uid,'journal',k), {v:JSON.parse(JSON.stringify(v)), at:Date.now()});
+    await batch.commit();
   }
-  await syncRefreshUI();
+  localStorage.setItem(mergedFlag,'1');
+  syncClearPending();
+  if(changedLocal) await syncRefreshUI();
   } finally { syncActivity(-1); }
 }
 // 他端末の変更を受けて画面を作り直す
@@ -1975,19 +2013,21 @@ function syncWatch(){
       let dirty=null;   // サンプル混入を受信したら、掃除した値でリモートも直す
       applyingRemote=true;
       try{
-        if(ch.type==='removed') await _storeDel(k);
-        else {
+        if(ch.type==='removed'){
+          if((await Store.get(k))!=null){ await _storeDel(k); changed=true; }
+        } else {
           let v=(ch.doc.data()||{}).v;
           if(k.startsWith('journal:day:')){
             const r=stripSampleDay(v);
             if(r.changed){ v=r.day; dirty=(v.murmurs.length||v.reflection)?v:null;
               if(!dirty){ await _storeDel(k); applyingRemote=false; await syncPush(k,null); applyingRemote=true; changed=true; continue; } }
           }
-          await _storeSet(k,v);
+          // 手元と同じ内容なら書き込みも再描画もしない
+          // （起動直後の初回スナップショットは既知の全件が届くため、ここで素通しにする）
+          if(!sameVal(await Store.get(k), v)){ await _storeSet(k,v); changed=true; }
         }
       } finally { applyingRemote=false; }
       if(dirty) await syncPush(k,dirty);
-      changed=true;
     }
     if(changed) await syncRefreshUI();
     } finally { syncActivity(-1); }
