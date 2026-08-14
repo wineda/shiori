@@ -111,6 +111,10 @@ textarea,input{font-family:inherit}
 .sync-badge.on{color:var(--accent)}
 .sync-badge.on .sb-check{display:inline !important}
 .sync-badge.off .sb-slash{display:inline !important}
+/* 同期中：雲が静かに脈動する */
+.sync-badge.syncing{color:var(--accent)}
+.sync-badge.syncing svg{animation:syncPulse 1.1s ease-in-out infinite}
+@keyframes syncPulse{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ---------- scroll body ---------- */
 .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
