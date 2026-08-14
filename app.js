@@ -1578,7 +1578,9 @@ async function init(){
   await cleanSampleData();
   await loadLetters();
   await absorbToTomorrow();   // 旧形式（day.toTomorrow）を journal:letters へ
-  document.getElementById('todayDate').textContent=jpDate(today);
+  // 年は狭い画面ではCSSで省略する（8月14日 (金) だけで収まるように）
+  document.getElementById('todayDate').innerHTML=
+    '<span class="dy">'+today.getFullYear()+'年</span>'+(today.getMonth()+1)+'月'+today.getDate()+'日 ('+WD[today.getDay()]+')';
   await loadSettings();
   await renderFeed();
   await refreshMeta();
