@@ -93,6 +93,11 @@ textarea,input{font-family:inherit}
 .topbar .streak b{font-weight:700;color:var(--ink);font-size:13px}
 .icon-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--ink-soft)}
 .icon-btn:hover{background:var(--surface)}
+/* ヘッダーの同期状態（雲）：同期中=栞紅にチェック／未ログイン=薄い雲に斜線／準備中=薄い雲 */
+.sync-badge{color:var(--muted)}
+.sync-badge.on{color:var(--accent)}
+.sync-badge.on .sb-check{display:inline !important}
+.sync-badge.off .sb-slash{display:inline !important}
 
 /* ---------- scroll body ---------- */
 .screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
