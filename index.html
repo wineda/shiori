@@ -160,16 +160,24 @@
   <!-- SCREEN: HISTORY -->
   <div class="screen" id="screen-history">
     <div class="pad">
-      <div class="cal-head">
-        <div class="cal-title" id="calTitle">—</div>
-        <div class="cal-nav">
-          <button id="prevMonth" aria-label="前の月">‹</button>
-          <button id="nextMonth" aria-label="次の月">›</button>
+      <div class="hist-cal">
+        <div class="cal-head">
+          <div class="cal-title" id="calTitle">—</div>
+          <div class="cal-nav">
+            <button id="prevMonth" aria-label="前の月">‹</button>
+            <button id="nextMonth" aria-label="次の月">›</button>
+          </div>
         </div>
+        <div class="weekrow"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+        <div class="calgrid" id="calGrid"></div>
+        <div class="cal-legend" id="calLegend"></div>
       </div>
-      <div class="weekrow"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
-      <div class="calgrid" id="calGrid"></div>
-      <div class="cal-legend" id="calLegend"></div>
+      <!-- PC（900px以上）だけ：選んだ日の詳細をシートではなく右側に出す -->
+      <div class="hist-detail" id="histDetail">
+        <div class="hd-date" id="histDate">—</div>
+        <div class="hd-sub" id="histSub"></div>
+        <div class="hd-body" id="histBody"></div>
+      </div>
     </div>
   </div>
 

@@ -931,7 +931,8 @@ async function renderCalendar(){
     const count=(day.murmurs?day.murmurs.length:0)+(day.reflection?1:0);
     const lv = count===0?0 : count<=1?1 : count<=3?2 : count<=5?3 : 4;
     const cell=document.createElement('div');
-    cell.className='cell'+(count?' has lv'+lv:'')+(ds===todayKey?' today':'');
+    cell.className='cell'+(count?' has lv'+lv:'')+(ds===todayKey?' today':'')+(ds===detailDay?' sel':'');
+    cell.dataset.ds=ds;
     if(count) cell.style.background=heatColor(lv);
     cell.innerHTML=`<div class="num">${dnum}</div>`;
     if(count) cell.onclick=()=>openDetail(ds);
@@ -942,6 +943,11 @@ async function renderCalendar(){
     leg.innerHTML='<span>少ない</span><div class="cl-cells">'+[0,1,2,3,4].map(l=>`<i style="background:${l?heatColor(l):'transparent'}"></i>`).join('')+'</div><span>多い</span>';
     leg.dataset.built='1';
   }
+  // PCの2分割：まだ日を選んでいなければ今日の記録を右側に出しておく
+  if(matchMedia('(min-width:900px)').matches && document.getElementById('screen-history').classList.contains('active')){
+    if(!detailDay) detailDay=todayKey;
+    openDetail(detailDay);
+  }
 }
 function heatColor(lv){
   // 記録件数に応じて栞紅を濃く（ヒートマップ風グラデーション）
@@ -949,12 +955,11 @@ function heatColor(lv){
 }
 
 /* ============ detail sheet ============ */
+// 日の詳細。スマホでは下からのシート、PC（900px以上）の履歴では右側の欄に出す。
 async function openDetail(ds){
   detailDay=ds;
   const day=await getDay(ds);
-  document.getElementById('detailDate').textContent=jpDateShort(ds);
-  document.getElementById('detailSub').textContent=(day.murmurs.length)+' 件の呟き'+(day.reflection?' ・ 振り返りあり':'');
-  const body=document.getElementById('detailBody');
+  const sub=(day.murmurs.length)+' 件の呟き'+(day.reflection?' ・ 振り返りあり':'');
   let html='';
   // 振り返りを上、呟きを下に表示する。
   if(day.reflection){
@@ -983,6 +988,20 @@ async function openDetail(ds){
     });
   }
   if(!day.murmurs.length && !day.reflection && !sentLetters.length){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
+  // PCの履歴：右側の詳細欄へ（シートは開かない）
+  if(matchMedia('(min-width:900px)').matches && document.getElementById('screen-history').classList.contains('active')){
+    document.getElementById('histDate').textContent=jpDateShort(ds);
+    document.getElementById('histSub').textContent=sub;
+    const hb=document.getElementById('histBody');
+    hb.innerHTML=html; hb.scrollTop=0;
+    document.querySelectorAll('#calGrid .cell.sel').forEach(c=>c.classList.remove('sel'));
+    const cell=document.querySelector(`#calGrid .cell[data-ds="${ds}"]`);
+    if(cell) cell.classList.add('sel');
+    return;
+  }
+  document.getElementById('detailDate').textContent=jpDateShort(ds);
+  document.getElementById('detailSub').textContent=sub;
+  const body=document.getElementById('detailBody');
   body.innerHTML=html;
   body.scrollTop=0;
   document.getElementById('overlay').classList.add('show');
