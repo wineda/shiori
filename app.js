@@ -1273,12 +1273,15 @@ async function applyRestore(mode){
   if(mode==='overwrite'){
     const existing=(await Store.listAll()).filter(k=>k.startsWith('journal:'));
     for(const k of existing) await Store.del(k);
-    for(const k of Object.keys(data)) await Store.set(k, data[k]);
+    for(const k of Object.keys(data)){
+      const v=k.startsWith('journal:day:')?stripSampleDay(data[k]).day:data[k];
+      await Store.set(k, v);
+    }
   } else { // merge（非破壊）
     for(const k of Object.keys(data)){
       if(k.startsWith('journal:day:')){
         const cur=await Store.get(k);
-        await Store.set(k, cur?mergeDay(cur,data[k]):data[k]);
+        await Store.set(k, stripSampleDay(cur?mergeDay(cur,data[k]):data[k]).day);
       } else if(k==='journal:letters'){
         // 伝言は宛先日ごとに新しい方を採用
         const cur=(await Store.get(k))||[];
@@ -1540,51 +1543,39 @@ function switchScreen(name){
 }
 
 /* ============ sample seed ============ */
-async function seedIfEmpty(){
-  // 種まきは「初回のみ」。一度でも種まき済み（＝journal:meta あり）なら二度としない。
-  // これにより「まっさらに」で消してもサンプルは復活しない。
-  const meta=await Store.get('journal:meta');
-  if(meta && meta.seeded) return;
-  // 旧データ（このフラグ導入前から記録がある人）は種まき済みとみなし、消さない。
+/* ============ サンプルデータの掃除（種まきは v36 で廃止） ============
+   かつての初回種まき（呟き id が s◯_◯、振り返りが下記の定型文）が、
+   同期のマージでクラウドに混入し得たため、あらゆる入口で恒久的に取り除く：
+   起動時の全日掃除／同期マージ／リモート受信／バックアップ復元。 */
+const SAMPLE_R_TEXTS=[
+  '急がなくていい日だった。','うまくいかないこともあったけど、まあいい。','小さな幸せに、いくつか気づけた。',
+  '静かに過ごせた。悪くない一日。','疲れたけれど、前に進んだ気がする。','人のやさしさに助けられた日。',
+  'なんでもない日を、大切にしたい。'
+];
+function isSampleMurmur(m){ return !!m && typeof m.id==='string' && /^s\d+_\d+$/.test(m.id); }
+function stripSampleDay(day){
+  if(!day) return {changed:false, day};
+  let changed=false;
+  const murmurs=(day.murmurs||[]).filter(m=>{ if(isSampleMurmur(m)){ changed=true; return false; } return true; });
+  let reflection=day.reflection||null;
+  if(reflection && !reflection.source && SAMPLE_R_TEXTS.includes(reflection.text)){ reflection=null; changed=true; }
+  return {changed, day:{...day, murmurs, reflection}};
+}
+// 起動のたびにローカル全日を掃除（同期ログイン中なら Store フック経由でクラウドにも反映）
+async function cleanSampleData(){
   const keys=await Store.listDays();
-  if(keys.length>0){ await Store.set('journal:meta',{seeded:true, seededAt:Date.now()}); return; }
-  const mTexts=[
-    '朝のコーヒーがちょうどいい温度だった','窓の外の雲をぼんやり眺めてた','帰り道、金木犀の匂いがした',
-    '少し疲れた。早めに休もう','友だちからの連絡がうれしかった','本を10ページ読めた','何もしない時間も、悪くない',
-    '夕焼けがとてもきれいだった','昼にちゃんと歩けた','締め切りが近い、でも大丈夫','あたたかいスープを飲んだ',
-    'ひとつ、やり残しを片づけた','雨の音が心地よかった','会議が長かった','小さな失敗、でも笑えた',
-    '今日の空はうすい水色','ねこが膝にのってきた','考えごとで手が止まった'
-  ];
-  const rTexts=[
-    '急がなくていい日だった。','うまくいかないこともあったけど、まあいい。','小さな幸せに、いくつか気づけた。',
-    '静かに過ごせた。悪くない一日。','疲れたけれど、前に進んだ気がする。','人のやさしさに助けられた日。',
-    'なんでもない日を、大切にしたい。'
-  ];
-  let seed=7;
-  const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
-  for(let i=1;i<=20;i++){
-    const d=new Date(today); d.setDate(d.getDate()-i);
-    const ds=fmtKey(d);
-    const nM=1+Math.floor(rnd()*3);
-    const murmurs=[];
-    for(let j=0;j<nM;j++){
-      const hh=8+Math.floor(rnd()*13);
-      const mm=Math.floor(rnd()*60);
-      const t=new Date(d); t.setHours(hh,mm,0,0);
-      murmurs.push({id:'s'+i+'_'+j, text:mTexts[Math.floor(rnd()*mTexts.length)], ts:t.getTime(), time:String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')});
-    }
-    murmurs.sort((a,b)=>a.ts-b.ts);
-    let reflection=null;
-    if(rnd()<0.65){ reflection={text:rTexts[Math.floor(rnd()*rTexts.length)], savedAt:d.getTime()}; }
-    await setDay(ds,{murmurs,reflection});
+  for(const k of keys){
+    const {changed, day}=stripSampleDay(await Store.get(k));
+    if(!changed) continue;
+    if(!day.murmurs.length && !day.reflection) await Store.del(k);
+    else await Store.set(k, day);
   }
-  await Store.set('journal:meta',{seeded:true, seededAt:Date.now()});
 }
 
 /* ============ init ============ */
 async function init(){
   await Store.init();
-  await seedIfEmpty();
+  await cleanSampleData();
   await loadLetters();
   await absorbToTomorrow();   // 旧形式（day.toTomorrow）を journal:letters へ
   document.getElementById('todayDate').textContent=jpDate(today);
@@ -1924,7 +1915,7 @@ function mergeLettersArr(a,b){
 function mergeKeyValue(k, lv, rv){
   if(lv==null) return rv;
   if(rv==null) return lv;
-  if(k.startsWith('journal:day:')) return mergeDay(lv,rv);
+  if(k.startsWith('journal:day:')) return stripSampleDay(mergeDay(lv,rv)).day;
   if(k==='journal:letters') return mergeLettersArr(lv,rv);
   return lv;   // 設定・読み解きキャッシュ等はこの端末を優先
 }
@@ -1967,11 +1958,21 @@ function syncWatch(){
       if(ch.doc.metadata.hasPendingWrites) continue;   // 自分の書き込みのエコーは無視
       const k=ch.doc.id;
       if(!k.startsWith('journal:')) continue;
+      let dirty=null;   // サンプル混入を受信したら、掃除した値でリモートも直す
       applyingRemote=true;
       try{
         if(ch.type==='removed') await _storeDel(k);
-        else await _storeSet(k,(ch.doc.data()||{}).v);
+        else {
+          let v=(ch.doc.data()||{}).v;
+          if(k.startsWith('journal:day:')){
+            const r=stripSampleDay(v);
+            if(r.changed){ v=r.day; dirty=(v.murmurs.length||v.reflection)?v:null;
+              if(!dirty){ await _storeDel(k); applyingRemote=false; await syncPush(k,null); applyingRemote=true; changed=true; continue; } }
+          }
+          await _storeSet(k,v);
+        }
       } finally { applyingRemote=false; }
+      if(dirty) await syncPush(k,dirty);
       changed=true;
     }
     if(changed) await syncRefreshUI();
