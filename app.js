@@ -1049,19 +1049,24 @@ function renderAngleList(){
   const wrap=document.getElementById('angleList');
   if(!wrap) return;
   wrap.innerHTML='';
+  const sub=document.getElementById('accAngleSub');
+  if(sub) sub.textContent=(settings.anglePrompts||[]).length? (settings.anglePrompts.length+'件') : '';
   (settings.anglePrompts||[]).forEach(a=>{
-    const div=document.createElement('div');
-    div.className='prompt-field angle-item';
+    const div=document.createElement('details');
+    div.className='angle-acc angle-item';
     div.innerHTML=`
-      <div class="angle-head">
+      <summary><span class="a-title"></span></summary>
+      <div class="a-body">
         <input class="pf-name" placeholder="角度の名前" aria-label="角度の名前">
+        <textarea class="pf-input" rows="4" placeholder="AIへのお願いを書く"></textarea>
         <button class="angle-del" type="button">削除</button>
-      </div>
-      <textarea class="pf-input" rows="4" placeholder="AIへのお願いを書く"></textarea>`;
+      </div>`;
     const nameEl=div.querySelector('.pf-name'), textEl=div.querySelector('.pf-input');
+    const title=div.querySelector('.a-title');
+    title.textContent=a.name;
     nameEl.value=a.name;
     textEl.value=a.text;
-    nameEl.addEventListener('change',async()=>{ a.name=nameEl.value.trim()||a.name; nameEl.value=a.name; await saveSettings(); toast('角度を保存しました'); });
+    nameEl.addEventListener('change',async()=>{ a.name=nameEl.value.trim()||a.name; nameEl.value=a.name; title.textContent=a.name; await saveSettings(); toast('角度を保存しました'); });
     textEl.addEventListener('change',async()=>{ a.text=textEl.value.trim(); await saveSettings(); toast('角度を保存しました'); });
     div.querySelector('.angle-del').onclick=async()=>{
       settings.anglePrompts=(settings.anglePrompts||[]).filter(x=>x.id!==a.id);
@@ -1744,7 +1749,7 @@ async function init(){
     renderAngleList();
     const items=document.querySelectorAll('#angleList .angle-item');
     const last=items[items.length-1];
-    if(last){ last.scrollIntoView({block:'center'}); last.querySelector('.pf-name').focus(); }
+    if(last){ last.open=true; last.scrollIntoView({block:'center'}); last.querySelector('.pf-name').focus(); }
   };
   // うつろいの角度セレクト
   document.getElementById('uAngle').onchange=e=>{ utsuroiAngle=e.target.value; renderUtsuroi(); };
@@ -1999,11 +2004,13 @@ function updateSyncUI(){
     dt.textContent=fb.user.email||'ログイン済み';
     btn.textContent='ログアウト';
     setSyncBadge('on','同期中：'+(fb.user.email||''));
+    const sub=document.getElementById('accSyncSub'); if(sub) sub.textContent='同期中';
   } else {
     st.textContent='未ログイン';
     dt.textContent='この端末のみに保存';
     btn.textContent='Googleでログイン';
     setSyncBadge('off','未ログイン（この端末のみに保存）');
+    const sub=document.getElementById('accSyncSub'); if(sub) sub.textContent='';
   }
 }
 async function initSync(){

@@ -256,56 +256,77 @@
         <input type="time" class="time-input" id="remTime" value="21:00">
       </div>
 
-      <div class="set-section">AIへのお願い（プロンプト）</div>
-      <div class="prompt-field">
-        <div class="pf-label">今日の下書き（呟きからAI下書き）</div>
-        <textarea class="pf-input" id="setPromptDraft" rows="4"></textarea>
-      </div>
-      <div class="prompt-field">
-        <div class="pf-label">今週の読み解き（うつろい）</div>
-        <textarea class="pf-input" id="setPromptWeek" rows="4"></textarea>
-      </div>
-      <div class="prompt-field">
-        <div class="pf-label">今月の読み解き（うつろい）</div>
-        <textarea class="pf-input" id="setPromptMonth" rows="4"></textarea>
-      </div>
-      <div class="prompt-field">
-        <div class="pf-label">任意の期間の読み解き（うつろい）</div>
-        <textarea class="pf-input" id="setPromptCustom" rows="4"></textarea>
-      </div>
-      <button class="reset-btn" id="resetPrompts" style="color:var(--ink-soft)">プロンプトを既定に戻す</button>
-
-      <div class="set-section">読み解きの角度（うつろいのプロンプト集）</div>
-      <div class="pf-hint" style="margin-bottom:12px">うつろいでAIに送るとき、ここに登録した角度から選べます。名前と本文は自由に書き替えられます。</div>
-      <div id="angleList"></div>
-      <button class="ex-btn" id="addAngle" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">＋ 角度を追加</button>
-
-      <div class="set-section">同期（複数端末）</div>
-      <div class="pf-hint" style="margin-bottom:12px">Googleでログインすると、複数の端末で同じ記録をひらけます。未ログインのままなら、これまで通りこの端末だけに保存されます。<br>インストール版でログインできないときは、同じブラウザで <b style="color:var(--ink-soft);font-weight:500">wineda.github.io/shiori</b> をタブで開いてログインしてください。ログインは端末で共有され、アプリ側も同期がはじまります。</div>
-      <div class="set-row">
-        <div class="sr-l">
-          <div class="sr-t" id="syncStatus">未ログイン</div>
-          <div class="sr-d" id="syncDetail">この端末のみに保存</div>
+      <!-- 折りたたみで各機能をたたむ（縦長対策） -->
+      <details class="acc">
+        <summary>同期（複数端末）<span class="acc-sub" id="accSyncSub"></span></summary>
+        <div class="acc-body">
+          <div class="pf-hint" style="margin-bottom:12px">Googleでログインすると、複数の端末で同じ記録をひらけます。未ログインのままなら、これまで通りこの端末だけに保存されます。<br>インストール版でログインできないときは、同じブラウザで <b style="color:var(--ink-soft);font-weight:500">wineda.github.io/shiori</b> をタブで開いてログインしてください。ログインは端末で共有され、アプリ側も同期がはじまります。</div>
+          <div class="set-row">
+            <div class="sr-l">
+              <div class="sr-t" id="syncStatus">未ログイン</div>
+              <div class="sr-d" id="syncDetail">この端末のみに保存</div>
+            </div>
+          </div>
+          <button class="ex-btn" id="syncLoginBtn">Googleでログイン</button>
         </div>
-      </div>
-      <button class="ex-btn" id="syncLoginBtn" style="margin-bottom:10px">Googleでログイン</button>
+      </details>
 
-      <div class="set-section">エクスポート</div>
-      <div class="ex-dates">
-        <div><div class="ex-l">開始</div><input type="date" class="ex-date" id="exFrom"></div>
-        <div><div class="ex-l">終了</div><input type="date" class="ex-date" id="exTo"></div>
-      </div>
-      <button class="ex-btn" id="exportBtn">この期間を書き出す</button>
-      <div class="pf-hint">選んだ期間の呟きと振り返りを Markdown で保存します（画像は含みません）。</div>
+      <details class="acc">
+        <summary>AIへのお願い（プロンプト）</summary>
+        <div class="acc-body">
+          <div class="prompt-field">
+            <div class="pf-label">今日の下書き（呟きからAI下書き）</div>
+            <textarea class="pf-input" id="setPromptDraft" rows="4"></textarea>
+          </div>
+          <div class="prompt-field">
+            <div class="pf-label">今週の読み解き（うつろい）</div>
+            <textarea class="pf-input" id="setPromptWeek" rows="4"></textarea>
+          </div>
+          <div class="prompt-field">
+            <div class="pf-label">今月の読み解き（うつろい）</div>
+            <textarea class="pf-input" id="setPromptMonth" rows="4"></textarea>
+          </div>
+          <div class="prompt-field">
+            <div class="pf-label">任意の期間の読み解き（うつろい）</div>
+            <textarea class="pf-input" id="setPromptCustom" rows="4"></textarea>
+          </div>
+          <button class="reset-btn" id="resetPrompts" style="color:var(--ink-soft)">プロンプトを既定に戻す</button>
+        </div>
+      </details>
 
-      <div class="set-section">バックアップ（丸ごと・復元用）</div>
-      <div class="pf-hint" style="margin-bottom:14px">Markdown は「読む・共有する」用。JSON バックアップは、画像も含めて<b style="color:var(--ink-soft);font-weight:500">丸ごと保存し、機種変などで元に戻す</b>用です。</div>
-      <button class="ex-btn" id="backupBtn" style="margin-bottom:10px">バックアップを保存（JSON）</button>
-      <button class="ex-btn" id="restoreBtn" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">バックアップから復元</button>
-      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none">
-      <div class="pf-hint">復元時に「マージ」か「上書き」を選べます。ときどき保存して、ドライブ／iCloud などに控えておくと安心です。</div>
+      <details class="acc">
+        <summary>読み解きの角度<span class="acc-sub" id="accAngleSub"></span></summary>
+        <div class="acc-body">
+          <div class="pf-hint" style="margin-bottom:12px">うつろいでAIに送るとき、ここに登録した角度から選べます。名前をタップすると本文をひらけます。</div>
+          <div id="angleList"></div>
+          <button class="ex-btn" id="addAngle" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">＋ 角度を追加</button>
+        </div>
+      </details>
 
-      <button class="reset-btn" id="resetData">サンプルデータを消して、まっさらに</button>
+      <details class="acc">
+        <summary>エクスポート</summary>
+        <div class="acc-body">
+          <div class="ex-dates">
+            <div><div class="ex-l">開始</div><input type="date" class="ex-date" id="exFrom"></div>
+            <div><div class="ex-l">終了</div><input type="date" class="ex-date" id="exTo"></div>
+          </div>
+          <button class="ex-btn" id="exportBtn">この期間を書き出す</button>
+          <div class="pf-hint">選んだ期間の呟きと振り返りを Markdown で保存します（画像は含みません）。</div>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary>バックアップ（丸ごと・復元用）</summary>
+        <div class="acc-body">
+          <div class="pf-hint" style="margin-bottom:14px">Markdown は「読む・共有する」用。JSON バックアップは、<b style="color:var(--ink-soft);font-weight:500">丸ごと保存し、機種変などで元に戻す</b>用です。</div>
+          <button class="ex-btn" id="backupBtn" style="margin-bottom:10px">バックアップを保存（JSON）</button>
+          <button class="ex-btn" id="restoreBtn" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">バックアップから復元</button>
+          <input type="file" id="restoreFile" accept="application/json,.json" style="display:none">
+          <div class="pf-hint">復元時に「マージ」か「上書き」を選べます。ときどき保存して、ドライブ／iCloud などに控えておくと安心です。</div>
+        </div>
+      </details>
+
+      <button class="reset-btn" id="resetData">すべての記録を消して、まっさらに</button>
       <div class="set-foot">「文（ふみ）」は、きのうのわたしから届いた便りを今日のわたしが読み、あしたのわたしへ短い文を出す日記です。その場の呟きと一日の振り返りをゆるやかに束ね、出した文は履歴やうつろいでいつでも読み返せます。書かなかった日も、物語が途切れたのではなく、しばらく便りが無かっただけ。差し色の朱は、手紙に封をする封蝋の色です。</div>
     </div>
   </div>
