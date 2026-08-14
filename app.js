@@ -1532,44 +1532,34 @@ async function renderUtsuroi(){
 
 /* ============ navigation ============ */
 const titles={murmur:'呟き',reflect:'振り返り',history:'履歴',utsuroi:'うつろい'};
-// PC見開き（900px以上）：呟きと振り返りをノートの見開きとして同時にひらく
-const spreadMQ=matchMedia('(min-width:900px)');
-function isSpread(){ return spreadMQ.matches; }
 function switchScreen(name){
-  const spread=isSpread()&&(name==='murmur'||name==='reflect');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
-  if(spread){
-    document.getElementById('screen-murmur').classList.add('active');
-    document.getElementById('screen-reflect').classList.add('active');
-  }
   document.querySelectorAll('.nav button').forEach(b=>{
-    const on=spread ? b.dataset.screen==='murmur' : b.dataset.screen===name;
+    const on=b.dataset.screen===name;
     b.classList.toggle('active',on);
     if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
   });
   document.getElementById('screenTitle').textContent=titles[name];
-  if(name==='reflect'||spread){ renderGathered(); loadReflection(); }
+  if(name==='reflect'){ renderGathered(); loadReflection(); }
   if(name==='history'){ renderCalendar(); }
   if(name==='utsuroi'){ renderUtsuroi(); }
-  document.querySelectorAll('.screen.active').forEach(s=>s.scrollTop=0);
+  document.querySelector('.screen.active').scrollTop=0;
 }
-// 画面幅が閾値（900px）をまたいだら、いまの画面を今のモードで組み直す
-spreadMQ.addEventListener('change',()=>{
-  const cur=document.querySelector('.nav button.active');
-  switchScreen(cur?cur.dataset.screen:'murmur');
-});
-// PC：← → で日をめくる、N で呟き入力へ。入力中・シートや確認を開いている間は何もしない
+// PC（900px以上）：← → で日をめくる、N で呟き入力へ。
+// 入力中・シートや確認を開いている間は何もしない
 document.addEventListener('keydown',(e)=>{
-  if(!isSpread()) return;
-  if(!document.getElementById('screen-murmur').classList.contains('active')) return;
+  if(!matchMedia('(min-width:900px)').matches) return;
+  const onMurmur=document.getElementById('screen-murmur').classList.contains('active');
+  const onReflect=document.getElementById('screen-reflect').classList.contains('active');
+  if(!onMurmur&&!onReflect) return;
   if(isTextField(document.activeElement)) return;
   if(document.querySelector('.sheet.show')) return;
   if(document.getElementById('imgViewer').classList.contains('show')) return;
   const co=document.getElementById('confirmOverlay'); if(co&&!co.hidden) return;
   if(e.key==='ArrowLeft'){ e.preventDefault(); shiftMurmurDay(-1); }
   else if(e.key==='ArrowRight'){ e.preventDefault(); shiftMurmurDay(1); }
-  else if(e.key==='n'||e.key==='N'){ e.preventDefault(); document.getElementById('murmurInput').focus(); }
+  else if(e.key==='n'||e.key==='N'){ e.preventDefault(); if(!onMurmur) switchScreen('murmur'); document.getElementById('murmurInput').focus(); }
 });
 
 /* ============ sample seed ============ */
@@ -1680,7 +1670,6 @@ async function init(){
 
   // nav
   document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>switchScreen(b.dataset.screen));
-  switchScreen('murmur');   // PC（900px以上）ならここで見開き（呟き＋振り返り）になる
 
   // calendar nav
   document.getElementById('prevMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
