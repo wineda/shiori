@@ -68,10 +68,22 @@ textarea,input{font-family:inherit}
 
 /* ---------- header ---------- */
 .topbar{
-  padding:20px 22px 14px;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:20px 18px 14px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;
   border-bottom:1px solid var(--hairline);flex-shrink:0;background:var(--paper);
 }
-.topbar .date{font-size:13px;color:var(--ink-soft);letter-spacing:.04em;display:flex;align-items:center}
+.topbar>div:first-child{min-width:0}
+.topbar .date{font-size:13px;color:var(--ink-soft);letter-spacing:.02em;display:flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .date>span:last-child{overflow:hidden;text-overflow:ellipsis}
+/* 右側の操作群：折り返さない */
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+/* 狭い画面・大きめフォント設定では、日付と連続日数を少し詰める */
+@media (max-width: 400px){
+  .topbar .date{font-size:11.5px}
+  .topbar .date .dy{display:none}   /* 狭い画面では年を省く */
+  .topbar .streak{font-size:11px;padding:4px 9px;gap:4px}
+  .topbar .streak b{font-size:12px}
+  .topbar-actions{gap:4px}
+}
 /* ロゴ「文」（案A-3 封蝋）：明朝一字＋紅の傍線、線の結びに封蝋の点 */
 .logo-mark{
   font-family:var(--mincho);font-size:15px;color:var(--ink);letter-spacing:.1em;
@@ -89,6 +101,7 @@ textarea,input{font-family:inherit}
 .topbar .streak{
   display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);
   border:1px solid var(--hairline-strong);border-radius:999px;padding:5px 11px;background:var(--surface);
+  white-space:nowrap;flex-shrink:0;
 }
 .topbar .streak b{font-weight:700;color:var(--ink);font-size:13px}
 .icon-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--ink-soft)}
