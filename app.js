@@ -1978,6 +1978,15 @@ function syncWatch(){
     if(changed) await syncRefreshUI();
   }, e=>console.warn('[fumi] sync watch error:',e));
 }
+// ヘッダーの雲アイコン：'on'=同期中（栞紅＋チェック）/'off'=未ログイン（斜線）/'wait'=準備中
+function setSyncBadge(state, title){
+  const b=document.getElementById('syncBadge');
+  if(!b) return;
+  b.classList.toggle('on', state==='on');
+  b.classList.toggle('off', state==='off');
+  b.title=title||'同期';
+  b.setAttribute('aria-label', title||'同期の状態');
+}
 function updateSyncUI(){
   const st=document.getElementById('syncStatus');
   const dt=document.getElementById('syncDetail');
@@ -1987,16 +1996,19 @@ function updateSyncUI(){
     st.textContent='同期中';
     dt.textContent=fb.user.email||'ログイン済み';
     btn.textContent='ログアウト';
+    setSyncBadge('on','同期中：'+(fb.user.email||''));
   } else {
     st.textContent='未ログイン';
     dt.textContent='この端末のみに保存';
     btn.textContent='Googleでログイン';
+    setSyncBadge('off','未ログイン（この端末のみに保存）');
   }
 }
 async function initSync(){
   const btn=document.getElementById('syncLoginBtn');
   const dt=document.getElementById('syncDetail');
   if(dt) dt.textContent='同期の準備中…';
+  setSyncBadge('wait','同期の準備中…');
   try{
     const V='10.12.2';
     const [appM,authM,fsM]=await Promise.all([
@@ -2033,6 +2045,7 @@ async function initSync(){
     console.warn('[fumi] sync unavailable:',e);
     if(btn){ btn.disabled=true; btn.textContent='同期を準備できません'; }
     if(dt) dt.textContent='読み込みに失敗：'+String(e&&e.message||e).slice(0,80);
+    setSyncBadge('off','同期を準備できません');
   }
 }
 // インストール版（スタンドアロン表示）かどうか。ポップアップが塞がれやすい環境。
@@ -2040,6 +2053,9 @@ function isStandaloneApp(){
   return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true;
 }
 function wireSyncUI(){
+  // ヘッダーの雲 → 設定（同期セクションのある画面）へ
+  const badge=document.getElementById('syncBadge');
+  if(badge) badge.onclick=()=>openSettings();
   const btn=document.getElementById('syncLoginBtn');
   if(!btn) return;
   btn.onclick=async()=>{
