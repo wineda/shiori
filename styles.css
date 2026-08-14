@@ -437,6 +437,23 @@ textarea,input{font-family:inherit}
 .pf-input{width:100%;border:1px solid var(--hairline-strong);border-radius:12px;padding:12px;font-size:13px;line-height:1.7;color:var(--ink);background:var(--surface-2);resize:vertical;outline:none;min-height:88px}
 .pf-input:focus{border-color:var(--ink-soft)}
 .pf-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+/* 設定：折りたたみセクション */
+.acc{border-bottom:1px solid var(--hairline)}
+.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:16px 2px;font-size:13px;color:var(--ink);letter-spacing:.06em;user-select:none;-webkit-user-select:none}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:"";width:7px;height:7px;margin-left:auto;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .18s;flex-shrink:0}
+.acc[open]>summary::after{transform:rotate(-135deg) translateY(-2px)}
+.acc-sub{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.acc-body{padding:2px 2px 20px}
+/* 角度：1件ずつ折りたたみ（名前タップで本文をひらく） */
+.angle-acc{border:1px solid var(--hairline);border-radius:12px;background:var(--surface);margin-bottom:8px}
+.angle-acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;padding:11px 13px;font-size:12.5px;color:var(--ink-soft);user-select:none;-webkit-user-select:none}
+.angle-acc>summary::-webkit-details-marker{display:none}
+.angle-acc>summary::after{content:"";width:6px;height:6px;margin-left:auto;border-right:1.4px solid var(--muted);border-bottom:1.4px solid var(--muted);transform:rotate(45deg);transition:transform .18s;flex-shrink:0}
+.angle-acc[open]>summary::after{transform:rotate(-135deg)}
+.angle-acc .a-body{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+.angle-acc .angle-del{align-self:flex-end}
+
 /* 設定：読み解きの角度（プロンプト集）の一覧 */
 .angle-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .pf-name{flex:1;font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface-2);border:1px solid var(--hairline-strong);border-radius:10px;padding:8px 10px;outline:none}
