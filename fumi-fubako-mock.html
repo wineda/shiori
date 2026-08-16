@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>文 — 文箱（モック）</title>
+<style>
+@font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:400;font-display:swap;src:url('fonts/ZenKakuGothicNew-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-weight:500;font-display:swap;src:url('fonts/ZenKakuGothicNew-500.woff2') format('woff2');}
+:root{
+  --paper:#F4F5F2; --surface:#FBFBF9; --surface-2:#FFFFFF;
+  --ink:#2B2E2B; --ink-soft:#5C615B; --muted:#9AA09A;
+  --hairline:#E5E6E1; --hairline-strong:#D8D9D3;
+  --accent:#9C4A50;
+  --sans:'Zen Kaku Gothic New',system-ui,sans-serif;
+  --mincho:'Shippori Mincho',serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--sans);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6}
+.wrap{max-width:560px;margin:0 auto;padding:34px 22px 80px}
+h1{font-family:var(--mincho);font-size:20px;font-weight:500;letter-spacing:.1em;margin:0 0 6px}
+.lead{font-size:12.5px;color:var(--ink-soft);margin:0 0 34px;line-height:1.9}
+.sec{font-size:11px;letter-spacing:.16em;color:var(--muted);margin:40px 0 14px;display:flex;align-items:center;gap:10px}
+.sec::after{content:"";flex:1;height:1px;background:var(--hairline)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+/* 下タブ（5つ） */
+.navmock{display:flex;background:rgba(250,250,248,.95);border:1px solid var(--hairline);border-radius:16px;padding:8px 0}
+.navmock .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);font-size:9.5px;letter-spacing:.06em}
+.navmock .nb svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.navmock .nb.on{color:var(--accent)}
+
+/* 検索と追加 */
+.toolrow{display:flex;gap:10px;margin-bottom:16px}
+.search{flex:1;display:flex;align-items:center;gap:8px;border:1px solid var(--hairline-strong);border-radius:999px;background:var(--surface-2);padding:9px 14px;color:var(--muted);font-size:12.5px}
+.search svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.addbtn{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* 便りカード */
+.card{background:var(--surface-2);border:1px solid var(--hairline);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.card .c-top{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.card .c-title{font-family:var(--mincho);font-size:14.5px;font-weight:500;letter-spacing:.04em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .c-date{font-size:10.5px;color:var(--muted);flex-shrink:0}
+.card .c-from{display:inline-block;font-size:10px;color:var(--accent);border:1px solid rgba(156,74,80,.35);border-radius:999px;padding:1px 8px;margin-bottom:7px}
+.card .c-body{font-size:12.5px;color:var(--ink-soft);line-height:1.8;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* 全文シート */
+.sheet{background:var(--paper);border:1px solid var(--hairline-strong);border-radius:22px 22px 0 0;padding:14px 22px 26px;box-shadow:0 -6px 30px rgba(0,0,0,.08)}
+.grip{width:38px;height:4px;background:var(--hairline-strong);border-radius:3px;margin:0 auto 14px}
+.sh-title{font-family:var(--mincho);font-size:17px;font-weight:500;letter-spacing:.06em}
+.sh-meta{font-size:11px;color:var(--muted);margin:4px 0 14px;display:flex;gap:10px;align-items:center}
+.sh-meta .c-from{margin:0}
+.sh-body{font-size:13.5px;line-height:2;color:var(--ink);border-top:1px solid var(--hairline);padding-top:14px;white-space:pre-wrap}
+.sh-acts{display:flex;gap:16px;margin-top:16px;justify-content:flex-end}
+.sh-acts button{font-size:12px;color:var(--ink-soft);text-decoration:underline}
+.sh-acts .warn{color:var(--accent)}
+
+/* 仕舞う（新規）シート */
+.paste-area{width:100%;border:1px solid var(--hairline-strong);border-radius:12px;background:var(--surface-2);padding:12px 14px;font-size:13px;line-height:1.8;min-height:110px;resize:none;font-family:inherit;color:var(--ink);margin:4px 0 4px}
+.paste-area::placeholder{color:var(--muted)}
+.p-hint{font-size:10.5px;color:var(--muted);margin-bottom:12px}
+.save-btn{width:100%;background:var(--accent);color:#fff;border-radius:12px;padding:13px;font-family:var(--mincho);font-size:14px;letter-spacing:.14em}
+
+/* うつろい連携 */
+.u-review{background:var(--surface-2);border:1px solid var(--hairline);border-radius:16px;padding:16px}
+.u-cap{font-size:11px;color:var(--muted);letter-spacing:.1em;margin-bottom:8px}
+.u-text{font-size:13px;line-height:1.9;color:var(--ink)}
+.u-row{display:flex;gap:14px;margin-top:12px;align-items:center}
+.u-row .lk{font-size:12px;color:var(--ink-soft);text-decoration:underline}
+.u-row .keep{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);border:1px solid rgba(156,74,80,.4);border-radius:999px;padding:6px 13px;background:var(--surface)}
+.u-row .keep svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.note-box{font-size:11.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:14px 16px;line-height:1.9}
+.note-box b{font-weight:500;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>文箱（ふばこ）<span style="color:var(--accent)">.</span></h1>
+  <p class="lead">AIからもらった読み解きや解析を「届いた便り」として仕舞っておく、5つ目のタブのモックです。うつろいの読み解きは新しく作ると流れて消えますが、残したいものはここに仕舞えます。</p>
+
+  <div class="sec">下タブ — 5つになる</div>
+  <div class="navmock">
+    <span class="nb"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>呟き</span>
+    <span class="nb"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>振り返り</span>
+    <span class="nb"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>履歴</span>
+    <span class="nb"><svg viewBox="0 0 24 24"><path d="M3 15l4-4 3.5 3L18 8"/><circle cx="18" cy="8" r="1.3" fill="currentColor" stroke="none"/><path d="M3 20h18"/></svg>うつろい</span>
+    <span class="nb on"><svg viewBox="0 0 24 24"><path d="M3 8l9-4.5L21 8v9.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3 8h18"/><path d="M9 12h6"/></svg>文箱</span>
+  </div>
+
+  <div class="sec">文箱の一覧 — 新しい順・ことば検索</div>
+  <div class="toolrow">
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>ことばで探す</div>
+    <button class="addbtn">＋</button>
+  </div>
+  <div class="card">
+    <div class="c-top"><span class="c-title">夜のわたしは別人という仮説</span><span class="c-date">8月16日</span></div>
+    <span class="c-from">うつろい・今月（カーネギーの目）</span>
+    <div class="c-body">夜に自分を責める呟きが集中している一方、朝の呟きには前向きな計画が多い。カーネギーなら「疲れている時に人生の決断をするな」と言うだろう。夜の言葉は事実ではなく疲労のサインとして扱うと、翌朝の自分がずっと楽になるはずだ。</div>
+  </div>
+  <div class="card">
+    <div class="c-top"><span class="c-title">5キロが「ちょうどいい」の分析</span><span class="c-date">8月10日</span></div>
+    <span class="c-from">貼り付け</span>
+    <div class="c-body">走行記録と気分の記述を突き合わせると、6キロを超えた日は翌日の呟きが減り、5キロ前後の日は翌朝の呟きが最も明るい。距離を伸ばすことより「翌日も走りたいと思える距離」を守ることが、いまの目的に合っている。</div>
+  </div>
+  <div class="card" style="opacity:.75">
+    <div class="c-top"><span class="c-title">こころみの勝率と言いわけ集</span><span class="c-date">7月28日</span></div>
+    <span class="c-from">うつろい・今週</span>
+    <div class="c-body">今週のこころみは3勝2敗。負けた日の言いわけには共通して「時間がなかった」が現れるが、実際の記録では…</div>
+  </div>
+
+  <div class="sec">便りをひらく — タップで全文</div>
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="sh-title">夜のわたしは別人という仮説</div>
+    <div class="sh-meta"><span class="c-from">うつろい・今月（カーネギーの目）</span><span>8月16日に仕舞った</span></div>
+    <div class="sh-body">夜に自分を責める呟きが集中している一方、朝の呟きには前向きな計画が多い。カーネギーなら「疲れている時に人生の決断をするな」と言うだろう。
+
+夜の言葉は事実ではなく疲労のサインとして扱うと、翌朝の自分がずっと楽になるはずだ。具体的には：
+・夜10時以降の呟きに「今日の結論にしない」印をつける
+・大事な判断は翌朝の呟きで再確認する</div>
+    <div class="sh-acts"><button>なおす</button><button class="warn">消す</button></div>
+  </div>
+
+  <div class="sec">新しく仕舞う — ＋から貼り付け</div>
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="sh-title" style="font-size:15px">文箱に仕舞う</div>
+    <textarea class="paste-area" placeholder="AIの解析をここに貼り付け"></textarea>
+    <div class="p-hint">1行目が題になります（あとで直せます）</div>
+    <button class="save-btn">仕舞う</button>
+  </div>
+
+  <div class="sec">うつろいから仕舞う — 消える前に残す</div>
+  <div class="u-review">
+    <div class="u-cap">今週の読み解き</div>
+    <div class="u-text">今週は「朝の散歩」が3回登場し、いずれの日も呟きの数が多く、言葉も柔らかい。休みなく続いた仕事の記述の中で…</div>
+    <div class="u-row">
+      <span class="lk">AIに送り直す</span>
+      <button class="keep"><svg viewBox="0 0 24 24"><path d="M3 8l9-4.5L21 8v9.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3 8h18"/></svg>文箱に仕舞う</button>
+    </div>
+  </div>
+
+  <div class="sec">しくみ</div>
+  <div class="note-box">
+    ・保存は <b>journal:fubako</b>（配列）。同期・バックアップ対象<br>
+    ・題は貼り付けの1行目から自動で拾う。あとから「なおす」で題も本文も編集できる<br>
+    ・うつろいから仕舞うと、出典（期間・角度の名前）が自動で付く<br>
+    ・検索は題と本文のことば一致。件数が少ないうちは箱の中身がそのまま見える<br>
+    ・PCではレールに「文箱」が加わり、一覧は中央寄せ1カラム（他タブと同じ）
+  </div>
+</div>
+</body>
+</html>
