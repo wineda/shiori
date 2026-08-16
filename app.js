@@ -1957,6 +1957,8 @@ async function init(){
     !!document.querySelector('.murmur.editing,.murmur.tsn-editing');
   wireSwipeNav(document.getElementById('screen-murmur'), shiftMurmurDay, daySwipeSkip);
   wireSwipeNav(document.getElementById('screen-reflect'), shiftMurmurDay, daySwipeSkip);
+  // 履歴のカレンダー：左右スワイプで前後の月へ
+  wireSwipeNav(document.querySelector('.hist-cal'), (n)=>{ calMonth.setMonth(calMonth.getMonth()+n); renderCalendar(); });
 
   // utsuroi period toggle
   [...document.getElementById('uSeg').children].forEach(b=>b.onclick=()=>{ utsuroiPeriod=b.dataset.p; renderUtsuroi(); });
