@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>文 — 月の絵日記（モック）</title>
+<title>文 — 月の絵日記（モック・画像版）</title>
 <style>
 @font-face{font-family:'Shippori Mincho';font-weight:400;font-display:swap;src:url('fonts/ShipporiMincho-400.woff2') format('woff2');}
 @font-face{font-family:'Shippori Mincho';font-weight:500;font-display:swap;src:url('fonts/ShipporiMincho-500.woff2') format('woff2');}
@@ -26,7 +26,7 @@ h1{font-family:var(--mincho);font-size:20px;font-weight:500;letter-spacing:.1em;
 .sec::after{content:"";flex:1;height:1px;background:var(--hairline)}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 
-/* ---- 入口（履歴画面のカレンダー下に置く想定） ---- */
+/* ---- 入口（履歴画面のカレンダー下） ---- */
 .entry{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--hairline);border-radius:14px;padding:13px 16px}
 .entry .ico{width:20px;height:20px;color:var(--accent);flex-shrink:0}
 .entry .ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
@@ -34,30 +34,43 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .entry .s{font-size:11px;color:var(--muted);margin-top:1px}
 .entry .go{margin-left:auto;color:var(--muted);font-size:16px}
 
-/* ---- 絵日記ページ本体 ---- */
-.page{background:var(--card);border:1px solid var(--hairline-strong);border-radius:6px;padding:26px 26px 22px;
+/* ---- できあがり：画像がそのまま1頁 ---- */
+.page{background:var(--card);border:1px solid var(--hairline-strong);border-radius:6px;padding:14px;
   box-shadow:0 1px 4px rgba(43,46,43,.05)}
-.p-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
-.p-title{font-family:var(--mincho);font-size:18px;font-weight:500;letter-spacing:.14em}
+.p-head{display:flex;align-items:baseline;gap:10px;margin:2px 4px 12px}
+.p-title{font-family:var(--mincho);font-size:17px;font-weight:500;letter-spacing:.14em}
 .p-title .seal{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:8px;vertical-align:2px}
 .p-range{font-size:10.5px;color:var(--muted);letter-spacing:.08em;margin-left:auto}
-.eart{border:1px solid var(--hairline);border-radius:4px;background:var(--surface);
-  height:150px;display:flex;align-items:center;justify-content:center;gap:18px;position:relative;margin-bottom:20px}
-.eart .em{font-size:44px;line-height:1}
-.eart .cap{position:absolute;right:8px;bottom:6px;font-size:9.5px;color:var(--muted);letter-spacing:.1em}
-.etext{font-family:var(--mincho);font-size:14.5px;line-height:2.35em;color:var(--ink);letter-spacing:.02em;
-  background:repeating-linear-gradient(to bottom, transparent, transparent calc(2.35em - 1px), var(--hairline) calc(2.35em - 1px), var(--hairline) 2.35em);
-  padding-bottom:2px}
-.p-foot{display:flex;align-items:center;margin-top:16px;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
-.p-foot .re{margin-left:auto;font-size:11px;color:var(--ink-soft);text-decoration:underline;padding:4px 0}
+/* 取り込んだ画像のプレースホルダ（実物はユーザーがAIで作った縦長の絵日記画像） */
+.eimg{position:relative;border:1px solid var(--hairline);border-radius:4px;overflow:hidden;
+  aspect-ratio:3/4.2;background:
+    linear-gradient(180deg,#FBF6E9 0%, #F7EFD9 100%)}
+.eimg .fake{position:absolute;inset:0;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.eimg .fk-title{font-family:var(--mincho);font-size:15px;text-align:center;color:#6b6250;letter-spacing:.06em}
+.eimg .fk-row{flex:1;display:flex;gap:8px}
+.eimg .fk-txt{flex:1.1;border:1px solid #E4DCC6;border-radius:4px;background:rgba(255,255,255,.5)}
+.eimg .fk-pic{flex:2;border:1px solid #E4DCC6;border-radius:4px;background:
+  repeating-linear-gradient(45deg,#F1E8D2,#F1E8D2 10px,#EFE3C8 10px,#EFE3C8 20px)}
+.eimg .cap{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:11px;color:#8a8069;
+  background:linear-gradient(transparent,rgba(251,246,233,.95) 40%);padding:26px 12px 10px}
+.p-foot{display:flex;align-items:center;gap:14px;margin:12px 4px 2px;font-size:11px;color:var(--muted)}
+.p-foot .act{font-size:11px;color:var(--ink-soft);text-decoration:underline;padding:4px 0}
+.p-foot .act.warn{color:var(--accent)}
+.p-foot .sp{margin-left:auto}
 
 /* ---- 未作成のとき ---- */
-.empty{border:1.5px dashed var(--hairline-strong);border-radius:6px;padding:30px 24px;text-align:center;background:var(--surface)}
+.empty{border:1.5px dashed var(--hairline-strong);border-radius:6px;padding:28px 24px;text-align:center;background:var(--surface)}
 .empty .big{font-family:var(--mincho);font-size:15px;color:var(--ink-soft);letter-spacing:.06em;margin-bottom:6px}
 .empty .note{font-size:11.5px;color:var(--muted);line-height:1.9;margin-bottom:18px}
 .ex-btn{width:100%;background:var(--accent);color:#fff;border-radius:12px;padding:13px;font-size:13.5px;letter-spacing:.06em;margin-bottom:10px}
 .ex-btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--hairline-strong)}
 .hint{font-size:10.5px;color:var(--muted);line-height:1.8;text-align:left}
+.steps{counter-reset:s;text-align:left;margin:0 0 16px;padding:0;list-style:none}
+.steps li{position:relative;padding:0 0 14px 34px;font-size:12.5px;color:var(--ink-soft);line-height:1.8}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;
+  background:#fff;border:1px solid var(--accent);color:var(--accent);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+.steps li:not(:last-child)::after{content:"";position:absolute;left:11px;top:26px;bottom:2px;width:1px;background:var(--hairline)}
+.steps b{font-weight:500;color:var(--ink)}
 
 .note-box{font-size:11.5px;color:var(--ink-soft);background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:14px 16px;line-height:1.9}
 .note-box b{font-weight:500;color:var(--ink)}
@@ -66,50 +79,62 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <body>
 <div class="wrap">
   <h1>月の絵日記<span style="color:var(--accent)">.</span></h1>
-  <p class="lead">1ヶ月の呟き・振り返り・こころみをAIに渡して（いつもの共有→貼り付け）、「絵日記調の1ページ」を作って履歴に貼っておく機能のモックです。絵は、AIに選ばせた<b>その月を表す絵文字</b>で代えます。</p>
+  <p class="lead">1ヶ月の記録をAIに渡して<b>絵日記の画像</b>を作ってもらい、その画像をそのまま月の頁として履歴に貼っておく機能のモックです。文章化はせず、画像1枚が主役です。</p>
 
   <div class="sec">入口 — 履歴画面のカレンダーの下</div>
   <div class="entry">
     <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 0 1 2-2h5v17H6a2 2 0 0 1-2-2z"/><path d="M20 19.5V6a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 0 2-2z"/></svg></span>
     <div>
       <div class="t">この月の絵日記</div>
-      <div class="s">8月はまだ作っていません</div>
+      <div class="s">8月はまだ白紙です</div>
     </div>
     <span class="go">›</span>
   </div>
 
-  <div class="sec">できあがりの頁（例）</div>
+  <div class="sec">できあがりの頁 — 画像がそのまま1頁</div>
   <div class="page">
     <div class="p-head">
       <span class="p-title">八月の絵日記<span class="seal"></span></span>
       <span class="p-range">2026.8.1 – 8.31</span>
     </div>
-    <div class="eart">
-      <span class="em">🌻</span><span class="em">🍧</span><span class="em">📖</span>
-      <span class="cap">この月の絵</span>
+    <div class="eimg">
+      <div class="fake">
+        <div class="fk-title">2026/08 絵日記</div>
+        <div class="fk-row"><div class="fk-txt"></div><div class="fk-pic"></div></div>
+        <div class="fk-row"><div class="fk-txt"></div><div class="fk-pic"></div></div>
+        <div class="fk-row"><div class="fk-txt"></div><div class="fk-pic"></div></div>
+        <div class="fk-row"><div class="fk-txt"></div><div class="fk-pic"></div></div>
+      </div>
+      <div class="cap">← ここに、AIで作った絵日記画像がそのまま入ります（タップで全画面表示）</div>
     </div>
-    <div class="etext">八月のわたしは、あついあついと言いながら、よく歩いて、よく書きました。あたらしい同期のしくみができて、二つの端末が同じ日記を覚えてくれるようになったのが、いちばんのできごとです。夜ふかしをなおすこころみは三勝二敗。まけた日の言いわけが、どれもおもしろかったです。来月のわたしへ。むりせず、でもつづけてね。</div>
     <div class="p-foot">
-      <span>呟き 42・振り返り 18・こころみ 3 の1ヶ月から</span>
-      <button class="re">作り直す</button>
+      <span>8月28日に取り込み</span>
+      <span class="sp"></span>
+      <button class="act">差し替える</button>
+      <button class="act warn">消す</button>
     </div>
   </div>
 
-  <div class="sec">まだ作っていない月</div>
+  <div class="sec">まだ作っていない月 — 作り方の流れ</div>
   <div class="empty">
     <div class="big">八月の絵日記は、まだ白紙です</div>
-    <div class="note">この月の記録をまとめてAIに渡すと、<br>絵日記調の1ページにして返してくれます。</div>
+    <div class="note">この月の記録から絵日記の画像を作って、ここに貼れます。</div>
+    <ol class="steps">
+      <li><b>「この月をAIへ（共有）」</b>を押す。1ヶ月の呟き・振り返り・こころみと、「1枚の絵日記画像にしてください」というお願い文がAIアプリに渡ります</li>
+      <li>AI（画像が作れるアプリ）が<b>絵日記の画像</b>を作るので、端末に保存する</li>
+      <li><b>「画像を取り込む」</b>で選ぶと、この頁に貼られます</li>
+    </ol>
     <button class="ex-btn">この月をAIへ（共有）</button>
-    <button class="ex-btn ghost">結果を貼り付けて、頁にする</button>
-    <div class="hint">・AIへのお願い文はうつろいと同じ「共有→貼り付け」方式（APIキー不要）<br>・1行目に「その月を表す絵文字を3つ」、2行目からが本文になるようお願いします<br>・できた頁は保存され、端末間でも同期されます。月が進んでも作り直せます</div>
+    <button class="ex-btn ghost">画像を取り込む</button>
+    <div class="hint">・取り込んだ画像は自動で軽く圧縮され、同期・バックアップにも含まれます（月1枚）<br>・月の途中でも作れます。あとから差し替え・削除もできます<br>・お願い文（プロンプト）は設定の「AIへのお願い」で調整できます</div>
   </div>
 
   <div class="sec">しくみ・置き場所</div>
   <div class="note-box">
-    ・<b>スマホ</b>：履歴カレンダーの下の入口をタップ → シートで頁を表示／作成<br>
-    ・<b>PC</b>：履歴の右欄（詳細）に頁を表示。カレンダー下の入口から切り替え、日付クリックで日の詳細に戻る<br>
-    ・保存は月ごと（journal:enikki）。バックアップにも含まれ、同期もされる<br>
-    ・プロンプトは設定の「AIへのお願い」に「月の絵日記」として追加し、調整できる
+    ・<b>スマホ</b>：履歴カレンダー下の入口をタップ → シートで頁を表示／取り込み。画像タップで全画面<br>
+    ・<b>PC</b>：履歴の右欄（詳細）に頁を表示。日付クリックで日の詳細に戻る<br>
+    ・保存は月ごと（journal:enikki:YYYY-MM）。クラウド同期の上限（1件1MB）に収まるよう、取り込み時に自動で縮小・JPEG化<br>
+    ・元の高解像度画像はアプリでは持たない（端末のアルバムに残る想定）
   </div>
 </div>
 </body>
