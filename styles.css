@@ -666,3 +666,28 @@ textarea,input{font-family:inherit}
 .ek-mat{font-size:11px;color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--hairline);border-radius:10px;padding:10px 12px;text-align:left;margin-bottom:12px;line-height:1.8}
 .ek-wish-input{width:100%;border:1px solid var(--hairline-strong);border-radius:12px;background:var(--surface-2);padding:11px 13px;font-size:13px;line-height:1.7;resize:none;min-height:60px;outline:none;font-family:inherit;margin-bottom:12px;text-align:left}
 .ek-wish-input::placeholder{color:var(--muted)}
+
+/* ---------- 文箱（ふばこ） ---------- */
+.fb-tools{display:flex;gap:10px;margin-bottom:16px}
+.fb-search{flex:1;display:flex;align-items:center;gap:8px;border:1px solid var(--hairline-strong);border-radius:999px;background:var(--surface-2);padding:0 14px;color:var(--muted);min-width:0}
+.fb-search svg{width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.fb-search input{flex:1;min-width:0;border:none;background:none;outline:none;font-size:13px;padding:10px 0;color:var(--ink)}
+.fb-search input::placeholder{color:var(--muted)}
+.fb-add{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fb-card{background:var(--surface-2);border:1px solid var(--hairline);border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;animation:fade .3s ease}
+.fb-top{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.fb-title{font-family:var(--mincho);font-size:14.5px;font-weight:500;letter-spacing:.04em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-date{font-size:10.5px;color:var(--muted);flex-shrink:0}
+.fb-from{display:inline-block;font-size:10px;color:var(--accent);border:1px solid rgba(156,74,80,.35);border-radius:999px;padding:1px 8px;margin-bottom:6px}
+.fb-body{font-size:12.5px;color:var(--ink-soft);line-height:1.8;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.fb-empty{text-align:center;color:var(--muted);font-size:12.5px;padding:56px 20px;line-height:2.1}
+.fb-full{font-size:13.5px;line-height:2;white-space:pre-wrap;color:var(--ink)}
+.fb-acts{display:flex;gap:18px;justify-content:flex-end;margin-top:18px;border-top:1px solid var(--hairline);padding-top:14px}
+.fb-title-input{width:100%;border:1px solid var(--hairline-strong);border-radius:10px;background:var(--surface-2);padding:9px 12px;font-size:14px;margin-bottom:10px;outline:none;font-family:var(--mincho)}
+.fb-title-input:focus{border-color:var(--accent)}
+.fb-edit{width:100%;border:1px solid var(--hairline-strong);border-radius:12px;background:var(--surface-2);padding:12px 14px;font-size:13px;line-height:1.8;min-height:150px;resize:vertical;outline:none;font-family:inherit;color:var(--ink)}
+.fb-edit:focus{border-color:var(--accent)}
+/* うつろい：読み解きの下の操作列（送り直す｜文箱に仕舞う） */
+.u-actrow{display:flex;align-items:center;gap:14px;margin-top:6px}
+.u-keep{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--accent);border:1px solid rgba(156,74,80,.4);border-radius:999px;padding:6px 13px;background:var(--surface);margin-left:auto;flex-shrink:0}
+.u-keep svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
