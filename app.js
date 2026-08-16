@@ -1626,11 +1626,83 @@ function openBridge(opts){
   openImportSheet();
 }
 function insightHTML(text){
-  return `<div class="u-review"><div class="u-insight">${escapeHtml(text)}</div>
+  return `<div class="u-review"><div class="u-insight md">${mdToHtml(text)}</div>
     <div class="u-actrow">
       <button class="u-regen" id="uRegen">AIに送り直す</button>
       <button class="u-keep" id="uKeep" type="button"><svg viewBox="0 0 24 24"><path d="M3 8l9-4.5L21 8v9.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3 8h18"/></svg>文箱に仕舞う</button>
     </div></div>`;
+}
+
+/* ============ かんたんMarkdown表示 ============
+   AIの回答はMarkdownで返ることが多いため、文箱・うつろいの表示で整える。
+   外部ライブラリは使わない（オフライン方針）。escapeHtml 済みの文字列にだけ
+   印を展開するので、貼り付けた内容がHTMLとして実行されることはない。
+   対応：見出し(#〜####)・**強調**・*斜体*・`コード`・コードブロック・
+   箇条書き(-,*,・)・番号(1.)・引用(>)・表(|)・罫線(---)・リンク */
+function mdInline(s){
+  return s
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<i>$2</i>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function mdToHtml(src){
+  const lines=escapeHtml(src||'').split('\n');
+  let html='', list=null, inCode=false, code=[];
+  const closeList=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
+  let i=0;
+  while(i<lines.length){
+    const raw=lines[i], t=raw.trim();
+    if(/^```/.test(t)){
+      closeList();
+      if(inCode){ html+='<pre class="md-pre">'+code.join('\n')+'</pre>'; code=[]; inCode=false; }
+      else inCode=true;
+      i++; continue;
+    }
+    if(inCode){ code.push(raw); i++; continue; }
+    if(/^\|.*\|$/.test(t)){
+      closeList();
+      const tbl=[];
+      while(i<lines.length && /^\|.*\|$/.test(lines[i].trim())){ tbl.push(lines[i].trim()); i++; }
+      const rows=tbl.map(r=>r.replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim()));
+      const hasSep=rows.length>1 && rows[1].every(c=>/^:?-{2,}:?$/.test(c));
+      let out='<div class="md-tw"><table class="md-table">';
+      rows.forEach((r,ri)=>{
+        if(hasSep&&ri===1) return;
+        const tag=(hasSep&&ri===0)?'th':'td';
+        out+='<tr>'+r.map(c=>'<'+tag+'>'+mdInline(c)+'</'+tag+'>').join('')+'</tr>';
+      });
+      html+=out+'</table></div>';
+      continue;
+    }
+    let m;
+    if(!t){ closeList(); }
+    else if(/^(-{3,}|_{3,}|\*{3,})$/.test(t)){ closeList(); html+='<hr class="md-hr">'; }
+    else if((m=t.match(/^(#{1,4})\s+(.*)/))){ closeList(); html+='<div class="md-h md-h'+m[1].length+'">'+mdInline(m[2])+'</div>'; }
+    else if((m=t.match(/^&gt;\s?(.*)/))){ closeList(); html+='<blockquote class="md-q">'+mdInline(m[1])+'</blockquote>'; }
+    else if((m=t.match(/^[-*・]\s+(.*)/))){ if(list!=='ul'){ closeList(); html+='<ul>'; list='ul'; } html+='<li>'+mdInline(m[1])+'</li>'; }
+    else if((m=t.match(/^\d+[.)]\s+(.*)/))){ if(list!=='ol'){ closeList(); html+='<ol>'; list='ol'; } html+='<li>'+mdInline(m[1])+'</li>'; }
+    else { closeList(); html+='<p class="md-p">'+mdInline(t)+'</p>'; }
+    i++;
+  }
+  if(inCode) html+='<pre class="md-pre">'+code.join('\n')+'</pre>';
+  closeList();
+  return html;
+}
+// カードの冒頭プレビュー用：Markdownの印を落として素の文にする
+function mdStrip(text){
+  return (text||'')
+    .replace(/```[^`]*```/gs,' ')
+    .replace(/^#{1,6}\s+/gm,'')
+    .replace(/^\s*[-*・]\s+/gm,'・')
+    .replace(/^\s*\d+[.)]\s+/gm,'')
+    .replace(/^>\s?/gm,'')
+    .replace(/^(-{3,}|_{3,}|\*{3,})$/gm,'')
+    .replace(/\*\*([^*]+)\*\*/g,'$1')
+    .replace(/`([^`]+)`/g,'$1')
+    .replace(/\[([^\]]+)\]\(https?:[^)\s]+\)/g,'$1')
+    .replace(/\|/g,' ')
+    .replace(/\n{2,}/g,'\n').trim();
 }
 
 /* ============ 文箱（ふばこ） ============
@@ -1640,7 +1712,7 @@ function insightHTML(text){
 let fubakoQuery='';
 async function getFubako(){ return (await Store.get('journal:fubako'))||[]; }
 function fubakoTitleOf(text){
-  const t=(text||'').trim().split('\n')[0].replace(/^[#*\s]+/,'').trim();
+  const t=mdStrip((text||'').trim().split('\n')[0]).trim();
   return t ? (t.length>40? t.slice(0,40)+'…' : t) : '便り';
 }
 async function renderFubako(){
@@ -1656,7 +1728,7 @@ async function renderFubako(){
     <div class="fb-card" data-id="${n.id}" role="button" tabindex="0">
       <div class="fb-top"><span class="fb-title">${escapeHtml(n.title||fubakoTitleOf(n.text))}</span><span class="fb-date">${jpMD(fmtKey(new Date(n.ts||Date.now())))}</span></div>
       ${n.from?`<span class="fb-from">${escapeHtml(n.from)}</span>`:''}
-      <div class="fb-body">${escapeHtml(n.text||'')}</div>
+      <div class="fb-body">${escapeHtml(mdStrip(n.text||''))}</div>
     </div>`).join('');
   list.querySelectorAll('.fb-card').forEach(c=>{
     c.onclick=()=>openFubakoNote(c.dataset.id);
@@ -1679,7 +1751,7 @@ async function openFubakoNote(id){
   document.getElementById('fbTitle').textContent=n.title||fubakoTitleOf(n.text);
   document.getElementById('fbMeta').textContent=[n.from, jpMD(fmtKey(new Date(n.ts||Date.now())))+'に仕舞った'].filter(Boolean).join(' ・ ');
   const body=document.getElementById('fbBody');
-  body.innerHTML=`<div class="fb-full">${escapeHtml(n.text||'')}</div>
+  body.innerHTML=`<div class="fb-full md">${mdToHtml(n.text||'')}</div>
     <div class="fb-acts">
       <button class="ek-act" id="fbEdit" type="button">なおす</button>
       <button class="ek-act warn" id="fbDel" type="button">消す</button>
