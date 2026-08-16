@@ -1037,6 +1037,7 @@ function closeSheets(){
   document.getElementById('detailSheet').classList.remove('show');
   document.getElementById('settingsSheet').classList.remove('show');
   document.getElementById('importSheet').classList.remove('show');
+  document.getElementById('fubakoSheet').classList.remove('show');
 }
 
 /* ============ 月の絵日記 ============
@@ -1546,6 +1547,9 @@ async function applyRestore(mode){
           if(!e || (l.ts||0)>(e.ts||0)) map.set(l.to,l);
         }
         await Store.set(k,[...map.values()]);
+      } else if(k==='journal:fubako'){
+        // 文箱は id ごとに新しい方を採用（非破壊）
+        await Store.set(k, mergeFubakoArr((await Store.get(k))||[], data[k]||[]));
       } else {
         const cur=await Store.get(k);           // 設定・読み解きキャッシュは既存を尊重
         if(cur==null) await Store.set(k, data[k]);
@@ -1622,7 +1626,102 @@ function openBridge(opts){
   openImportSheet();
 }
 function insightHTML(text){
-  return `<div class="u-review"><div class="u-insight">${escapeHtml(text)}</div><button class="u-regen" id="uRegen">AIに送り直す</button></div>`;
+  return `<div class="u-review"><div class="u-insight">${escapeHtml(text)}</div>
+    <div class="u-actrow">
+      <button class="u-regen" id="uRegen">AIに送り直す</button>
+      <button class="u-keep" id="uKeep" type="button"><svg viewBox="0 0 24 24"><path d="M3 8l9-4.5L21 8v9.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3 8h18"/></svg>文箱に仕舞う</button>
+    </div></div>`;
+}
+
+/* ============ 文箱（ふばこ） ============
+   AIからもらった読み解き・解析を「届いた便り」として仕舞う5つ目のタブ。
+   うつろいの読み解きは期間キャッシュで流れて消えるため、残したいものをここへ。
+   保存は journal:fubako（配列・同期とバックアップの対象）。 */
+let fubakoQuery='';
+async function getFubako(){ return (await Store.get('journal:fubako'))||[]; }
+function fubakoTitleOf(text){
+  const t=(text||'').trim().split('\n')[0].replace(/^[#*\s]+/,'').trim();
+  return t ? (t.length>40? t.slice(0,40)+'…' : t) : '便り';
+}
+async function renderFubako(){
+  const list=document.getElementById('fbList'); if(!list) return;
+  let arr=[...await getFubako()].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const q=fubakoQuery.trim();
+  if(q) arr=arr.filter(n=>((n.title||'')+'\n'+(n.text||'')+'\n'+(n.from||'')).includes(q));
+  if(!arr.length){
+    list.innerHTML=`<div class="fb-empty">${q?'見つかりませんでした。':'文箱は、まだ空です。<br>うつろいの読み解きの下の「文箱に仕舞う」か、<br>右上の＋から貼り付けて仕舞えます。'}</div>`;
+    return;
+  }
+  list.innerHTML=arr.map(n=>`
+    <div class="fb-card" data-id="${n.id}" role="button" tabindex="0">
+      <div class="fb-top"><span class="fb-title">${escapeHtml(n.title||fubakoTitleOf(n.text))}</span><span class="fb-date">${jpMD(fmtKey(new Date(n.ts||Date.now())))}</span></div>
+      ${n.from?`<span class="fb-from">${escapeHtml(n.from)}</span>`:''}
+      <div class="fb-body">${escapeHtml(n.text||'')}</div>
+    </div>`).join('');
+  list.querySelectorAll('.fb-card').forEach(c=>{
+    c.onclick=()=>openFubakoNote(c.dataset.id);
+    c.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openFubakoNote(c.dataset.id); } });
+  });
+}
+async function saveFubakoNote(note){
+  const arr=await getFubako();
+  const i=arr.findIndex(n=>n.id===note.id);
+  if(i>=0) arr[i]=note; else arr.push(note);
+  await Store.set('journal:fubako',arr);
+}
+function openFubakoSheet(){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('fubakoSheet').classList.add('show');
+}
+// 便りをひらく（全文＋なおす・消す）
+async function openFubakoNote(id){
+  const n=(await getFubako()).find(x=>x.id===id); if(!n) return;
+  document.getElementById('fbTitle').textContent=n.title||fubakoTitleOf(n.text);
+  document.getElementById('fbMeta').textContent=[n.from, jpMD(fmtKey(new Date(n.ts||Date.now())))+'に仕舞った'].filter(Boolean).join(' ・ ');
+  const body=document.getElementById('fbBody');
+  body.innerHTML=`<div class="fb-full">${escapeHtml(n.text||'')}</div>
+    <div class="fb-acts">
+      <button class="ek-act" id="fbEdit" type="button">なおす</button>
+      <button class="ek-act warn" id="fbDel" type="button">消す</button>
+    </div>`;
+  body.querySelector('#fbEdit').onclick=()=>openFubakoEditor(n);
+  body.querySelector('#fbDel').onclick=async()=>{
+    await Store.set('journal:fubako',(await getFubako()).filter(x=>x.id!==id));
+    toast('便りを消しました'); closeSheets(); renderFubako();
+  };
+  openFubakoSheet();
+  body.scrollTop=0;
+}
+// 仕舞う（新規=貼り付け・題は1行目から）／なおす（題と本文を編集）
+function openFubakoEditor(n){
+  const isNew=!n;
+  document.getElementById('fbTitle').textContent=isNew?'文箱に仕舞う':'便りをなおす';
+  document.getElementById('fbMeta').textContent=(n&&n.from)||'';
+  const body=document.getElementById('fbBody');
+  body.innerHTML=`
+    <input class="fb-title-input" id="fbTitleIn" placeholder="題" style="${isNew?'display:none':''}">
+    <textarea class="fb-edit" id="fbText" placeholder="AIの解析をここに貼り付け"></textarea>
+    ${isNew?'<div class="pf-hint" style="margin:8px 2px 14px">1行目が題になります（あとで直せます）</div>':'<div style="height:12px"></div>'}
+    <button class="ex-btn" id="fbSave" type="button">仕舞う</button>`;
+  const ti=body.querySelector('#fbTitleIn'), tx=body.querySelector('#fbText');
+  if(n){ ti.value=n.title||''; tx.value=n.text||''; }
+  body.querySelector('#fbSave').onclick=async()=>{
+    const text=tx.value.trim();
+    if(!text){ toast('本文が空です'); return; }
+    const title=ti.value.trim()||fubakoTitleOf(text);
+    const note=n?{...n, title, text}:{id:'fb'+Date.now(), title, text, from:'', ts:Date.now()};
+    await saveFubakoNote(note);
+    toast('文箱に仕舞いました'); closeSheets(); renderFubako();
+  };
+  openFubakoSheet();
+  if(isNew) setTimeout(()=>tx.focus(),350);
+}
+// うつろいから1タップで仕舞う（出典＝期間・角度の名前つき）
+async function keepInsightToFubako(text){
+  const angle=currentAngle();
+  const from='うつろい・'+periodLabel()+(angle?'（'+angle.name+'）':'');
+  await saveFubakoNote({id:'fb'+Date.now(), title:fubakoTitleOf(text), text, from, ts:Date.now()});
+  toast('文箱に仕舞いました');
 }
 /* ============ image viewer ============ */
 function openImg(src){
@@ -1776,12 +1875,13 @@ async function renderUtsuroi(){
   if(cached && cached.text!==undefined){
     area.innerHTML=insightHTML(cached.text);
     const rg=document.getElementById('uRegen'); if(rg) rg.onclick=generateUtsuroi;
+    const kp=document.getElementById('uKeep'); if(kp) kp.onclick=()=>keepInsightToFubako(cached.text);
   }
   else { area.innerHTML=genButtonHTML(); document.getElementById('uGen').onclick=generateUtsuroi; }
 }
 
 /* ============ navigation ============ */
-const titles={murmur:'呟き',reflect:'振り返り',history:'履歴',utsuroi:'うつろい'};
+const titles={murmur:'呟き',reflect:'振り返り',history:'履歴',utsuroi:'うつろい',fubako:'文箱'};
 function switchScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
@@ -1794,6 +1894,7 @@ function switchScreen(name){
   if(name==='reflect'){ renderGathered(); loadReflection(); }
   if(name==='history'){ renderCalendar(); }
   if(name==='utsuroi'){ renderUtsuroi(); }
+  if(name==='fubako'){ renderFubako(); }
   document.querySelector('.screen.active').scrollTop=0;
 }
 // PC（900px以上）：← → で日をめくる（履歴では詳細の日を移動）、N で呟き入力へ。
@@ -1930,6 +2031,10 @@ async function init(){
   document.getElementById('enikkiEntry').onclick=openEnikki;
   const ekFile=document.getElementById('enikkiFile');
   ekFile.onchange=async()=>{ const f=ekFile.files[0]; ekFile.value=''; if(f) await importEnikkiFile(f); };
+
+  // 文箱：＋で仕舞う・ことば検索
+  document.getElementById('fbAdd').onclick=()=>openFubakoEditor(null);
+  document.getElementById('fbSearch').addEventListener('input',e=>{ fubakoQuery=e.target.value; renderFubako(); });
 
   // 左右スワイプで前後の日へ（縦スクロールは邪魔しない）。fn に +1/-1 を渡す。
   // skip が true を返すタッチは無視する（テキスト入力中など）。
@@ -2227,7 +2332,17 @@ function mergeKeyValue(k, lv, rv){
   if(rv==null) return lv;
   if(k.startsWith('journal:day:')) return stripSampleDay(mergeDay(lv,rv)).day;
   if(k==='journal:letters') return mergeLettersArr(lv,rv);
+  if(k==='journal:fubako') return mergeFubakoArr(lv,rv);
   return lv;   // 設定・読み解きキャッシュ等はこの端末を優先
+}
+// 文箱のマージ（id ごとに新しい方）。伝言と同じ規則。
+function mergeFubakoArr(a,b){
+  const map=new Map((a||[]).map(n=>[n.id,n]));
+  for(const n of (b||[])){
+    const e=map.get(n.id);
+    if(!e||(n.ts||0)>(e.ts||0)) map.set(n.id,n);
+  }
+  return [...map.values()];
 }
 // 初回ログイン：リモート全件とローカル全件を非破壊マージし、差分だけを書き戻す。
 // 2回目以降の起動では丸ごとスキップ（購読が差分を届けてくれる）。ただし
@@ -2278,6 +2393,7 @@ async function syncRefreshUI(){
   const act=document.querySelector('.screen.active');
   if(act&&act.id==='screen-history') renderCalendar();
   if(act&&act.id==='screen-utsuroi') renderUtsuroi();
+  if(act&&act.id==='screen-fubako') renderFubako();
 }
 function syncWatch(){
   const {fsM,db,user}=fb;

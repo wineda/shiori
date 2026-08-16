@@ -208,6 +208,20 @@
     </div>
   </div>
 
+  <!-- SCREEN: FUBAKO（文箱）AIの読み解き・解析を便りとして仕舞う -->
+  <div class="screen" id="screen-fubako">
+    <div class="pad">
+      <div class="fb-tools">
+        <div class="fb-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+          <input id="fbSearch" type="search" placeholder="ことばで探す" aria-label="文箱をことばで探す">
+        </div>
+        <button class="fb-add" id="fbAdd" type="button" aria-label="文箱に仕舞う">＋</button>
+      </div>
+      <div id="fbList"></div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAV（PCでは左のレールになる） -->
   <div class="nav">
     <span class="logo-mark nav-logo" aria-hidden="true">文</span>
@@ -226,6 +240,10 @@
     <button data-screen="utsuroi">
       <svg class="n-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 15l4-4 3.5 3L18 8"/><circle cx="18" cy="8" r="1.3" fill="currentColor" stroke="none"/><path d="M3 20h18"/></svg>
       <span class="n-lbl">うつろい</span>
+    </button>
+    <button data-screen="fubako">
+      <svg class="n-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l9-4.5L21 8v9.5A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M3 8h18"/><path d="M9 12h6"/></svg>
+      <span class="n-lbl">文箱</span>
     </button>
     <div class="nav-foot" aria-hidden="true"><b>←</b><b>→</b> 日をめくる ・ <b>N</b> 呟く</div>
   </div>
@@ -249,6 +267,16 @@
       <div class="sh-sub" id="impSub">AIが読み取ります</div>
     </div>
     <div class="sheet-body" id="importBody"></div>
+  </div>
+
+  <!-- FUBAKO SHEET（便りの全文・なおす・仕舞う） -->
+  <div class="sheet" id="fubakoSheet">
+    <div class="grip"></div>
+    <div class="sheet-head">
+      <div class="sh-date" id="fbTitle">文箱</div>
+      <div class="sh-sub" id="fbMeta"></div>
+    </div>
+    <div class="sheet-body" id="fbBody"></div>
   </div>
 
   <!-- IMAGE VIEWER -->
