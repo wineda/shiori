@@ -171,6 +171,13 @@
         <div class="weekrow"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
         <div class="calgrid" id="calGrid"></div>
         <div class="cal-legend" id="calLegend"></div>
+        <!-- 月の絵日記：入口。AIに作らせた絵日記画像を月の頁として貼る -->
+        <button class="enikki-entry" id="enikkiEntry" type="button">
+          <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 0 1 2-2h5v17H6a2 2 0 0 1-2-2z"/><path d="M20 19.5V6a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 0 2-2z"/></svg></span>
+          <span class="et"><span class="t">この月の絵日記</span><span class="s" id="enikkiSub"></span></span>
+          <span class="go">›</span>
+        </button>
+        <input type="file" id="enikkiFile" accept="image/*" style="display:none">
       </div>
       <!-- PC（900px以上）だけ：選んだ日の詳細をシートではなく右側に出す -->
       <div class="hist-detail" id="histDetail">
@@ -299,6 +306,10 @@
           <div class="prompt-field">
             <div class="pf-label">任意の期間の読み解き（うつろい）</div>
             <textarea class="pf-input" id="setPromptCustom" rows="4"></textarea>
+          </div>
+          <div class="prompt-field">
+            <div class="pf-label">月の絵日記（履歴）</div>
+            <textarea class="pf-input" id="setPromptEnikki" rows="4"></textarea>
           </div>
           <button class="reset-btn" id="resetPrompts" style="color:var(--ink-soft)">プロンプトを既定に戻す</button>
         </div>

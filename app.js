@@ -91,7 +91,8 @@ const DEFAULT_PROMPTS = {
   draft: 'あなたはわたし本人です。以下の「今日の呟き」だけを手がかりに、明日のわたしへ宛てた一人称の振り返りを、日本語で3〜5文、穏やかで正直なトーンで書いてください。呟きに無い出来事は創作しないでください。',
   week: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今週の全体の流れ・前の週と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
   month: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今月の全体の流れ・前の月と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
-  custom: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の期間の記録をもとに、全体の流れ・その間の変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。'
+  custom: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の期間の記録をもとに、全体の流れ・その間の変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
+  enikki: 'この1ヶ月の日記の記録から、1枚の縦長の「絵日記」画像を作ってください。手描きの水彩タッチで、あたたかく素朴に。構成：最上部に「◯年◯月 絵日記」の題字。期間をいくつかの段に分け、段ごとに「小見出し＋2〜4文の短い文＋その場面の絵」。最後に「この月に見えてきたこと」を2〜4個の小さな枠で。文字はすべて日本語で、記録に無い出来事は描かないでください。'
 };
 // うつろいで選べる「読み解きの角度」の既定プロンプト集。設定で追加・編集・削除できる。
 const DEFAULT_ANGLES = [
@@ -943,10 +944,11 @@ async function renderCalendar(){
     leg.innerHTML='<span>少ない</span><div class="cl-cells">'+[0,1,2,3,4].map(l=>`<i style="background:${l?heatColor(l):'transparent'}"></i>`).join('')+'</div><span>多い</span>';
     leg.dataset.built='1';
   }
-  // PCの2分割：まだ日を選んでいなければ今日の記録を右側に出しておく
+  await updateEnikkiEntry();
+  // PCの2分割：絵日記表示中はその月の絵日記を、そうでなければ選択中の日（初期値は今日）を右側に
   if(matchMedia('(min-width:900px)').matches && document.getElementById('screen-history').classList.contains('active')){
-    if(!detailDay) detailDay=todayKey;
-    openDetail(detailDay);
+    if(enikkiMode){ renderEnikkiInto('histDate','histSub','histBody', calYMKey()); }
+    else { if(!detailDay) detailDay=todayKey; openDetail(detailDay); }
   }
 }
 function heatColor(lv){
@@ -988,8 +990,9 @@ async function openDetail(ds){
     });
   }
   if(!day.murmurs.length && !day.reflection && !sentLetters.length){ html='<div class="sb-empty">この日の記録はありません。</div>'; }
-  // PCの履歴：右側の詳細欄へ（シートは開かない）
+  // PCの履歴：右側の詳細欄へ（シートは開かない）。日付を選んだら絵日記表示は解く
   if(matchMedia('(min-width:900px)').matches && document.getElementById('screen-history').classList.contains('active')){
+    enikkiMode=false;
     document.getElementById('histDate').textContent=jpDateShort(ds);
     document.getElementById('histSub').textContent=sub;
     const hb=document.getElementById('histBody');
@@ -1031,6 +1034,116 @@ function closeSheets(){
   document.getElementById('importSheet').classList.remove('show');
 }
 
+/* ============ 月の絵日記 ============
+   1ヶ月の記録をAIに渡して絵日記の画像を作ってもらい（共有→画像生成）、
+   その画像を月の頁として貼っておく。保存は journal:enikki:YYYY-MM（月1枚）。
+   クラウド同期の1ドキュメント1MB上限に収まるよう、取り込み時に縮小・JPEG化する。 */
+const ENIKKI_M=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+let enikkiMode=false;        // PCの履歴右欄が絵日記表示になっているか
+let enikkiTarget=null;       // 再描画用 {dateId,subId,bodyId,ym}
+function calYMKey(){ return calMonth.getFullYear()+'-'+String(calMonth.getMonth()+1).padStart(2,'0'); }
+async function updateEnikkiEntry(){
+  const es=document.getElementById('enikkiSub'); if(!es) return;
+  const e=await Store.get('journal:enikki:'+calYMKey());
+  es.textContent=e ? 'この月の頁があります' : (calMonth.getMonth()+1)+'月はまだ白紙です';
+}
+async function renderEnikkiInto(dateId,subId,bodyId,ym){
+  enikkiTarget={dateId,subId,bodyId,ym};
+  const [y,m]=ym.split('-').map(Number);
+  const last=new Date(y,m,0).getDate();
+  document.getElementById(dateId).textContent=ENIKKI_M[m-1]+'月の絵日記';
+  document.getElementById(subId).textContent=`${y}.${m}.1 – ${m}.${last}`;
+  const body=document.getElementById(bodyId);
+  const e=await Store.get('journal:enikki:'+ym);
+  if(e&&e.img){
+    body.innerHTML=`<img class="ek-img" id="ekImg" alt="この月の絵日記">
+      <div class="ek-foot"><span>${jpMD(fmtKey(new Date(e.ts||Date.now())))}に取り込み</span><span class="sp"></span>
+      <button class="ek-act" id="ekReplace" type="button">差し替える</button>
+      <button class="ek-act warn" id="ekDelete" type="button">消す</button></div>`;
+    const im=body.querySelector('#ekImg');
+    im.src=e.img;
+    im.onclick=()=>openImg(e.img);
+    body.querySelector('#ekReplace').onclick=()=>document.getElementById('enikkiFile').click();
+    body.querySelector('#ekDelete').onclick=async()=>{
+      await Store.del('journal:enikki:'+ym);
+      toast('絵日記を消しました');
+      refreshEnikkiUI();
+    };
+  } else {
+    body.innerHTML=`<div class="ek-empty">
+      <div class="big">${ENIKKI_M[m-1]}月の絵日記は、まだ白紙です</div>
+      <div class="note">この月の記録から絵日記の画像を作って、ここに貼れます。<br>① この月をAIへ → ② 画像を作って保存 → ③ 取り込む</div>
+      <button class="ex-btn" id="ekShare" type="button">この月をAIへ（共有）</button>
+      <button class="ex-btn" id="ekImport" type="button" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">画像を取り込む</button>
+      <div class="ek-hint">画像が作れるAI（ChatGPT など）に共有し、できた絵日記画像を保存してから「画像を取り込む」で選んでください。取り込んだ画像は自動で軽く圧縮され、同期・バックアップにも含まれます。お願い文は設定の「AIへのお願い」で調整できます。</div>
+    </div>`;
+    body.querySelector('#ekShare').onclick=()=>shareEnikki(ym);
+    body.querySelector('#ekImport').onclick=()=>document.getElementById('enikkiFile').click();
+  }
+  body.scrollTop=0;
+}
+async function refreshEnikkiUI(){
+  if(enikkiTarget) await renderEnikkiInto(enikkiTarget.dateId,enikkiTarget.subId,enikkiTarget.bodyId,enikkiTarget.ym);
+  await updateEnikkiEntry();
+}
+async function openEnikki(){
+  const ym=calYMKey();
+  if(matchMedia('(min-width:900px)').matches){
+    enikkiMode=true;
+    document.querySelectorAll('#calGrid .cell.sel').forEach(c=>c.classList.remove('sel'));
+    await renderEnikkiInto('histDate','histSub','histBody', ym);
+  } else {
+    await renderEnikkiInto('detailDate','detailSub','detailBody', ym);
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('detailSheet').classList.add('show');
+  }
+}
+// 1ヶ月の記録＋お願い文をAIアプリへ（うつろいと同じ共有→保険でコピーも）
+async function shareEnikki(ym){
+  const [y,m]=ym.split('-').map(Number);
+  const arr=await gatherRange(`${ym}-01`, fmtKey(new Date(y,m,0)));
+  const dn=digestArr(arr);
+  if(!dn.trim()){ toast('この月に記録がありません'); return; }
+  const text=(settings.promptEnikki||DEFAULT_PROMPTS.enikki)+`\n\n【${y}年${m}月の記録】\n`+dn;
+  try{ await navigator.clipboard.writeText(text); }catch(e){}
+  try{
+    if(navigator.share) await navigator.share({text});
+    else toast('お願い文をコピーしました。AIアプリに貼り付けてください');
+  }catch(e){}
+}
+// 取り込み画像の圧縮：長辺1600pxに縮小 → 品質→大きさの順で下げ、
+// Firestoreの1ドキュメント1MB上限に収まるサイズ（約700KB）まで落とす
+async function compressEnikkiImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const draw=(sc)=>{
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(img.width*sc));
+      c.height=Math.max(1,Math.round(img.height*sc));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      return c;
+    };
+    let scale=Math.min(1, 1600/Math.max(img.width,img.height));
+    let q=0.85;
+    let canvas=draw(scale);
+    let data=canvas.toDataURL('image/jpeg',q);
+    while(data.length>700000 && q>0.55){ q-=0.1; data=canvas.toDataURL('image/jpeg',q); }
+    while(data.length>700000 && canvas.width>500){ scale*=0.8; canvas=draw(scale); data=canvas.toDataURL('image/jpeg',Math.max(q,0.6)); }
+    return data;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function importEnikkiFile(file){
+  const ym=(enikkiTarget&&enikkiTarget.ym)||calYMKey();
+  try{
+    toast('取り込んでいます…');
+    const img=await compressEnikkiImage(file);
+    await Store.set('journal:enikki:'+ym, {img, ts:Date.now()});
+    toast('絵日記を貼りました');
+    await refreshEnikkiUI();
+  }catch(e){ console.warn('[fumi] enikki import failed:',e); toast('画像を読み込めませんでした'); }
+}
+
 /* ============ settings ============ */
 async function loadSettings(){
   const s=await Store.get('journal:settings');
@@ -1040,6 +1153,7 @@ async function loadSettings(){
   if(!settings.promptWeek) settings.promptWeek=DEFAULT_PROMPTS.week;
   if(!settings.promptMonth) settings.promptMonth=DEFAULT_PROMPTS.month;
   if(!settings.promptCustom) settings.promptCustom=DEFAULT_PROMPTS.custom;
+  if(!settings.promptEnikki) settings.promptEnikki=DEFAULT_PROMPTS.enikki;
   // 角度プロンプト集が未導入の旧データには既定を種まき（全削除した場合は空のまま）
   if(!Array.isArray(settings.anglePrompts)){
     settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
@@ -1068,6 +1182,7 @@ async function loadSettings(){
   document.getElementById('setPromptWeek').value=settings.promptWeek;
   document.getElementById('setPromptMonth').value=settings.promptMonth;
   document.getElementById('setPromptCustom').value=settings.promptCustom;
+  document.getElementById('setPromptEnikki').value=settings.promptEnikki;
 }
 async function saveSettings(){ await Store.set('journal:settings',settings); }
 
@@ -1703,6 +1818,11 @@ async function init(){
   document.getElementById('prevMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); };
   document.getElementById('nextMonth').onclick=()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); };
 
+  // 月の絵日記：入口と画像の取り込み
+  document.getElementById('enikkiEntry').onclick=openEnikki;
+  const ekFile=document.getElementById('enikkiFile');
+  ekFile.onchange=async()=>{ const f=ekFile.files[0]; ekFile.value=''; if(f) await importEnikkiFile(f); };
+
   // 左右スワイプで前後の日へ（縦スクロールは邪魔しない）。fn に +1/-1 を渡す。
   // skip が true を返すタッチは無視する（テキスト入力中など）。
   function wireSwipeNav(el, fn, skip){
@@ -1769,15 +1889,18 @@ async function init(){
   bindPrompt('setPromptWeek','promptWeek');
   bindPrompt('setPromptMonth','promptMonth');
   bindPrompt('setPromptCustom','promptCustom');
+  bindPrompt('setPromptEnikki','promptEnikki');
   document.getElementById('resetPrompts').onclick=async()=>{
     settings.promptDraft=DEFAULT_PROMPTS.draft;
     settings.promptWeek=DEFAULT_PROMPTS.week;
     settings.promptMonth=DEFAULT_PROMPTS.month;
     settings.promptCustom=DEFAULT_PROMPTS.custom;
+    settings.promptEnikki=DEFAULT_PROMPTS.enikki;
     document.getElementById('setPromptDraft').value=settings.promptDraft;
     document.getElementById('setPromptWeek').value=settings.promptWeek;
     document.getElementById('setPromptMonth').value=settings.promptMonth;
     document.getElementById('setPromptCustom').value=settings.promptCustom;
+    document.getElementById('setPromptEnikki').value=settings.promptEnikki;
     settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
     settings.angleSeeded=DEFAULT_ANGLES.map(a=>a.id);
     renderAngleList();

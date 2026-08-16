@@ -634,3 +634,23 @@ textarea,input{font-family:inherit}
   .toast{bottom:48px}
   .install-hint{display:none !important}
 }
+
+/* ---------- 月の絵日記 ---------- */
+.enikki-entry{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);
+  border:1px solid var(--hairline);border-radius:14px;padding:13px 16px;margin-top:18px;text-align:left}
+.enikki-entry .ico{color:var(--accent);flex-shrink:0;width:20px;height:20px}
+.enikki-entry .ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.enikki-entry .et{min-width:0}
+.enikki-entry .t{font-size:13.5px;display:block}
+.enikki-entry .s{font-size:11px;color:var(--muted);display:block;margin-top:1px}
+.enikki-entry .go{margin-left:auto;color:var(--muted);font-size:16px}
+.ek-img{display:block;width:100%;border:1px solid var(--hairline);border-radius:6px;cursor:zoom-in}
+.ek-foot{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:11px;color:var(--muted)}
+.ek-foot .sp{margin-left:auto}
+.ek-act{font-size:11.5px;color:var(--ink-soft);text-decoration:underline;padding:4px 0}
+.ek-act.warn{color:var(--accent)}
+.ek-empty{border:1.5px dashed var(--hairline-strong);border-radius:10px;padding:26px 20px;text-align:center;background:var(--surface)}
+.ek-empty .big{font-family:var(--mincho);font-size:14.5px;color:var(--ink-soft);letter-spacing:.04em;margin-bottom:6px}
+.ek-empty .note{font-size:11.5px;color:var(--muted);line-height:1.9;margin-bottom:16px}
+.ek-empty .ex-btn{margin-bottom:10px}
+.ek-hint{font-size:10.5px;color:var(--muted);line-height:1.8;text-align:left;margin-top:4px}
