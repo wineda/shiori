@@ -92,7 +92,8 @@ const DEFAULT_PROMPTS = {
   week: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今週の全体の流れ・前の週と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
   month: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の記録をもとに、今月の全体の流れ・前の月と比べた変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
   custom: 'あなたは、わたしの日記を読み解く、静かで思いやりのある観察者です。評価や説教はせず、気づきをそっと差し出します。誇張や決めつけはしません。以下の期間の記録をもとに、全体の流れ・その間の変化・気づいたことを、やさしい日本語で短くまとめてください。記録に無いことは書かないでください。',
-  enikki: 'この1ヶ月の日記の記録から、1枚の縦長の「絵日記」画像を作ってください。手描きの水彩タッチで、あたたかく素朴に。構成：最上部に「◯年◯月 絵日記」の題字。期間をいくつかの段に分け、段ごとに「小見出し＋2〜4文の短い文＋その場面の絵」。最後に「この月に見えてきたこと」を2〜4個の小さな枠で。文字はすべて日本語で、記録に無い出来事は描かないでください。'
+  enikki: 'この1ヶ月の日記の記録から、1枚の縦長の「絵日記」画像を作ってください。手描きの水彩タッチで、あたたかく素朴に。構成：最上部に「◯年◯月 絵日記」の題字。期間をいくつかの段に分け、段ごとに「小見出し＋2〜4文の短い文＋その場面の絵」。最後に「この月に見えてきたこと」を2〜4個の小さな枠で。文字はすべて日本語で、記録に無い出来事は描かないでください。',
+  shitae: 'これはまだ来ていないひと月への願いです。以下の願いと、その月のわたしに宛てた文をもとに、その月の理想のひと月を1枚の縦長の絵にしてください。淡い色の下絵（鉛筆と薄い水彩のスケッチ）風で、やわらかく静かに。文字を入れる場合は日本語で少しだけ。願いに無いことは描き込みすぎないでください。'
 };
 // うつろいで選べる「読み解きの角度」の既定プロンプト集。設定で追加・編集・削除できる。
 const DEFAULT_ANGLES = [
@@ -1000,14 +1001,8 @@ async function openDetail(ds){
     document.querySelectorAll('#calGrid .cell.sel').forEach(c=>c.classList.remove('sel'));
     const cell=document.querySelector(`#calGrid .cell[data-ds="${ds}"]`);
     if(cell) cell.classList.add('sel');
-    else {
-      // 表示中の月の外の日を選んだ（矢印キーで月をまたいだ等）→ カレンダーをその月へ
-      const [yy,mm]=ds.split('-').map(Number);
-      if(calMonth.getFullYear()!==yy || calMonth.getMonth()!==mm-1){
-        calMonth=new Date(yy,mm-1,1);
-        renderCalendar();   // 再描画の最後に同じ日の openDetail が呼ばれ、選択枠も付く
-      }
-    }
+    // 表示中の月の外の日はここではカレンダーを動かさない（月送りの閲覧を邪魔しないため）。
+    // 矢印キーで月をまたいだときの追従は shiftDetailDay 側で行う。
     return;
   }
   document.getElementById('detailDate').textContent=jpDateShort(ds);
@@ -1025,6 +1020,16 @@ function shiftDetailDay(n){
   const dt=new Date(y,m-1,d); dt.setDate(dt.getDate()+n);
   const ds=fmtKey(dt);
   if(ds>todayKey) return;
+  // PCの履歴で月をまたいだら、カレンダーもその月へ（再描画の最後に openDetail が呼ばれる）
+  if(matchMedia('(min-width:900px)').matches && document.getElementById('screen-history').classList.contains('active')){
+    const [yy,mm]=ds.split('-').map(Number);
+    if(calMonth.getFullYear()!==yy || calMonth.getMonth()!==mm-1){
+      detailDay=ds; enikkiMode=false;
+      calMonth=new Date(yy,mm-1,1);
+      renderCalendar();
+      return;
+    }
+  }
   openDetail(ds);
 }
 function closeSheets(){
@@ -1041,45 +1046,122 @@ function closeSheets(){
 const ENIKKI_M=['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 let enikkiMode=false;        // PCの履歴右欄が絵日記表示になっているか
 let enikkiTarget=null;       // 再描画用 {dateId,subId,bodyId,ym}
+let enikkiTab='auto';        // 今月・すんだ月のタブ：'duo'|'enikki'|'shitae'（'auto'=中身に合わせる）
+let enikkiImportKind='enikki';   // 画像取り込みの宛先：絵日記か下絵か
 function calYMKey(){ return calMonth.getFullYear()+'-'+String(calMonth.getMonth()+1).padStart(2,'0'); }
+function pickEnikkiFile(kind){ enikkiImportKind=kind; document.getElementById('enikkiFile').click(); }
 async function updateEnikkiEntry(){
   const es=document.getElementById('enikkiSub'); if(!es) return;
-  const e=await Store.get('journal:enikki:'+calYMKey());
-  es.textContent=e ? 'この月の頁があります' : (calMonth.getMonth()+1)+'月はまだ白紙です';
+  const ym=calYMKey();
+  const e=await Store.get('journal:enikki:'+ym);
+  const s=await Store.get('journal:shitae:'+ym);
+  const hasE=!!(e&&e.img), hasS=!!(s&&s.img);
+  const mLabel=(calMonth.getMonth()+1)+'月';
+  if(ym>todayKey.slice(0,7)){
+    es.textContent=hasS ? '下絵があります' : mLabel+'（未来）— 下絵はまだ白紙です';
+  } else {
+    es.textContent = hasE&&hasS ? '下絵と絵日記があります'
+      : hasE ? 'この月の頁があります'
+      : hasS ? '下絵があります・絵日記はまだ'
+      : mLabel+'はまだ白紙です';
+  }
+}
+// 画像＋全画面ビューアの配線
+function wireEkImg(img,src){ img.src=src; img.onclick=()=>openImg(src); }
+// 絵日記（すごした月の本描き）の頁
+function renderEnikkiView(el,ym,e){
+  el.innerHTML=`<img class="ek-img" alt="この月の絵日記">
+    <div class="ek-foot"><span>${jpMD(fmtKey(new Date(e.ts||Date.now())))}に取り込み</span><span class="sp"></span>
+    <button class="ek-act" data-a="rep" type="button">差し替える</button>
+    <button class="ek-act warn" data-a="del" type="button">消す</button></div>`;
+  wireEkImg(el.querySelector('.ek-img'), e.img);
+  el.querySelector('[data-a="rep"]').onclick=()=>pickEnikkiFile('enikki');
+  el.querySelector('[data-a="del"]').onclick=async()=>{ await Store.del('journal:enikki:'+ym); toast('絵日記を消しました'); refreshEnikkiUI(); };
+}
+function renderEnikkiEmpty(el,ym,m){
+  el.innerHTML=`<div class="ek-empty">
+    <div class="big">${ENIKKI_M[m-1]}月の絵日記は、まだ白紙です</div>
+    <div class="note">この月の記録から絵日記の画像を作って、ここに貼れます。<br>① この月をAIへ → ② 画像を作って保存 → ③ 取り込む</div>
+    <button class="ex-btn" id="ekShare" type="button">この月をAIへ（共有）</button>
+    <button class="ex-btn" id="ekImport" type="button" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">画像を取り込む</button>
+    <div class="ek-hint">画像が作れるAI（ChatGPT など）に共有し、できた絵日記画像を保存してから「画像を取り込む」で選んでください。取り込んだ画像は自動で軽く圧縮され、同期・バックアップにも含まれます。お願い文は設定の「AIへのお願い」で調整できます。</div>
+  </div>`;
+  el.querySelector('#ekShare').onclick=()=>shareEnikki(ym);
+  el.querySelector('#ekImport').onclick=()=>pickEnikkiFile('enikki');
+}
+// 下絵（未来の月へのイメージ）の頁
+function renderShitaeView(el,ym,s){
+  el.innerHTML=`<img class="ek-img" alt="この月の下絵">
+    <div class="ek-foot"><span>${jpMD(fmtKey(new Date(s.ts||Date.now())))}にえがいた${s.wish?'　願い：'+escapeHtml(s.wish):''}</span><span class="sp"></span>
+    <button class="ek-act" data-a="rep" type="button">差し替える</button>
+    <button class="ek-act warn" data-a="del" type="button">消す</button></div>`;
+  wireEkImg(el.querySelector('.ek-img'), s.img);
+  el.querySelector('[data-a="rep"]').onclick=()=>pickEnikkiFile('shitae');
+  el.querySelector('[data-a="del"]').onclick=async()=>{ await Store.del('journal:shitae:'+ym); toast('下絵を消しました'); refreshEnikkiUI(); };
+}
+function renderShitaeEmpty(el,ym,s,m){
+  const letters=LETTERS.filter(l=>l.to&&l.to.startsWith(ym)&&l.text);
+  const mats=letters.map(l=>`・${jpMD(l.to)}へ${l.kokoromi?'（こころみ）':''}：${escapeHtml(l.text)}`).join('<br>');
+  el.innerHTML=`<div class="ek-empty">
+    <div class="big">${ENIKKI_M[m-1]}月の下絵は、まだ白紙です</div>
+    <div class="note">この月をどう過ごしたいか、絵にして貼っておけます。<br>月が過ぎたら、絵日記とならべて見比べられます。</div>
+    ${mats?`<div class="ek-mat">いっしょにAIへ渡す、この月宛の文<br>${mats}</div>`:''}
+    <textarea class="ek-wish-input" id="ekWish" placeholder="ひとことでいい。この月をどう過ごしたい?"></textarea>
+    <button class="ex-btn" id="skShare" type="button">この願いをAIへ（共有）</button>
+    <button class="ex-btn" id="skImport" type="button" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">画像を取り込む</button>
+    <div class="ek-hint">画像が作れるAIに共有し、できた下絵の画像を保存してから「画像を取り込む」で選んでください。願いのひとことは画像といっしょに保存されます。</div>
+  </div>`;
+  const w=el.querySelector('#ekWish'); w.value=(s&&s.wish)||'';
+  el.querySelector('#skShare').onclick=()=>shareShitae(ym, w.value.trim());
+  el.querySelector('#skImport').onclick=()=>pickEnikkiFile('shitae');
+}
+// すんだ月の答え合わせ：えがいた下絵とすごした月をならべる
+function renderEnikkiDuo(el,ym,s,e){
+  el.innerHTML=`<div class="ek-duo">
+    <div><div class="ek-lbl">えがいていた下絵</div><img class="ek-img" data-k="s" alt="この月の下絵"></div>
+    <div><div class="ek-lbl">すごした月の絵日記</div><img class="ek-img" data-k="e" alt="この月の絵日記"></div>
+  </div>
+  ${s.wish?`<div class="ek-foot"><span>下絵の願い：${escapeHtml(s.wish)}</span></div>`:''}`;
+  wireEkImg(el.querySelector('[data-k="s"]'), s.img);
+  wireEkImg(el.querySelector('[data-k="e"]'), e.img);
 }
 async function renderEnikkiInto(dateId,subId,bodyId,ym){
+  if(enikkiTarget&&enikkiTarget.ym!==ym) enikkiTab='auto';   // 月が変わったらタブは中身に合わせ直す
   enikkiTarget={dateId,subId,bodyId,ym};
   const [y,m]=ym.split('-').map(Number);
   const last=new Date(y,m,0).getDate();
-  document.getElementById(dateId).textContent=ENIKKI_M[m-1]+'月の絵日記';
-  document.getElementById(subId).textContent=`${y}.${m}.1 – ${m}.${last}`;
-  const body=document.getElementById(bodyId);
+  const curYM=todayKey.slice(0,7);
   const e=await Store.get('journal:enikki:'+ym);
-  if(e&&e.img){
-    body.innerHTML=`<img class="ek-img" id="ekImg" alt="この月の絵日記">
-      <div class="ek-foot"><span>${jpMD(fmtKey(new Date(e.ts||Date.now())))}に取り込み</span><span class="sp"></span>
-      <button class="ek-act" id="ekReplace" type="button">差し替える</button>
-      <button class="ek-act warn" id="ekDelete" type="button">消す</button></div>`;
-    const im=body.querySelector('#ekImg');
-    im.src=e.img;
-    im.onclick=()=>openImg(e.img);
-    body.querySelector('#ekReplace').onclick=()=>document.getElementById('enikkiFile').click();
-    body.querySelector('#ekDelete').onclick=async()=>{
-      await Store.del('journal:enikki:'+ym);
-      toast('絵日記を消しました');
-      refreshEnikkiUI();
-    };
-  } else {
-    body.innerHTML=`<div class="ek-empty">
-      <div class="big">${ENIKKI_M[m-1]}月の絵日記は、まだ白紙です</div>
-      <div class="note">この月の記録から絵日記の画像を作って、ここに貼れます。<br>① この月をAIへ → ② 画像を作って保存 → ③ 取り込む</div>
-      <button class="ex-btn" id="ekShare" type="button">この月をAIへ（共有）</button>
-      <button class="ex-btn" id="ekImport" type="button" style="background:var(--surface-2);color:var(--ink);border:1px solid var(--hairline-strong)">画像を取り込む</button>
-      <div class="ek-hint">画像が作れるAI（ChatGPT など）に共有し、できた絵日記画像を保存してから「画像を取り込む」で選んでください。取り込んだ画像は自動で軽く圧縮され、同期・バックアップにも含まれます。お願い文は設定の「AIへのお願い」で調整できます。</div>
-    </div>`;
-    body.querySelector('#ekShare').onclick=()=>shareEnikki(ym);
-    body.querySelector('#ekImport').onclick=()=>document.getElementById('enikkiFile').click();
+  const s=await Store.get('journal:shitae:'+ym);
+  const hasE=!!(e&&e.img), hasS=!!(s&&s.img);
+  const dateEl=document.getElementById(dateId);
+  const body=document.getElementById(bodyId);
+  document.getElementById(subId).textContent=`${y}.${m}.1 – ${m}.${last}`;
+  // 未来の月：下絵だけ
+  if(ym>curYM){
+    dateEl.textContent=ENIKKI_M[m-1]+'月の下絵';
+    if(hasS) renderShitaeView(body,ym,s); else renderShitaeEmpty(body,ym,s,m);
+    body.scrollTop=0; return;
   }
+  // 今月・すんだ月：下絵があるか今月ならタブで切り替え
+  const showTabs=hasS||ym===curYM;
+  dateEl.textContent=ENIKKI_M[m-1]+'月'+(showTabs?'':'の絵日記');
+  let tab=enikkiTab;
+  if(tab==='auto'||(tab==='duo'&&!(hasS&&hasE))) tab=(hasS&&hasE)?'duo':(hasS?'shitae':'enikki');
+  let html='';
+  if(showTabs){
+    const defs=[];
+    if(hasS&&hasE) defs.push(['duo','ならべて見る']);
+    defs.push(['enikki', hasS&&hasE?'絵日記だけ':'絵日記']);
+    defs.push(['shitae', hasS&&hasE?'下絵だけ':'下絵']);
+    html=`<div class="ek-tabs">`+defs.map(d=>`<button type="button" class="ek-tab${d[0]===tab?' on':''}" data-tab="${d[0]}">${d[1]}</button>`).join('')+`</div>`;
+  }
+  body.innerHTML=html+'<div id="ekInner"></div>';
+  body.querySelectorAll('.ek-tab').forEach(b=>b.onclick=()=>{ enikkiTab=b.dataset.tab; renderEnikkiInto(dateId,subId,bodyId,ym); });
+  const inner=body.querySelector('#ekInner');
+  if(tab==='duo') renderEnikkiDuo(inner,ym,s,e);
+  else if(tab==='shitae'){ hasS?renderShitaeView(inner,ym,s):renderShitaeEmpty(inner,ym,s,m); }
+  else { hasE?renderEnikkiView(inner,ym,e):renderEnikkiEmpty(inner,ym,m); }
   body.scrollTop=0;
 }
 async function refreshEnikkiUI(){
@@ -1105,6 +1187,22 @@ async function shareEnikki(ym){
   const dn=digestArr(arr);
   if(!dn.trim()){ toast('この月に記録がありません'); return; }
   const text=(settings.promptEnikki||DEFAULT_PROMPTS.enikki)+`\n\n【${y}年${m}月の記録】\n`+dn;
+  await shareText(text);
+}
+// 下絵：願いのひとこと＋その月宛の文をAIへ。願いは控えておき、画像取り込み時に一緒に保存する
+async function shareShitae(ym,wish){
+  const [y,m]=ym.split('-').map(Number);
+  const letters=LETTERS.filter(l=>l.to&&l.to.startsWith(ym)&&l.text);
+  if(!wish&&!letters.length){ toast('願いをひとこと書いてください'); return; }
+  const prev=await Store.get('journal:shitae:'+ym);
+  if(wish&&(!prev||prev.wish!==wish)) await Store.set('journal:shitae:'+ym, {...(prev||{}), wish, ts:(prev&&prev.ts)||Date.now()});
+  let ctx=`【${y}年${m}月への願い】\n${wish||'（ひとことは無し）'}`;
+  if(letters.length) ctx+=`\n\n【この月のわたしに宛てた文】\n`+letters.map(l=>`${jpMD(l.to)}へ${l.kokoromi?'（こころみ）':''}：${l.text}`).join('\n');
+  const text=(settings.promptShitae||DEFAULT_PROMPTS.shitae)+`\n\n`+ctx;
+  await shareText(text);
+}
+// 共有（保険でクリップボードにも）
+async function shareText(text){
   try{ await navigator.clipboard.writeText(text); }catch(e){}
   try{
     if(navigator.share) await navigator.share({text});
@@ -1138,8 +1236,16 @@ async function importEnikkiFile(file){
   try{
     toast('取り込んでいます…');
     const img=await compressEnikkiImage(file);
-    await Store.set('journal:enikki:'+ym, {img, ts:Date.now()});
-    toast('絵日記を貼りました');
+    if(enikkiImportKind==='shitae'){
+      const prev=await Store.get('journal:shitae:'+ym);
+      const wEl=document.getElementById('ekWish');
+      const wish=(wEl&&wEl.value.trim())||(prev&&prev.wish)||'';
+      await Store.set('journal:shitae:'+ym, {img, wish, ts:Date.now()});
+      toast('下絵を貼りました');
+    } else {
+      await Store.set('journal:enikki:'+ym, {img, ts:Date.now()});
+      toast('絵日記を貼りました');
+    }
     await refreshEnikkiUI();
   }catch(e){ console.warn('[fumi] enikki import failed:',e); toast('画像を読み込めませんでした'); }
 }
@@ -1154,6 +1260,7 @@ async function loadSettings(){
   if(!settings.promptMonth) settings.promptMonth=DEFAULT_PROMPTS.month;
   if(!settings.promptCustom) settings.promptCustom=DEFAULT_PROMPTS.custom;
   if(!settings.promptEnikki) settings.promptEnikki=DEFAULT_PROMPTS.enikki;
+  if(!settings.promptShitae) settings.promptShitae=DEFAULT_PROMPTS.shitae;
   // 角度プロンプト集が未導入の旧データには既定を種まき（全削除した場合は空のまま）
   if(!Array.isArray(settings.anglePrompts)){
     settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
@@ -1183,6 +1290,7 @@ async function loadSettings(){
   document.getElementById('setPromptMonth').value=settings.promptMonth;
   document.getElementById('setPromptCustom').value=settings.promptCustom;
   document.getElementById('setPromptEnikki').value=settings.promptEnikki;
+  document.getElementById('setPromptShitae').value=settings.promptShitae;
 }
 async function saveSettings(){ await Store.set('journal:settings',settings); }
 
@@ -1890,17 +1998,20 @@ async function init(){
   bindPrompt('setPromptMonth','promptMonth');
   bindPrompt('setPromptCustom','promptCustom');
   bindPrompt('setPromptEnikki','promptEnikki');
+  bindPrompt('setPromptShitae','promptShitae');
   document.getElementById('resetPrompts').onclick=async()=>{
     settings.promptDraft=DEFAULT_PROMPTS.draft;
     settings.promptWeek=DEFAULT_PROMPTS.week;
     settings.promptMonth=DEFAULT_PROMPTS.month;
     settings.promptCustom=DEFAULT_PROMPTS.custom;
     settings.promptEnikki=DEFAULT_PROMPTS.enikki;
+    settings.promptShitae=DEFAULT_PROMPTS.shitae;
     document.getElementById('setPromptDraft').value=settings.promptDraft;
     document.getElementById('setPromptWeek').value=settings.promptWeek;
     document.getElementById('setPromptMonth').value=settings.promptMonth;
     document.getElementById('setPromptCustom').value=settings.promptCustom;
     document.getElementById('setPromptEnikki').value=settings.promptEnikki;
+    document.getElementById('setPromptShitae').value=settings.promptShitae;
     settings.anglePrompts=DEFAULT_ANGLES.map(a=>({...a}));
     settings.angleSeeded=DEFAULT_ANGLES.map(a=>a.id);
     renderAngleList();
