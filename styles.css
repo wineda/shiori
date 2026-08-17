@@ -713,3 +713,19 @@ textarea,input{font-family:inherit}
 .md .md-table th{background:var(--surface);font-weight:500;white-space:nowrap}
 .md a{color:var(--accent)}
 .md b{font-weight:700}
+
+/* ---------- 呟きの横断検索 ---------- */
+.db-search{position:absolute;right:0;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;z-index:1}
+.db-search:hover{background:var(--surface)}
+.db-search svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.msearch{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.ms-cancel{font-size:12.5px;color:var(--ink-soft);flex-shrink:0;padding:6px 2px}
+.ms-count{font-size:11px;color:var(--muted);margin:2px 2px 10px}
+.ms-item{background:var(--surface-2);border:1px solid var(--hairline);border-radius:12px;padding:11px 14px;margin-bottom:8px;cursor:pointer;animation:fade .25s ease}
+.ms-meta{font-size:10.5px;color:var(--accent);margin-bottom:3px;letter-spacing:.03em}
+.ms-kk{border:1px solid rgba(156,74,80,.35);border-radius:999px;padding:0 7px;font-size:9.5px}
+.ms-text{font-size:13.5px;line-height:1.75;color:var(--ink)}
+.ms-echo{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:5px;padding-left:10px;border-left:2px solid var(--hairline-strong)}
+mark{background:rgba(156,74,80,.16);color:inherit;border-radius:3px;padding:0 1px}
+/* 検索から移動してきた呟きを一瞬光らせる */
+.murmur.found{background:rgba(156,74,80,.12)}
