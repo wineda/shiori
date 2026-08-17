@@ -227,6 +227,7 @@ async function renderFeed(){
   sorted.forEach(m=>{
     const el=document.createElement('div');
     el.className='murmur';
+    el.dataset.id=m.id;   // 検索からの移動先ハイライトに使う
     const badge=m.source==='hand'?'<span class="badge-hand">✎ 手書き</span>':'';
     const late=m.late?'<span class="badge-hand">あとから</span>':'';
     const tv=timeValue(m);   // 時刻ピッカーの初期値（HH:MM）
@@ -1705,6 +1706,69 @@ function mdStrip(text){
     .replace(/\n{2,}/g,'\n').trim();
 }
 
+/* ============ 呟きの横断検索 ============
+   呟き画面の日付バーの虫めがねから。すべての日の呟き（追伸・結果も含む）を
+   ことばで探し、結果をタップするとその日へ移動して該当の呟きを一瞬光らせる。 */
+let msearchOpen=false;
+function msHighlight(text,q){
+  const esc=escapeHtml(text||''), eq=escapeHtml(q);
+  return esc.split(eq).join('<mark>'+eq+'</mark>');
+}
+function toggleMurmurSearch(open){
+  msearchOpen=open;
+  document.getElementById('msearchRow').style.display=open?'flex':'none';
+  document.getElementById('msearchResults').style.display=open?'block':'none';
+  document.getElementById('murmurBody').style.display=open?'none':'block';
+  if(open){ renderMurmurSearch(); document.getElementById('msearchInput').focus(); }
+  else { document.getElementById('msearchInput').value=''; document.getElementById('msearchInput').blur(); }
+}
+async function renderMurmurSearch(){
+  const box=document.getElementById('msearchResults');
+  const q=document.getElementById('msearchInput').value.trim();
+  if(!q){ box.innerHTML='<div class="fb-empty">ことばを入れると、すべての日の呟きから探します。</div>'; return; }
+  const LIMIT=100;
+  const keys=(await Store.listDays()).sort().reverse();   // 新しい日から
+  const hits=[];
+  for(const k of keys){
+    const day=await Store.get(k);
+    if(!day||!day.murmurs||!day.murmurs.length) continue;
+    const ds=k.slice('journal:day:'.length);
+    for(const m of [...day.murmurs].sort((a,b)=>b.ts-a.ts)){
+      const inText=(m.text||'').includes(q);
+      const echoHits=(m.echoes||[]).filter(e=>(e.text||'').includes(q));
+      if(inText||echoHits.length) hits.push({ds,m,echoHits});
+      if(hits.length>=LIMIT) break;
+    }
+    if(hits.length>=LIMIT) break;
+  }
+  if(!hits.length){ box.innerHTML='<div class="fb-empty">見つかりませんでした。</div>'; return; }
+  box.innerHTML=`<div class="ms-count">${hits.length}件${hits.length>=LIMIT?'（新しい方から'+LIMIT+'件まで）':''}</div>`+
+    hits.map(h=>`
+    <div class="ms-item" data-ds="${h.ds}" data-id="${h.m.id}" role="button" tabindex="0">
+      <div class="ms-meta">${jpDateShort(h.ds)}　${h.m.time||''}${h.m.kokoromi?'　<span class="ms-kk">こころみ</span>':''}</div>
+      <div class="ms-text">${msHighlight(h.m.text,q)}</div>
+      ${h.echoHits.map(e=>`<div class="ms-echo">${e.result?'結果':'追伸'}：${msHighlight(e.text,q)}</div>`).join('')}
+    </div>`).join('');
+  box.querySelectorAll('.ms-item').forEach(it=>{
+    const go=()=>jumpToMurmur(it.dataset.ds, it.dataset.id);
+    it.onclick=go;
+    it.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+}
+function jumpToMurmur(ds,id){
+  toggleMurmurSearch(false);
+  setMurmurDay(ds);
+  // 描画が落ち着いてから該当の呟きへスクロールし、一瞬光らせる
+  setTimeout(()=>{
+    const el=document.querySelector(`#murmurFeed .murmur[data-id="${id}"]`);
+    if(el){
+      el.scrollIntoView({block:'center',behavior:'smooth'});
+      el.classList.add('found');
+      setTimeout(()=>el.classList.remove('found'),1800);
+    }
+  },450);
+}
+
 /* ============ 文箱（ふばこ） ============
    AIからもらった読み解き・解析を「届いた便り」として仕舞う5つ目のタブ。
    うつろいの読み解きは期間キャッシュで流れて消えるため、残したいものをここへ。
@@ -1978,6 +2042,7 @@ document.addEventListener('keydown',(e)=>{
   const onHistory=document.getElementById('screen-history').classList.contains('active');
   if(!onMurmur&&!onReflect&&!onHistory) return;
   if(isTextField(document.activeElement)) return;
+  if(msearchOpen) return;   // 呟きの検索中は日めくりしない
   if(document.querySelector('.sheet.show')) return;
   if(document.getElementById('imgViewer').classList.contains('show')) return;
   const co=document.getElementById('confirmOverlay'); if(co&&!co.hidden) return;
@@ -2108,6 +2173,13 @@ async function init(){
   document.getElementById('fbAdd').onclick=()=>openFubakoEditor(null);
   document.getElementById('fbSearch').addEventListener('input',e=>{ fubakoQuery=e.target.value; renderFubako(); });
 
+  // 呟きの横断検索
+  document.getElementById('murmurSearchBtn').onclick=()=>toggleMurmurSearch(!msearchOpen);
+  document.getElementById('msearchClose').onclick=()=>toggleMurmurSearch(false);
+  const msi=document.getElementById('msearchInput');
+  msi.addEventListener('input',renderMurmurSearch);
+  msi.addEventListener('keydown',e=>{ if(e.key==='Escape') toggleMurmurSearch(false); });
+
   // 左右スワイプで前後の日へ（縦スクロールは邪魔しない）。fn に +1/-1 を渡す。
   // skip が true を返すタッチは無視する（テキスト入力中など）。
   function wireSwipeNav(el, fn, skip){
@@ -2130,6 +2202,7 @@ async function init(){
   // 呟き・振り返り画面（同じ選択日を共有）。入力欄の上や、呟きの編集・追伸の
   // 入力中は反応させない（書きかけを守る）。
   const daySwipeSkip=e=>
+    msearchOpen ||   // 検索中は日めくりしない（結果一覧のスクロール操作を守る）
     !!(e.target.closest && e.target.closest('textarea,input')) ||
     !!document.querySelector('.murmur.editing,.murmur.tsn-editing');
   wireSwipeNav(document.getElementById('screen-murmur'), shiftMurmurDay, daySwipeSkip);

@@ -45,7 +45,19 @@
         <button class="db-label" id="dayLabel">きょう</button>
         <button class="db-nav" id="dayNext" aria-label="次の日">›</button>
         <input type="date" id="dayPicker" class="db-picker">
+        <button class="db-search" id="murmurSearchBtn" type="button" aria-label="呟きを探す" title="呟きを探す">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+        </button>
       </div>
+      <!-- 呟きの横断検索（開いている間は日の表示と入れ替わる） -->
+      <div class="msearch" id="msearchRow" style="display:none">
+        <div class="fb-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+          <input id="msearchInput" type="search" placeholder="すべての日の呟きから探す" aria-label="呟きをことばで探す">
+        </div>
+        <button class="ms-cancel" id="msearchClose" type="button">やめる</button>
+      </div>
+      <div id="msearchResults" style="display:none"></div>
       <!-- 日付の切り替え時にフェードインする範囲（日付バーは含めない） -->
       <div class="day-body" id="murmurBody">
       <!-- きのうのわたしからの伝言（水引の文）。今日表示のときだけ現れる -->
