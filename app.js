@@ -1755,17 +1755,29 @@ async function renderMurmurSearch(){
     it.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
   });
 }
+// 祖先を巻き込まず、指定のスクロール容器の中だけで要素を中央に出す。
+// scrollIntoView はスクロール可能な祖先すべて（overflow:hidden の .app 枠まで）を
+// 動かしてしまい、上のバーが消えて画面外のシートが覗く崩れを起こすため使わない。
+function scrollIntoContainer(container, el, smooth){
+  if(!container||!el) return;
+  const top=el.getBoundingClientRect().top - container.getBoundingClientRect().top
+    + container.scrollTop - (container.clientHeight - el.clientHeight)/2;
+  container.scrollTo({top:Math.max(0,top), behavior:smooth?'smooth':'auto'});
+}
 function jumpToMurmur(ds,id){
   toggleMurmurSearch(false);
   setMurmurDay(ds);
   // 描画が落ち着いてから該当の呟きへスクロールし、一瞬光らせる
   setTimeout(()=>{
     const el=document.querySelector(`#murmurFeed .murmur[data-id="${id}"]`);
+    scrollIntoContainer(document.getElementById('screen-murmur'), el, true);
     if(el){
-      el.scrollIntoView({block:'center',behavior:'smooth'});
       el.classList.add('found');
       setTimeout(()=>el.classList.remove('found'),1800);
     }
+    // 万一外枠がずれていたら戻す（過去に scrollIntoView でずれた状態の保険）
+    const app=document.querySelector('.app'); if(app) app.scrollTop=0;
+    document.documentElement.scrollTop=0;
   },450);
 }
 
@@ -2278,7 +2290,7 @@ async function init(){
     renderAngleList();
     const items=document.querySelectorAll('#angleList .angle-item');
     const last=items[items.length-1];
-    if(last){ last.open=true; last.scrollIntoView({block:'center'}); last.querySelector('.pf-name').focus(); }
+    if(last){ last.open=true; scrollIntoContainer(last.closest('.sheet-body'), last); last.querySelector('.pf-name').focus(); }
   };
   // うつろいの角度セレクト
   document.getElementById('uAngle').onchange=e=>{ utsuroiAngle=e.target.value; renderUtsuroi(); };
