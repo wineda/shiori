@@ -2,11 +2,11 @@
 
 > 明日のわたしへの伝言。その場の**呟き**と一日の**振り返り**を、言葉だけで束ねる日記。
 
-和紙色と墨色の無彩色に、栞紐の臙脂＝**栞紅 #9C4A50** をひとしずく。気分の入力は置かず、書くことそのものに集中する、静かなジャーナリング PWA です。
+便箋の生成りと墨色に、封蝋の朱＝**栞紅 #9C4A50** をひとしずく。UI と呟きはゴシック、振り返りや届いた文など「読む側」は手書きのペン字（Klee One）。気分の入力は置かず、書くことそのものに集中する、静かなジャーナリング PWA です。
 
 ## 特徴
 
-- **4タブ**：呟き（即時の一言・ゴシック）／振り返り（一日の内省・明朝）／履歴（件数ヒートマップのカレンダー）／うつろい（期間のAI読み解き）。
+- **4タブ**：呟き（即時の一言・ゴシック）／振り返り（一日の内省・ペン字、便箋の罫）／履歴（件数ヒートマップのカレンダー）／うつろい（期間のAI読み解き）。
 - **AIはキー不要の「共有→貼り付け」方式**：サーバーもAPIキーも持たず、OSの共有シートで手持ちのAIアプリ（Claude / ChatGPT / Gemini など）に渡し、返信を貼り付けて取り込む。AI出力は必ず下書きで、自動保存しない。
 - **オフラインで動く PWA**：ホーム画面に追加してアプリのように起動。フォントも同梱し、通信なしで描画。
 - **消えにくい保存**：記録は IndexedDB に保存。ブラウザの「キャッシュ削除」では消えません（アプリ本体のキャッシュとは別枠）。
@@ -46,15 +46,15 @@ python3 -m http.server 8000
 
 **ビルド工程はありません。** 静的ファイルをそのまま配信します。
 
-フォントだけは配布容量のため、実使用の5フェイス（明朝 400/500・ゴシック 400/500/700）を woff2 にサブセット化して同梱しています。作り直す場合の一度きりの手順（開発時のみ・アプリには不要）：
+フォントだけは配布容量のため、実使用の5フェイス（ペン字 Klee One 400/600・ゴシック 400/500/700）を woff2 にサブセット化して同梱しています。作り直す場合の一度きりの手順（開発時のみ・アプリには不要）：
 
 ```bash
 pip install fonttools brotli
-# 例：Shippori Mincho Regular を全字サブセット化
-pyftsubset ShipporiMincho-Regular.ttf \
+# 例：Klee One Regular を全字サブセット化
+pyftsubset KleeOne-Regular.ttf \
   --unicodes="U+0020-007E,U+00A0-00FF,U+2000-206F,U+3000-30FF,U+3190-31FF,U+3200-33FF,U+4E00-9FFF,U+F900-FAFF,U+FE30-FE4F,U+FF00-FFEF" \
   --layout-features='kern,liga,palt,vert,vrt2,locl' --flavor=woff2 \
-  --output-file=fonts/ShipporiMincho-400.woff2
+  --output-file=fonts/KleeOne-400.woff2
 ```
 
 ## デプロイ
@@ -80,5 +80,6 @@ pyftsubset ShipporiMincho-Regular.ttf \
 
 - アプリのコード：`LICENSE` を参照。
 - 同梱フォント：**SIL Open Font License 1.1**
-  - Shippori Mincho — `fonts/OFL-ShipporiMincho.txt`
+  - Klee One — `fonts/OFL-KleeOne.txt`
+  - Shippori Mincho — `fonts/OFL-ShipporiMincho.txt`（アプリでは使わず、`fumi-*-mock.html` の比較用にだけ残している）
   - Zen Kaku Gothic New — `fonts/OFL-ZenKakuGothicNew.txt`

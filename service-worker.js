@@ -4,7 +4,7 @@
    重要：ユーザーデータ（IndexedDB）は SW の管轄外。ここでは一切触れない。
         キャッシュの更新・削除をしても IndexedDB は消えない（別枠）。 */
 
-const CACHE = 'fumi-shell-v55';
+const CACHE = 'fumi-shell-v56';
 
 // プリキャッシュするアプリ本体。バージョンを上げたら CACHE 名も上げる。
 const SHELL = [
@@ -13,8 +13,8 @@ const SHELL = [
   './styles.css',
   './app.js',
   './manifest.webmanifest',
-  './fonts/ShipporiMincho-400.woff2',
-  './fonts/ShipporiMincho-500.woff2',
+  './fonts/KleeOne-400.woff2',
+  './fonts/KleeOne-600.woff2',
   './fonts/ZenKakuGothicNew-400.woff2',
   './fonts/ZenKakuGothicNew-500.woff2',
   './fonts/ZenKakuGothicNew-700.woff2',
